@@ -1,0 +1,59 @@
+<h1>Master Layout</h1>
+    <p>This is a simple text editor with basic formatting options.</p>
+    <div class="editor-container">
+      <div class="toolbar" *ngIf="selectedParagraphId">
+        <div class="text-style-group">
+          <button (click)="applyInlineStyle('bold')" title="Bold">B</button>
+          <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
+          <button (click)="applyInlineStyle('large')" title="Large Text">
+            T
+          </button>
+        </div>
+        <div class="style-group">
+          <button (click)="applyStyle('fontSize', '24px')">Large</button>
+          <button (click)="applyStyle('fontSize', '16px')">Normal</button>
+          <button (click)="applyStyle('fontWeight', 'bold')">Bold</button>
+          <button (click)="applyStyle('color', '#ff0000')">Red</button>
+          <button (click)="applyStyle('textAlign', 'left')">Left</button>
+          <button (click)="applyStyle('textAlign', 'center')">Center</button>
+        </div>
+        <div class="list-group">
+          <button (click)="toggleParagraphType('bullet')">Toggle Bullet</button>
+          <button (click)="toggleParagraphType('number')">Toggle Number</button>
+          <button (click)="changeLevel(1)" title="Increase indent">→</button>
+          <button (click)="changeLevel(-1)" title="Decrease indent">←</button>
+        </div>
+        <button (click)="deleteParagraph()" class="delete-btn">
+          Delete Paragraph
+        </button>
+      </div>
+
+      <div class="content-area">
+        <div class="paragraph-markers">
+          <div
+            *ngFor="let paragraph of paragraphs; let i = index"
+            class="marker"
+            [class.selected]="paragraph.id === selectedParagraphId"
+            [style.paddingLeft.px]="paragraph.level * 20"
+            (click)="selectParagraph(paragraph.id)"
+          >
+            <span *ngIf="paragraph.type === 'bullet'">•</span>
+            <span *ngIf="paragraph.type === 'number'"
+              >{{ getNumberForParagraph(paragraph, i) }}.</span
+            >
+            <span *ngIf="paragraph.type === 'none'" class="empty-marker"
+              >¶</span
+            >
+          </div>
+        </div>
+
+        <div
+          #editor
+          class="editor"
+          contenteditable="true"
+          (input)="onInput($event)"
+          (keydown)="onKeyDown($event)"
+          (click)="onEditorClick($event)"
+        ></div>
+      </div>
+    </div>
