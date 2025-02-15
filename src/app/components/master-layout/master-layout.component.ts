@@ -6,6 +6,7 @@ import {
   HostListener,
   ViewChild,
 } from '@angular/core';
+import { Paragraph } from '../../types/paragraph'
 
 @Component({
   selector: 'app-master-layout',
@@ -141,6 +142,7 @@ export class MasterLayoutComponent implements AfterViewInit {
         },
         type: existingParagraph?.type || 'none',
         level: existingParagraph?.level || 0,
+        notes: existingParagraph?.notes || []
       };
     });
   }
@@ -197,6 +199,7 @@ export class MasterLayoutComponent implements AfterViewInit {
       },
       type: 'none',
       level: level,
+      notes: []
     };
 
     this.paragraphs.push(paragraph);
@@ -305,6 +308,7 @@ export class MasterLayoutComponent implements AfterViewInit {
           },
           type: 'none',
           level: 0,
+          notes: []
         });
       }
     });
@@ -363,6 +367,7 @@ export class MasterLayoutComponent implements AfterViewInit {
         styles: { ...this.paragraphs[currentIndex].styles },
         type: this.paragraphs[currentIndex].type, // Maintain the list type
         level: this.paragraphs[currentIndex].level, // Maintain the indentation level
+        notes: this.paragraphs[currentIndex].notes
       };
 
       // Insert new paragraph
@@ -539,16 +544,16 @@ export class MasterLayoutComponent implements AfterViewInit {
 
 // Breakpoint
 
-interface Paragraph {
-  id: string;
-  content: string;
-  styles: {
-    fontSize?: string;
-    fontWeight?: string;
-    color?: string;
-    textAlign?: string;
-    minHeight?: string;
-  };
-  type: 'bullet' | 'number' | 'none';
-  level: number; // Indentation level
-}
+// interface Paragraph {
+//   id: string;
+//   content: string;
+//   styles: {
+//     fontSize?: string;
+//     fontWeight?: string;
+//     color?: string;
+//     textAlign?: string;
+//     minHeight?: string;
+//   };
+//   type: 'bullet' | 'number' | 'none';
+//   level: number; // Indentation level
+// }
