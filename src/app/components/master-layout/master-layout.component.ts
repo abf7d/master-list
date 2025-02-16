@@ -5,6 +5,7 @@ import {
   ElementRef,
   HostListener,
   ViewChild,
+  ViewEncapsulation,
 } from '@angular/core';
 import { Note, Paragraph } from '../../types/paragraph'
 import { MetaTagService } from '../meta-tags/meta-tag.service';
@@ -21,7 +22,8 @@ import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
     // NotesPanelComponent
   ],
   templateUrl: './master-layout.component.html',
-  styleUrl: './master-layout.component.scss'
+  styleUrl: './master-layout.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 
 
@@ -31,6 +33,7 @@ export class MasterLayoutComponent implements AfterViewInit {
 
   paragraphs: Paragraph[] = [];
   selectedParagraphId: string | null = null;
+  selectedParagraphIds: string[] = [];
   
 
 
@@ -292,6 +295,24 @@ export class MasterLayoutComponent implements AfterViewInit {
       this.changeLevel(1);
     }
   }
+  ctrlDown = false;
+  @HostListener('keydown.meta', ['$event'])
+  onMeta(event: KeyboardEvent): void {
+    this.ctrlDown = true;
+  }
+  @HostListener('keyup.meta', ['$event'])
+  offMeta(event: KeyboardEvent): void {
+    this.ctrlDown = false;
+  }
+  @HostListener('keydown.ctrl', ['$event'])
+  onCtrl(event: KeyboardEvent): void {
+    this.ctrlDown = true;
+  }
+  @HostListener('keyup.ctrl', ['$event'])
+  offCtrl(event: KeyboardEvent): void {
+    this.ctrlDown = false;
+  }
+
 
 
   onInput(event: Event): void {
@@ -494,6 +515,18 @@ export class MasterLayoutComponent implements AfterViewInit {
 
   selectParagraph(id: string): void {
     this.selectedParagraphId = id;
+    if (this.ctrlDown) {
+      if (this.selectedParagraphIds?.includes(id)) {
+        this.selectedParagraphIds = this.selectedParagraphIds?.filter(
+          (pId) => pId !== id
+        );
+      } else {
+        this.selectedParagraphIds?.push(id);
+      }
+    }
+    else {
+      this.selectedParagraphIds = [id];
+    }
 
     this.editorRef.nativeElement
       .querySelectorAll('p')
@@ -504,6 +537,22 @@ export class MasterLayoutComponent implements AfterViewInit {
     const selectedElement = document.getElementById(id);
     if (selectedElement) {
       selectedElement.classList.add('selected');
+    }
+    if (this.selectedParagraphIds.length > 0) {
+      this.paragraphs.forEach((p) => {
+        const pEl = document.getElementById(p.id);
+        if (this.selectedParagraphIds?.includes(p.id)) {
+         
+          if (pEl) {
+            pEl.classList.add('grouped');
+          }
+        } else {
+          if (pEl) {
+            pEl.classList.remove('grouped');
+          }
+        }
+
+      });
     }
   }
 
