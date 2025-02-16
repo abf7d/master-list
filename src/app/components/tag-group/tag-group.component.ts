@@ -18,6 +18,7 @@ export class TagGroupComponent implements OnInit {
     @Input() multiselect: boolean = false;
     @Input() tags: TagSelection[] = [];
     @Input() description!: string;
+    @Input() allowAdd = true;
 
     @Input() hideAssignLinks!: boolean;
     @Output() assignTags = new EventEmitter<string[]>();
@@ -47,5 +48,6 @@ export class TagGroupComponent implements OnInit {
         this.addTag.emit(name);
         this.newTag = '';
     }
+    public filterTags(): void {}
     public ngOnInit(): void {}
 }

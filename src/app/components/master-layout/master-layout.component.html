@@ -1,7 +1,7 @@
-<h1>Master Layout</h1>
+<h1>Master List</h1>
 <p>This is a simple text editor with basic formatting options.</p>
 <div class="editor-container">
-  <div class="toolbar" >
+  <div class="toolbar">
     <div class="text-style-group">
       <button (click)="applyInlineStyle('bold')" title="Bold">B</button>
       <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
@@ -23,6 +23,10 @@
       <button (click)="toggleParagraphType('number')">Toggle Number</button>
       <button (click)="changeLevel(1)" title="Increase indent">→</button>
       <button (click)="changeLevel(-1)" title="Decrease indent">←</button>
+    </div>
+    <div class="list-group filters">
+      <button>Critical Pass x</button>
+      <button>Monte Carlo x</button>
     </div>
     <button (click)="deleteParagraph()" class="delete-btn">
       Delete Paragraph
@@ -68,9 +72,43 @@
       (deleteNote)="onNoteDelete($event)"
     ></app-notes-panel>
     </div> -->
-    <div class="tags">
-        <app-meta-tags></app-meta-tags>
+
+    <div class="action-panel">
+      <div class="tabs">
+        <!-- <div>
+            <a href="javascript::void(0)">View Master List</a>
+        </div> -->
+        
+        <div
+          [ngClass]="{ selected: selectedTab === 'explore' }"
+          (click)="selectedTab = 'explore'"
+        >
+          <!-- <span>Filter List</span> -->
+          <span>Explore Lists</span>
+        </div>
+        <div
+          [ngClass]="{ selected: selectedTab === 'tags' }"
+          (click)="selectedTab = 'tags'"
+        >
+          <span>Tag Items</span>
+        </div>
+        <div>
+            <!-- <span>Filter List</span> -->
+            <span>AI / ML</span>
+          </div>
+          <div>
+            <!-- <span>Filter List</span> -->
+            <span>Visualizations</span>
+          </div>
+      </div>
+      <div class="areas">
+        <div [hidden]="selectedTab !== 'tags'">
+          <app-meta-tags></app-meta-tags>
+        </div>
+        <div [hidden]="selectedTab !== 'explore'">
+          <app-meta-tags [allowAdd]="false"></app-meta-tags>
+        </div>
+      </div>
     </div>
   </div>
-
 </div>

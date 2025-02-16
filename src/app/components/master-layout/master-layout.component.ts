@@ -34,7 +34,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   paragraphs: Paragraph[] = [];
   selectedParagraphId: string | null = null;
   selectedParagraphIds: string[] = [];
-  
+  selectedTab = 'tags';
 
 
   applyInlineStyle(style: string): void {

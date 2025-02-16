@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { TagManagerService } from '../../services/tag-manager.service';
@@ -13,6 +13,7 @@ import { TagGroupComponent } from '../tag-group/tag-group.component';
   styleUrl: './meta-tags.component.scss',
 })
 export class MetaTagsComponent {
+  @Input() allowAdd = true;
   public tagGroups: TagSelectionGroup;
   public availableGroups: TagSelectionGroup[] = [];
   public activeGroup: TagSelectionGroup | null = null;

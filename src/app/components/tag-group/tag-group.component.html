@@ -2,10 +2,13 @@
 <div class="actions">
     <span class="tag-title">{{ title }}</span>
     <div class="tag-description">{{ description }}</div>
-    <span class="float-right assign-button" [hidden]="hideAssignLinks">
+    <span class="float-right assign-button" [hidden]="hideAssignLinks || !allowAdd">
         <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>
         <span class="center">|</span>
         <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
+        <span class="center">|</span>
+        <a href="javascript:void(0)" class="explore" (click)="filterTags()">Filter</a>
+        
     </span>
 </div>
 <div class="tags">
@@ -19,8 +22,8 @@
     >
         <svg><circle r="7" cx="8" cy="12" [ngStyle]="{ fill: tag.backgroundcolor, stroke: tag.isSelected ? 'white' : '' }"></circle></svg>
         {{ tag.name }}
-        <span class="remove" (click)="remove(tag)">x</span>
+        <span class="remove" *ngIf="allowAdd" (click)="remove(tag)">x</span>
     </button>
-    <input class="add-tag" [(ngModel)]="newTag" (change)="add($event.target)" (keydown.enter)="add($event.target)" type="text" placeholder="Type Name" />
+    <input class="add-tag" *ngIf="allowAdd" [(ngModel)]="newTag" (change)="add($event.target)" (keydown.enter)="add($event.target)" type="text" placeholder="Type Name" />
 </div>
 </div>
