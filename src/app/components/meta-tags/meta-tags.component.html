@@ -1,0 +1,27 @@
+<button class="btn">View Master List</button>
+<div class="chart-options group">
+    <app-tag-group
+        *ngIf="isResourceView"
+        title="Meta Lists"
+        description="Meta lists are used to group lists. Type to create a master list. Then create lists below."
+        [tags]="tagGroups.tags"
+        (selectTag)="selectGroup($event)"
+        (removeTag)="removeGroup($event)"
+        (addTag)="addGroup($event)"
+    ></app-tag-group>
+    <!-- [hideAssignLinks]="true" -->
+</div>
+<div class="group" *ngIf="project !== undefined">
+    <app-tag-group
+        *ngIf="!!activeGroup"
+        description="Lists are used to categorize activities. Type to create a list. Assign a list to an activity to categorize it. A list can belong to multiple master lists."
+        [title]="activeGroup.name + ' Lists' "
+        [tags]="activeGroup.tags"
+        [multiselect]="true"
+        (assignTags)="assignToActivities($event)"
+        (unassignTags)="unassignFromActivities()"
+        (selectTag)="selectTag($event)"
+        (removeTag)="removeTag($event)"
+        (addTag)="addTag($event)"
+    ></app-tag-group>
+</div>

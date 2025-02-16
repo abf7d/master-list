@@ -1,0 +1,26 @@
+<div class="tag-group-container">
+<div class="actions">
+    <span class="tag-title">{{ title }}</span>
+    <div class="tag-description">{{ description }}</div>
+    <span class="float-right assign-button" [hidden]="hideAssignLinks">
+        <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>
+        <span class="center">|</span>
+        <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
+    </span>
+</div>
+<div class="tags">
+    <button
+        type="button"
+        (click)="select(tag)"
+        [style.background-color]="tag.isSelected ? tag.backgroundcolor : '#bbb'"
+        [style.color]="tag.isSelected ? tag.color : 'white'"
+        class="btn btn-light tag-btn"
+        *ngFor="let tag of tags"
+    >
+        <svg><circle r="7" cx="8" cy="12" [ngStyle]="{ fill: tag.backgroundcolor, stroke: tag.isSelected ? 'white' : '' }"></circle></svg>
+        {{ tag.name }}
+        <span class="remove" (click)="remove(tag)">x</span>
+    </button>
+    <input class="add-tag" [(ngModel)]="newTag" (change)="add($event.target)" (keydown.enter)="add($event.target)" type="text" placeholder="Type Name" />
+</div>
+</div>

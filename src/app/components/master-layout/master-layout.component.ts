@@ -6,11 +6,20 @@ import {
   HostListener,
   ViewChild,
 } from '@angular/core';
-import { Paragraph } from '../../types/paragraph'
+import { Note, Paragraph } from '../../types/paragraph'
+import { MetaTagService } from '../meta-tags/meta-tag.service';
+import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
+// import { NoteEditorComponent } from '../note-editor/note-editor.component';
+// import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
 
 @Component({
   selector: 'app-master-layout',
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    MetaTagsComponent
+    // NoteEditorComponent,
+    // NotesPanelComponent
+  ],
   templateUrl: './master-layout.component.html',
   styleUrl: './master-layout.component.scss'
 })
@@ -539,6 +548,75 @@ export class MasterLayoutComponent implements AfterViewInit {
 
   getParagraphs(): Paragraph[] {
     return this.paragraphs;
+  }
+
+
+
+  addNote(paragraphId: string, content: string): void {
+    const paragraph = this.paragraphs.find(p => p.id === paragraphId);
+    if (!paragraph) return;
+  
+    const newNote: Note = {
+      id: crypto.randomUUID(),
+      content,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  
+    paragraph.notes.push(newNote);
+    // You might want to trigger change detection or re-render here
+  }
+  
+  updateNote(paragraphId: string, noteId: string, content: string): void {
+    const paragraph = this.paragraphs.find(p => p.id === paragraphId);
+    if (!paragraph) return;
+  
+    const note = paragraph.notes.find(n => n.id === noteId);
+    if (!note) return;
+  
+    note.content = content;
+    note.updatedAt = new Date();
+  }
+  
+  deleteNote(paragraphId: string, noteId: string): void {
+    const paragraph = this.paragraphs.find(p => p.id === paragraphId);
+    if (!paragraph) return;
+  
+    paragraph.notes = paragraph.notes.filter(n => n.id !== noteId);
+  }
+  
+  getNotes(paragraphId: string): Note[] {
+    const paragraph = this.paragraphs.find(p => p.id === paragraphId);
+    return paragraph?.notes || [];
+  }
+
+  showNoteEditor = false;
+  editingNote: Note | null = null;
+
+  onNoteSave(content: string) {
+    if (this.editingNote) {
+      this.updateNote(this.selectedParagraphId!, this.editingNote.id, content);
+    } else {
+      this.addNote(this.selectedParagraphId!, content);
+    }
+    this.showNoteEditor = false;
+    this.editingNote = null;
+  }
+
+  onNoteCancel() {
+    this.showNoteEditor = false;
+    this.editingNote = null;
+  }
+
+  onNoteEdit(note: Note) {
+    this.editingNote = note;
+    this.showNoteEditor = true;
+  }
+
+  onNoteDelete(note: Note) {
+    if (this.selectedParagraphId) {
+      this.deleteNote(this.selectedParagraphId, note.id);
+    }
   }
 }
 

@@ -130,3 +130,55 @@
 //   .editor p:empty::after {
 //       content: '\x80''; /* Zero-width space */
 //     }
+.editor-container {
+    position: relative;
+    display: flex;
+    gap: 16px;
+  }
+  
+  .editor {
+    flex: 1;
+    margin-right: 300px; // Make room for the notes panel
+  }
+
+  .editor-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px); // Adjust based on your header height
+  }
+  
+  .content-area {
+    display: flex;
+    flex: 1;
+    position: relative;
+    margin-right: 300px; // Make room for notes panel
+  }
+  
+  .editor {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  app-notes-panel {
+    position: sticky;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 300px;
+    border-left: 1px solid #ccc;
+  }
+  
+  app-note-editor {
+    position: sticky;
+    right: -320px;
+    top: 0;
+    width: 300px;
+    z-index: 1000;
+  }
+  .note-editor-container {
+    width: 300px;
+    position: fixed;
+    right: 300px;
+  }
