@@ -1,9 +1,10 @@
-<button class="btn">View Master List</button>
+
 <div class="chart-options group">
+    <button class="tag-btn">View Master List</button>
     <app-tag-group
         *ngIf="isResourceView"
         title="Meta Lists"
-        description="Meta lists are used to group lists. Type to create a master list. Then create lists below."
+        description="High level subjects."
         [tags]="tagGroups.tags"
         (selectTag)="selectGroup($event)"
         (removeTag)="removeGroup($event)"
