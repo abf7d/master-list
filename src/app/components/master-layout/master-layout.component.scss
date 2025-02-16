@@ -43,7 +43,8 @@
   .content-area {
     flex-grow: 1;
     display: flex;
-    overflow-y: auto;
+    // overflow-y: auto;
+    overflow: visible;
   }
 
   .paragraph-markers {
@@ -131,7 +132,7 @@
 //       content: '\x80''; /* Zero-width space */
 //     }
 .editor-container {
-    position: relative;
+    // position: relative;
     display: flex;
     gap: 16px;
   }
@@ -142,10 +143,11 @@
   }
 
   .editor-container {
-    position: relative;
+    // position: relative;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 100px); // Adjust based on your header height
+    // height: calc(100vh - 100px); // Adjust based on your header height
+    height: auto;
   }
   
   .content-area {
