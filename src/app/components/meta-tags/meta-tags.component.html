@@ -16,7 +16,7 @@
 <div class="group" *ngIf="project !== undefined">
     <app-tag-group
         *ngIf="!!activeGroup"
-        description="Lists are used to categorize activities. Type to create a list. Assign a list to an activity to categorize it. A list can belong to multiple master lists."
+        description="Categorize your note elements"
         [title]="activeGroup.name + ' Lists' "
         [tags]="activeGroup.tags"
         [allowAdd]="allowAdd"

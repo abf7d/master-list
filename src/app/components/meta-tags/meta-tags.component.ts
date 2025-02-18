@@ -25,8 +25,8 @@ export class MetaTagsComponent {
   ) {
     // this.id = +route.snapshot.params['id'];
     // this.project$ = this.dashboard.activeProject$;
-    // const focusTag = this.creatNewTag('Focus', 0, 0);
-    // const backgroundTag = this.creatNewTag('Background', 1, 0);
+    // const focusTag = this.creatNewTag('Focus', 0, 0); // high priority
+    // const backgroundTag = this.creatNewTag('Background', 1, 0); // low prioritiy
     // const storageTag = this.creatNewTag('Storage', 2, 0);
     // const deleteTag = this.creatNewTag('Delete', 3, 0);
     this.tagGroups = { name: 'Tag Group', tags: [] };

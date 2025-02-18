@@ -34,6 +34,7 @@
   </div>
 
   <div class="content-area">
+    
     <div class="paragraph-markers">
       <div
         *ngFor="let paragraph of paragraphs; let i = index"
@@ -41,6 +42,10 @@
         [class.selected]="paragraph.id === selectedParagraphId"
         [style.paddingLeft.px]="paragraph.level * 20"
         (click)="selectParagraph(paragraph.id)"
+
+
+        [style.gridRow]="i + 1"
+        [style.gridColumn]="1"
       >
         <span *ngIf="paragraph.type === 'bullet'">•</span>
         <span *ngIf="paragraph.type === 'number'"
@@ -54,24 +59,12 @@
       #editor
       class="editor"
       contenteditable="true"
+      (paste)="handlePaste($event)"
       (input)="onInput($event)"
       (keydown)="onKeyDown($event)"
       (click)="onEditorClick($event)"
     ></div>
-    <!-- <div class="note-editor-container">
-      <app-note-editor
-        *ngIf="showNoteEditor"
-        [initialContent]="editingNote?.content || ''"
-        (saved)="onNoteSave($event)"
-        (closed)="onNoteCancel()"
-      ></app-note-editor>
-      <app-notes-panel
-      *ngIf="selectedParagraphId"
-      [notes]="getNotes(selectedParagraphId)"
-      (editNote)="onNoteEdit($event)"
-      (deleteNote)="onNoteDelete($event)"
-    ></app-notes-panel>
-    </div> -->
+ 
 
     <div class="action-panel">
       <div class="tabs">
@@ -112,3 +105,19 @@
     </div>
   </div>
 </div>
+
+
+   <!-- <div class="note-editor-container">
+      <app-note-editor
+        *ngIf="showNoteEditor"
+        [initialContent]="editingNote?.content || ''"
+        (saved)="onNoteSave($event)"
+        (closed)="onNoteCancel()"
+      ></app-note-editor>
+      <app-notes-panel
+      *ngIf="selectedParagraphId"
+      [notes]="getNotes(selectedParagraphId)"
+      (editNote)="onNoteEdit($event)"
+      (deleteNote)="onNoteDelete($event)"
+    ></app-notes-panel>
+    </div> -->

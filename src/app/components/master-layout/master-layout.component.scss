@@ -139,7 +139,7 @@
   
   .editor {
     flex: 1;
-    margin-right: 300px; // Make room for the notes panel
+    // margin-right: 300px; // Make room for the notes panel
   }
 
   .editor-container {
@@ -214,3 +214,33 @@
   .filters {
     margin-left: calc(100vw - 1694px);
   }
+
+
+
+
+//   .content-area {
+//     display: grid;
+//     grid-template-columns: auto 1fr;
+//     /* We don't set explicit rows since they'll be dynamic */
+//   }
+
+//   .paragraph-markers {
+//     display: contents;
+//   }
+  
+//   /* Keep editor as a real element but make it span the second column */
+//   .editor {
+//     grid-column: 2;
+//     grid-row: 1 / span 1000; /* Span many rows to ensure it covers the whole area */
+//   }
+  
+//   /* Make elements expand to fill their grid areas */
+//   .marker, .row {
+//     padding: 8px;
+//     line-height: 1.5;
+//   }
+
+//   .editor-area {
+//     width: 100%;
+//     height: 100%;
+//   }

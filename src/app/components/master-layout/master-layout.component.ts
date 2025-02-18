@@ -228,10 +228,14 @@ export class MasterLayoutComponent implements AfterViewInit {
     // Keep track of numbering at each level
     const numberingByLevel: { [key: number]: number } = {};
 
-    this.paragraphs.forEach((paragraph) => {
+    this.paragraphs.forEach((paragraph, i: number) => {
       const p = document.createElement('p');
       p.innerHTML = paragraph.content;
       p.id = paragraph.id;
+
+      // const styles = { ...paragraph.styles, gridRow: i + 1, gridColumn: 2 }; 
+      // Object.assign(p.style, styles);
+
       Object.assign(p.style, paragraph.styles);
       p.style.paddingLeft = `${paragraph.level * 40}px`;
 
@@ -665,6 +669,46 @@ export class MasterLayoutComponent implements AfterViewInit {
   onNoteDelete(note: Note) {
     if (this.selectedParagraphId) {
       this.deleteNote(this.selectedParagraphId, note.id);
+    }
+  }
+
+  handlePaste(event: ClipboardEvent) {
+    // Prevent default paste behavior
+    event.preventDefault();
+    
+    // Get the pasted text content
+    const pastedText = event.clipboardData?.getData('text') || '';
+    
+    // Split the text by newline characters
+    // This handles different types of line breaks (\n, \r\n, \r)
+    const lines = pastedText.split(/\r?\n/)
+      .filter(line => line.trim().length > 0); // Remove empty lines
+
+
+      
+    let currentIndex = this.paragraphs.length - 1;
+    if (this.selectedParagraphId) {
+      currentIndex = this.paragraphs.findIndex(p => p.id === this.selectedParagraphId);
+    }
+    // Create new notes for each line
+    lines.forEach((line, i) => {
+      const newParagraph: Paragraph = {
+        id: crypto.randomUUID(),
+        content: line, // Start with empty content
+        styles: { ...this.paragraphs[currentIndex + i].styles },
+        type: this.paragraphs[currentIndex + i].type, // Maintain the list type
+        level: this.paragraphs[currentIndex + i].level, // Maintain the indentation level
+        notes: this.paragraphs[currentIndex + i].notes
+      };
+
+      // Insert new paragraph
+      this.paragraphs.splice(currentIndex + i, 0, newParagraph);
+      
+    });
+    this.renderParagraphs();
+    // Clear the paste area
+    if (event.target instanceof HTMLElement) {
+      event.target.textContent = '';
     }
   }
 }
