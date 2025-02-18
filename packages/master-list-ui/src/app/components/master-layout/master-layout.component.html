@@ -43,10 +43,9 @@
         [style.paddingLeft.px]="paragraph.level * 20"
         (click)="selectParagraph(paragraph.id)"
 
-
-        [style.gridRow]="i + 1"
-        [style.gridColumn]="1"
       >
+      <!-- [style.gridRow]="i + 1"
+      [style.gridColumn]="1" -->
         <span *ngIf="paragraph.type === 'bullet'">•</span>
         <span *ngIf="paragraph.type === 'number'"
           >{{ getNumberForParagraph(paragraph, i) }}.</span
