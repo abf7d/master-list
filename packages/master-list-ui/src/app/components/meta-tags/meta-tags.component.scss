@@ -1,4 +1,4 @@
-@import "../../styles/buttons.scss";
+@use "../../styles/buttons.scss" as *;
 cp-tag-selection {
     padding-top: 3px;
     display: block;
