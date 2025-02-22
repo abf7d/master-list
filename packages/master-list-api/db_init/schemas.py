@@ -7,9 +7,8 @@ from uuid import UUID
 # Pydantic models for API
 class CreateNoteGroup(BaseModel):
     """Request model for creating a group of notes"""
-    tag_name: str
     parent_tag_id: Optional[UUID] = None  # Optional notebook to create under
-    content: str  # Full text that will be split into paragraphs
+    content: List[str]  # Full text that will be split into paragraphs
 
 # Pydantic Response Models
 class TagResponse(BaseModel):

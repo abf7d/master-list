@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.models import Base, Tag, Note, NoteTag  # Import the models from your models.py
+from models.models import Base, Tag, Note, NoteTag  # Use absolute import
+
+# Only import the SQLAlchemy models, not the Pydantic models
+# If you need settings, import only what you need
 from core.config import settings
 
 def init_db():
@@ -53,54 +56,10 @@ if __name__ == "__main__":
     finally:
         db.close()
 
-# from sqlalchemy import create_engine, Column, String, Text, DateTime, ForeignKey, Integer, UniqueConstraint
-# from sqlalchemy.dialects.postgresql import UUID
-# from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-# import uuid
-# from datetime import datetime
-# from config import settings
-
-# # Create the base class
-# Base = declarative_base()
-
-# # Define the models
-# class Tag(Base):
-#     __tablename__ = "tags"
-    
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-#     name = Column(String(50), index=True)
-#     created_at = Column(DateTime, default=datetime.utcnow)
-#     parent_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=True)
-    
-#     __table_args__ = (
-#         UniqueConstraint('name', 'parent_id', name='uix_tag_name_parent'),
-#     )
-    
-#     # Relationships
-#     parent = relationship("Tag", remote_side=[id], back_populates="children")
-#     children = relationship("Tag", back_populates="parent")
-#     notes = relationship("Note", secondary="note_tags", back_populates="tags")
-#     created_notes = relationship("Note", back_populates="creation_tag")
-
-# class Note(Base):
-#     __tablename__ = "notes"
-    
-#     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-#     content = Column(Text)
-#     created_at = Column(DateTime, default=datetime.utcnow)
-#     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-#     creation_tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=False)
-#     sequence_number = Column(Integer)
-    
-#     # Relationships
-#     tags = relationship("Tag", secondary="note_tags", back_populates="notes")
-#     creation_tag = relationship("Tag", foreign_keys=[creation_tag_id], back_populates="created_notes")
-
-# class NoteTag(Base):
-#     __tablename__ = "note_tags"
-    
-#     note_id = Column(UUID(as_uuid=True), ForeignKey('notes.id'), primary_key=True)
-#     tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), primary_key=True)
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import sessionmaker
+# from models.models import Base, Tag, Note, NoteTag  # Import the models from your models.py
+# from core.config import settings
 
 # def init_db():
 #     """Initialize the database and create all tables"""

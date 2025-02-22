@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID
 from typing import List
-from ..models import Note, Tag
-from ..models import CreateNoteGroup, NoteGroupResponse, NoteResponse, TagResponse
+from models.models import Note, Tag
+from db_init.schemas import CreateNoteGroup, NoteGroupResponse, NoteResponse, TagResponse
 
-class NoteRepository:
+class NoteRepo:
     def __init__(self, db: Session):
         self.db = db
     

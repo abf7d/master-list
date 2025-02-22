@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import uvicorn 
 
-
+#ask chatgpt about logger, test writing some logs
 """ Initialize the logger """
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -31,3 +32,7 @@ app.add_middleware(
 )
 
 app.include_router(notes_routes.router)
+
+if __name__ == "__main__":
+    logger.info("Starting FastAPI server")
+    uvicorn.run(app, host="127.0.0.1", port=8000,  log_level="info")

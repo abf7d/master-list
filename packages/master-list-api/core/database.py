@@ -13,11 +13,11 @@ engine = create_engine(settings.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # ChromaDB setup
-chroma_client = Client(Settings(
-    chroma_db_impl="duckdb+parquet",
-    persist_directory="./chroma_db"
-))
-vector_collection = chroma_client.get_or_create_collection("notes_embeddings")
+# chroma_client = Client(Settings(
+#     chroma_db_impl="duckdb+parquet",
+#     persist_directory="./chroma_db"
+# ))
+# vector_collection = chroma_client.get_or_create_collection("notes_embeddings")
 
 def get_db():
     db = SessionLocal()
