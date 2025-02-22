@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, Tag, Note, NoteTag  # Import the models from your models.py
-from ..core import settings
+from models.models import Base, Tag, Note, NoteTag  # Import the models from your models.py
+from core.config import settings
 
 def init_db():
     """Initialize the database and create all tables"""

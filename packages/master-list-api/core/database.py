@@ -4,10 +4,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from chromadb import Client, Settings
 import chromadb
+from .config import settings
 
+engine = create_engine(settings.DATABASE_URL)
 # SQLite setup
-SQLALCHEMY_DATABASE_URL = "sqlite:///./notes.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+# SQLALCHEMY_DATABASE_URL = "sqlite:///./notes.db"
+# engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # ChromaDB setup

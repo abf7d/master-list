@@ -1,6 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from ..services.notes_service import NotesService
-from ..models import NoteCreate
+from ..models import ( NoteCreate, NoteResponse, NoteDB )
+
+from sqlalchemy.orm import Session
+from typing import List
+import uuid
 
 router = APIRouter()
 

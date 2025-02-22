@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_list_container
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+
+    ports:
+      - "5432:5432"
+    env_file:
+      - ../.env
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# the load database should be a separate shell script, need to create a schema for database
+# but i do want the database created if you provide the right parameter so I can modify the python and the table updates
+  db-init:
+    build:
+      context: ..
+      dockerfile: docker/postgres/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      - POSTGRES_HOST=db 
+    profiles:
+      - init
+
+volumes:
+  postgres_data:
+
+# cd docker
+# docker compose --profile init up
