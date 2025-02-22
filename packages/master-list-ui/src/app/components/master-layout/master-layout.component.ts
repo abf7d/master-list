@@ -7,7 +7,7 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { Note, Paragraph } from '../../types/paragraph'
+import { ParagraphNote, Paragraph } from '../../types/note'
 import { MetaTagService } from '../meta-tags/meta-tag.service';
 import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
@@ -609,7 +609,7 @@ export class MasterLayoutComponent implements AfterViewInit {
     const paragraph = this.paragraphs.find(p => p.id === paragraphId);
     if (!paragraph) return;
   
-    const newNote: Note = {
+    const newNote: ParagraphNote = {
       id: crypto.randomUUID(),
       content,
       createdAt: new Date(),
@@ -638,13 +638,13 @@ export class MasterLayoutComponent implements AfterViewInit {
     paragraph.notes = paragraph.notes.filter(n => n.id !== noteId);
   }
   
-  getNotes(paragraphId: string): Note[] {
+  getNotes(paragraphId: string): ParagraphNote[] {
     const paragraph = this.paragraphs.find(p => p.id === paragraphId);
     return paragraph?.notes || [];
   }
 
   showNoteEditor = false;
-  editingNote: Note | null = null;
+  editingNote: ParagraphNote | null = null;
 
   onNoteSave(content: string) {
     if (this.editingNote) {
@@ -661,12 +661,12 @@ export class MasterLayoutComponent implements AfterViewInit {
     this.editingNote = null;
   }
 
-  onNoteEdit(note: Note) {
+  onNoteEdit(note: ParagraphNote) {
     this.editingNote = note;
     this.showNoteEditor = true;
   }
 
-  onNoteDelete(note: Note) {
+  onNoteDelete(note: ParagraphNote) {
     if (this.selectedParagraphId) {
       this.deleteNote(this.selectedParagraphId, note.id);
     }

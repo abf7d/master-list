@@ -3,7 +3,7 @@
     
     <app-tag-group
         *ngIf="isResourceView"
-        title="Meta Lists"
+        title="Lists"
         description="High level subjects."
         [allowAdd]="allowAdd"
         [tags]="tagGroups.tags"
@@ -17,7 +17,7 @@
     <app-tag-group
         *ngIf="!!activeGroup"
         description="Categorize your note elements"
-        [title]="activeGroup.name + ' Lists' "
+        [title]="'Notes: ' + activeGroup.name  "
         [tags]="activeGroup.tags"
         [allowAdd]="allowAdd"
         [multiselect]="true"

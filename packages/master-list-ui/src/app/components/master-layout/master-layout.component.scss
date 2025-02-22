@@ -14,6 +14,7 @@
     z-index: 100;
     display: flex;
     gap: 16px;
+    width: 100%;
   }
 
   .style-group,
@@ -45,6 +46,7 @@
     display: flex;
     // overflow-y: auto;
     overflow: visible;
+    width: calc(100vw - 312px)
   }
 
   .paragraph-markers {
@@ -135,6 +137,10 @@
     // position: relative;
     display: flex;
     gap: 16px;
+
+    width: 100vw;
+    justify-content: center;
+    align-items: center;
   }
   
   .editor {
@@ -154,7 +160,7 @@
     display: flex;
     flex: 1;
     position: relative;
-    margin-right: 300px; // Make room for notes panel
+    // margin-right: 300px; // Make room for n÷tes panel
   }
   
   .editor {
@@ -189,7 +195,7 @@
   }
 
   .action-panel .tabs {
-    padding: 15px;
+    padding: 9px;
     display: flex;
     gap: -4px;
     div {
@@ -215,7 +221,14 @@
     margin-left: calc(100vw - 1694px);
   }
 
-
+.tabs {
+  position: sticky;
+  top: 110px;
+}
+.areas {
+  position: sticky;
+  top: 165px;
+}
 
 
 //   .content-area {

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Note, Paragraph } from '../../types/paragraph';
+import { ParagraphNote, Paragraph } from '../../types/note';
 
 @Component({
   selector: 'app-notes-panel',
@@ -99,12 +99,12 @@ import { Note, Paragraph } from '../../types/paragraph';
 })
 export class NotesPanelComponent {
   @Input() isOpen = false;
-  @Input() notes: Note[] = [];
+  @Input() notes: ParagraphNote[] = [];
   @Input() paragraphs: Paragraph[] = [];
   
   @Output() close = new EventEmitter<void>();
-  @Output() editNote = new EventEmitter<Note>();
-  @Output() deleteNote = new EventEmitter<Note>();
+  @Output() editNote = new EventEmitter<ParagraphNote>();
+  @Output() deleteNote = new EventEmitter<ParagraphNote>();
 
   getParagraphPreview(paragraphId: string): string {
     const paragraph = this.paragraphs.find(p => p.id === paragraphId);
