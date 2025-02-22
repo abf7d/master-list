@@ -12,21 +12,32 @@ from db_init.schemas import TagResponse, NoteGroupResponse
 
 from sqlalchemy.orm import Session
 from typing import List
+import logging
 
 router = APIRouter()
+
+""" Initialize the logger """
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("routers.bins")
+
 
 # Dependency to get NoteService
 def get_note_service(db: Session = Depends(get_db)):
     return NoteService(db)
 
-# @router.get("/tags/", response_model=TagResponse)
-# async def get_tags(
-#     name: str, 
-#     parent_tag_id: Optional[UUID] = None,
-#     note_service: NoteService = Depends(get_note_service)
-# ):
-#     """Create a new tag"""
-#     return note_service.create_tag(name=name, parent_tag_id=parent_tag_id)
+@router.get("/tags/", response_model=List[TagResponse])
+async def get_tags(
+    note_service: NoteService = Depends(get_note_service)
+):
+    """Create a new tag"""
+    return note_service.get_tags(parent_tag_id=None)
+@router.get("/tags/{parent_tag_id}/children", response_model=List[TagResponse])
+async def get_child_tags(
+    parent_tag_id: UUID,
+    note_service: NoteService = Depends(get_note_service)
+):
+    """Get child tags for a specific parent tag"""
+    return note_service.get_tags(parent_tag_id=parent_tag_id)
 @router.post("/tags/", response_model=TagResponse)
 async def create_tag(
     name: str, 

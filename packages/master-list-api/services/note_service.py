@@ -111,6 +111,31 @@ class NoteService:
             parent_id=tag.parent_id,
             created_at=tag.created_at
         )
+    def get_tags(self, parent_tag_id: Optional[UUID] = None) -> Optional[List[TagResponse]]:
+        """
+        Create a new tag with the specified name and optional parent.
+        
+        Args:
+            name: Name for the tag
+            parent_tag_id: Optional UUID of parent tag
+            
+        Returns:
+            TagResponse for the created tag
+        """
+        tags = self.db.query(Tag).filter(Tag.parent_id == parent_tag_id)
+
+        tag_responses = []
+        for tag in tags:
+            tag_responses.append(
+                TagResponse(
+                    id=tag.id,
+                    name=tag.name,
+                    parent_id=tag.parent_id,
+                    created_at=tag.created_at
+                )
+            )
+        
+        return tag_responses
 
     def get_note_group_by_tag_id(self, tag_id: UUID) -> Optional[NoteGroupResponse]:
         """
