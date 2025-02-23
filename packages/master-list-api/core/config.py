@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
+    TENANT_ID: Optional[str] = None
+    AUDIENCE: Optional[str] = None
     
     @property
     def DATABASE_URL(self) -> str:

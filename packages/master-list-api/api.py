@@ -15,7 +15,7 @@ logger = logging.getLogger("plots.api")
 # from .models import NoteDB, NoteCreate, NoteResponse
 # from .database import get_db, engine
 
-from routes import (notes_routes) #, tags_routes
+from routes import (notes_routes, account_routes) #, tags_routes
 
 # Create PostgreSQL tables
 # NoteDB.metadata.create_all(bind=engine)
@@ -32,6 +32,7 @@ app.add_middleware(
 )
 
 app.include_router(notes_routes.router)
+app.include_router(account_routes.router)
 
 if __name__ == "__main__":
     logger.info("Starting FastAPI server")
