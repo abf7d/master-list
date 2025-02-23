@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     POSTGRES_PORT: str = "5432"
     TENANT_ID: Optional[str] = None
     AUDIENCE: Optional[str] = None
+    JWKS_URL: Optional[str] = None
+    AZURE_AD_CLIENT_ID: Optional[str] = None
+    AZURE_AD_CLIENT_SECRET: Optional[str] = None
     
     @property
     def DATABASE_URL(self) -> str:

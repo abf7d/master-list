@@ -47,21 +47,21 @@ logger = logging.getLogger("plots.auth")
 #     )
 
 
-def get_user_info(token: str) -> Dict[str, Any]:
-    """Obtains the data for a user from the 'me' endpoint given a Bearer token.
+# def get_user_info(token: str) -> Dict[str, Any]:
+#     """Obtains the data for a user from the 'me' endpoint given a Bearer token.
 
-    Args:
-        token: Bearer token from Authorization Header
-    """
-    auth_url = settings.auth_url
-    headers = {"Authorization": "Bearer " + token}
-    body_data = {"json": True}
-    userData = requests.post(
-        auth_url,
-        data=body_data,
-        headers=headers,
-    ).json()
-    return userData
+#     Args:
+#         token: Bearer token from Authorization Header
+#     """
+#     auth_url = settings.auth_url
+#     headers = {"Authorization": "Bearer " + token}
+#     body_data = {"json": True}
+#     userData = requests.post(
+#         auth_url,
+#         data=body_data,
+#         headers=headers,
+#     ).json()
+#     return userData
 
 
 def get_token_auth_header(request: Request) -> str:
@@ -95,6 +95,12 @@ def normalize_text(text: str) -> str:
         str.maketrans(string.punctuation, "_" * len(string.punctuation))
     )
 
+def get_user_info(decoded_payload: Dict[str, Any]) -> Dict[str, Any]:
+    email = decoded_payload.get("emails", None)
+    if email is None:
+        raise HTTPException(status_code=401, detail="Claims not found.")
+    return email[0]
+
 
 def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
     """Authenticate header information with jwt.
@@ -117,7 +123,7 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
         audience = settings.AUDIENCE
         print('tenant_id', tenant_id)
         print('audience', audience)
-        return await func(*args, **kwargs)
+        # return await func(*args, **kwargs)
         request: Request = kwargs["request"]
 
         # if SETTINGS.OFFLINE_USER is not None:
@@ -128,7 +134,7 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
         # if IS_OFFLINE:
         #     return await func(*args, **kwargs)
 
-        user_id = request.session.get("user_id", None)
+        # user_id = request.session.get("user_id", None)
         # if user_id is not None:
         #     request.state.user_id = user_id
         #     return await func(*args, **kwargs)
@@ -136,18 +142,22 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
         logging.debug(f"Calling {func.__name__} with auth.")
         token = get_token_auth_header(request)
 
-        
-        jwks_url = f"https://login.microsoftonline.com/{tenant_id}/discovery/v2.0/keys"
+        jwks_url = settings.JWKS_URL
+        # jwks_url = f"https://criticalplayground.b2clogin.com/criticalplayground.onmicrosoft.com/b2c_1_defaultsigninsignup2/discovery/v2.0/keys" #f"https://login.microsoftonline.com/{tenant_id}/discovery/v2.0/keys"
         # issuer_url = f"https://login.microsoftonline.com/{tenant_id}/v2.0"
         # issuer_url = f"https://{tenant_name}.b2clogin.com/{tenant_name}.onmicrosoft.com/{user_flow}/v2.0"
         # issuer_url = f"https://criticalplayground.b2clogin.com/287da62e-94fc-4504-b36e-f59ea81ca115/v2.0/"
-        issuer_url = f"https://criticalplayground.b2clogin.com/criticalplayground.onmicrosoft.com/b2c_1_defaultsigninsignup2/v2.0"
+        # issuer_url = f"https://criticalplayground.b2clogin.com/criticalplayground.onmicrosoft.com/b2c_1_defaultsigninsignup2/v2.0"
+        issuer_url = f"https://criticalplayground.b2clogin.com/{tenant_id}/v2.0/"
         jwks_client = PyJWKClient(
             jwks_url,
         )
         signing_key = jwks_client.get_signing_key_from_jwt(token)
+        print(signing_key)
         try:
-            jwt.decode(
+            # Decode without verifying signature to inspect claims
+           
+            decoded_payload = jwt.decode(
                 token,
                 signing_key.key,
                 verify=True,
@@ -155,23 +165,65 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
                 audience=audience,
                 issuer=issuer_url,
             )
+
         except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=401, detail="token is expired")
-        except jwt.JWTClaimsError:
+            # Add logging
+            print('ExpiredSignatureError')
             raise HTTPException(
                 status_code=401,
-                detail="incorrect claims, please check the audience and issuer",
+                detail="Expired signature. Please obtain a new token.",
             )
-        except Exception:
+        except jwt.DecodeError as ex:
+            # Add logging
+            print('DecodeError')
+            raise HTTPException(
+                status_code=401, detail="Unable to decode authentication token."
+            )
+        except Exception as ex:
+            # Add logging
+            print('General Exception', ex)
             raise HTTPException(
                 status_code=401, detail="Unable to parse authentication token."
             )
         
-        print("Token is valid")
-        print('token', token)
-        user_data = "tempuser"
-        request.state.user_id = user_data #normalize_text(email)
+        # print('decoded_payload', decoded_payload)
+        user_email = get_user_info(decoded_payload)
+        user_id = decoded_payload.get("oid", None)
+        # print('user_id', user_id)
+        # user_data = "tempuser"
+        request.state.email = user_email
+        request.state.user_id = user_id #normalize_text(email)
         return await func(*args, **kwargs)
+    
+
+
+
+
+
+
+
+# public string GetAccountId(ClaimsIdentity userIdentity)
+# 		{
+# 			var accountIdClaim = userIdentity.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier");
+# 			if (accountIdClaim == null)
+# 			{
+# 				throw new ArgumentException("The user identity does not contain a valid account ID claim.");
+# 			}
+# 			return accountIdClaim.Value;
+# 		}
+
+
+
+
+
+
+
+
+
+
+
+
+
         # # request.session["user_id"] = request.state.user_id
         # if SETTINGS.OFFLINE_USER is None:
         #         user_data = get_user(request)
