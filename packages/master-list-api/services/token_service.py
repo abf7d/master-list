@@ -4,23 +4,23 @@ import uuid
 import jwt
 from dataclasses import dataclass
 from typing import Optional
+from core.config import settings
+from services.graph_service import Claim
+import logging
+from pydantic import BaseModel
+
+""" Initialize the logger """
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("routers.bins")
 
 @dataclass
 class JwtResponse:
-    token: str
-    expires_at: int
-
-@dataclass
-class JwtSettings:
-    issuer: str
-    audience: str
-
+    Token: str
+    ExpiresAt: int
 class TokenService:
-    def __init__(self, settings: JwtSettings):
-        self._settings = settings
 
 # identity: dict,
-    def get_token(self, username: str, exp: Any, groups: List[dict]) -> Optional[JwtResponse]:
+    def get_token(self, username: str, exp: Any, groups: List[Claim], decoded_token: dict) -> JwtResponse:
         """
         Create an unsigned JWT token with claims.
         
@@ -40,30 +40,47 @@ class TokenService:
 
             # Get current time
             now = datetime.utcnow()
+
+            isAdmin = False
+            isAuthorized = False
+            for group in groups:
+                if group.value == 'Site Admin':
+                    isAdmin = True
+                if group.value == 'Authorized User':
+                    isAuthorized = True
+
+            # Get role
+            role = 'guest'
+            if isAdmin:
+                role = 'admin'
+            elif isAuthorized:
+                role = 'user'
             
             # Create basic claims
             guid = str(uuid.uuid4())
             iat = int(now.timestamp())
-            
+            iss = decoded_token.get("iss", None)
+            aud = decoded_token.get("aud", None)
+            exp = decoded_token.get("exp", None)
+
             # Get expiration from identity
-            exp_claim = exp #identity.get(EXP)
-            if exp_claim is None:
-                raise ValueError(f"Missing required claim: {ROL}")
+            # exp_claim = exp #identity.get(EXP)
+            if exp is None:
+                raise ValueError(f"Missing required claim: exp")
 
             # Create claims list
             claims = {
                 "sub": username,
                 "jti": guid,
                 "iat": iat,
-                "exp": int(exp_claim),
-                # "iss": self._settings.issuer,
-                # "aud": self._settings.audience,
+                "exp": int(exp),
+                "iss": iss,
+                "aud": aud,
                 "nbf": int(now.timestamp()),
+                "rol": role,
+                "group": [group.value for group in groups],
             }
 
-            # Add group claims
-            for group in groups:
-                claims.update(group)
 
             # Create header with "none" algorithm
             headers = {
@@ -81,9 +98,9 @@ class TokenService:
 
             return JwtResponse(
                 Token=token,
-                ExpiresAt=int(exp_claim)
+                ExpiresAt=int(exp)
             )
 
         except Exception as ex:
-            print(f"Error creating token: {str(ex)}", file=sys.stderr)
+            logger.exception(f"Error creating token: {str(ex)}")
             return None

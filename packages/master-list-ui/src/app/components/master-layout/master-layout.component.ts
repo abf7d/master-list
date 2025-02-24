@@ -10,6 +10,7 @@ import {
 import { ParagraphNote, Paragraph } from '../../types/note'
 import { MetaTagService } from '../meta-tags/meta-tag.service';
 import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
+import { NotesApiService } from '../../services/notes-api.service';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
 
@@ -36,6 +37,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   selectedParagraphIds: string[] = [];
   selectedTab = 'tags';
 
+  constructor(private notesApi: NotesApiService) {}
 
   applyInlineStyle(style: string): void {
     const selection = window.getSelection();
@@ -710,6 +712,11 @@ export class MasterLayoutComponent implements AfterViewInit {
     if (event.target instanceof HTMLElement) {
       event.target.textContent = '';
     }
+  }
+  getTags(): void {
+    this.notesApi.getNoteElements('temp').subscribe((elements) => {
+      console.log(elements);
+    });
   }
 }
 

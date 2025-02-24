@@ -195,7 +195,7 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
         request.state.email = user_email
         request.state.user_id = user_id #normalize_text(email)
         request.state.exp = exp
-        request.state.user_identity = decoded_payload
+        request.state.decoded_token = decoded_payload
         return await func(*args, **kwargs)
     
 

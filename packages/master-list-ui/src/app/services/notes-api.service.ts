@@ -1,14 +1,20 @@
 import { Injectable } from "@angular/core";
 import { NoteElement } from "../types/note";
+import { HttpClient } from "@angular/common/http";
+import { environment } from "@master-list/environments";
+import urlJoin from "url-join";
+import { Observable } from "rxjs";
 
 @Injectable({
     providedIn: 'root',
 })
 export class NotesApiService {
+    constructor(private http: HttpClient) {}
     // API calls for notes
-    async getNoteElements(noteId: string): Promise<NoteElement[]> {
+    getNoteElements(noteId: string): Observable<NoteElement[]> {
         // Call the API to get elements for a note
-        return [];
+        return this.http.get<NoteElement[]>(urlJoin(environment.masterListApi, `/tags`));
+      
     }
     
     async updateNoteElements(noteId: string, elements: NoteElement[]): Promise<void> {

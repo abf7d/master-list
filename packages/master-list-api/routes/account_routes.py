@@ -3,7 +3,7 @@ from services.note_service import NoteService
 from core.database import get_db
 from db_init.schemas import TagResponse, NoteGroupResponse
 from core.auth import authenticate
-from services.token_service import TokenService
+from services.token_service import JwtResponse, TokenService
 
 from sqlalchemy.orm import Session
 from typing import List
@@ -11,6 +11,7 @@ from fastapi import Request
 from services.graph_service import GraphService
 from core.account_mapper import AccountMapper
 import logging
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/account")
 
@@ -31,8 +32,10 @@ def get_token_service():
 def get_account_mapper():
     return AccountMapper()
 
+class TokenResponse(BaseModel):
+    Result: JwtResponse
 
-@router.get("/get-token/", response_model=List[TagResponse])
+@router.get("/get-token/", response_model=TokenResponse)
 @authenticate
 async def get_tags(
     request: Request,
@@ -48,18 +51,17 @@ async def get_tags(
     print('CLAIMS!!!!!!!!! ', claims)
     
     # need to test this and user_identity might not be the correct format and I might need to change the code
-    account = account_mapper.map_claims_to_account(claims, request.state.user_identity) #(request.state.user_id)
+    account = account_mapper.map_claims_to_account(claims, request.state.decoded_token) #(request.state.user_id)
     print('ACCOUNT!!!!!!!!! ', account)
 
     #need to test this
-    token = token_service.get_token(request.state.user_id, request.state.exp, claims)
-    result = {
-        "Result": token,
-    }
+    token = token_service.get_token(request.state.user_id, request.state.exp, claims, request.state.decoded_token)
+    result: TokenResponse = TokenResponse(Result=token)
+    
     print('RESULT!!!!!!!!! ', result)
 
 
-    note_service.get_tags(parent_tag_id=None)
+    # note_service.get_tags(parent_tag_id=None)
     return result
 
 
