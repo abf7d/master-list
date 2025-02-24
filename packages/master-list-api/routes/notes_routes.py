@@ -3,7 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
-
+from fastapi import Request
 
 from fastapi import APIRouter, Depends, HTTPException
 from services.note_service import NoteService
@@ -27,10 +27,13 @@ def get_note_service(db: Session = Depends(get_db)):
     return NoteService(db)
 
 @router.get("/tags/", response_model=List[TagResponse])
+@authenticate
 async def get_tags(
-    note_service: NoteService = Depends(get_note_service)
+    request: Request,
+    note_service: NoteService = Depends(get_note_service),
 ):
     """Create a new tag"""
+    print('USERID!!!!!!!!! ', request.state.user_id)
     return note_service.get_tags(parent_tag_id=None)
 @router.get("/tags/{parent_tag_id}/children", response_model=List[TagResponse])
 async def get_child_tags(
