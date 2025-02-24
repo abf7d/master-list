@@ -189,10 +189,13 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
         # print('decoded_payload', decoded_payload)
         user_email = get_user_info(decoded_payload)
         user_id = decoded_payload.get("oid", None)
+        exp =  exp_claim = decoded_payload.get("ext", None)
         # print('user_id', user_id)
         # user_data = "tempuser"
         request.state.email = user_email
         request.state.user_id = user_id #normalize_text(email)
+        request.state.exp = exp
+        request.state.user_identity = decoded_payload
         return await func(*args, **kwargs)
     
 
