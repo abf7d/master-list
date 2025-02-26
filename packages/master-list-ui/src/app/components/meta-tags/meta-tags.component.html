@@ -4,7 +4,6 @@
     <app-tag-group
         *ngIf="isResourceView"
         title="Lists"
-        description="High level subjects."
         [allowAdd]="allowAdd"
         [tags]="tagGroups.tags"
         (selectTag)="selectGroup($event)"
@@ -13,7 +12,7 @@
     ></app-tag-group>
     <!-- [hideAssignLinks]="true" -->
 </div>
-<div class="group" *ngIf="project !== undefined">
+<!-- <div class="group" *ngIf="project !== undefined">
     <app-tag-group
         *ngIf="!!activeGroup"
         description="Categorize your note elements"
@@ -27,4 +26,4 @@
         (removeTag)="removeTag($event)"
         (addTag)="addTag($event)"
     ></app-tag-group>
-</div>
+</div> -->

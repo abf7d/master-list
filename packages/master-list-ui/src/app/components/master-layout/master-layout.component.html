@@ -24,10 +24,10 @@
       <button (click)="changeLevel(1)" title="Increase indent">→</button>
       <button (click)="changeLevel(-1)" title="Decrease indent">←</button>
     </div>
-    <div class="list-group filters">
+    <!-- <div class="list-group filters">
       <button>Critical Pass x</button>
       <button>Monte Carlo x</button>
-    </div>
+    </div> -->
     <button (click)="getTags()">Get Tags</button>
     <button (click)="deleteParagraph()" class="delete-btn">
       Delete Paragraph
@@ -67,16 +67,14 @@
  
 
     <div class="action-panel">
-      <div class="tabs">
-        <!-- <div>
-            <a href="javascript::void(0)">View Master List</a>
-        </div> -->
+      <!-- <div class="tabs">
+       
         
         <div
           [ngClass]="{ selected: selectedTab === 'explore' }"
           (click)="selectedTab = 'explore'"
         >
-          <!-- <span>Filter List</span> -->
+          
           <span>Explore Lists</span>
         </div>
         <div
@@ -86,14 +84,14 @@
           <span>Tag Items</span>
         </div>
         <div>
-            <!-- <span>Filter List</span> -->
+            
             <span>AI / ML</span>
           </div>
           <div>
-            <!-- <span>Filter List</span> -->
+           
             <span>Visualizations</span>
           </div>
-      </div>
+      </div> -->
       <div class="areas">
         <div [hidden]="selectedTab !== 'tags'">
           <app-meta-tags></app-meta-tags>
