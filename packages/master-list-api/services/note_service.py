@@ -4,8 +4,8 @@ import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
-from models.models import Tag, Note, NoteTag
-from db_init.schemas import CreateNoteGroup, NoteGroupResponse, TagResponse, NoteResponse
+from db_init.schemas import Tag, Note, NoteTag
+from models.models import CreateNoteGroup, NoteGroupResponse, TagResponse, NoteResponse
 
 
 class NoteService:

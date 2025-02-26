@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models.models import Base, Tag, Note, NoteTag  # Use absolute import
+from schemas import Base, Tag, Note, NoteTag  # Use absolute import
 
 # Only import the SQLAlchemy models, not the Pydantic models
 # If you need settings, import only what you need

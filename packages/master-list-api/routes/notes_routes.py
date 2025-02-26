@@ -8,7 +8,7 @@ from fastapi import Request
 from fastapi import APIRouter, Depends, HTTPException
 from services.note_service import NoteService
 from core.database import get_db
-from db_init.schemas import TagResponse, NoteGroupResponse
+from models.models import TagResponse, NoteGroupResponse
 from core.auth import authenticate
 
 from sqlalchemy.orm import Session
