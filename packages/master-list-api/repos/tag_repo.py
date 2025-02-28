@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID
 from typing import List, Optional, Dict
 from sqlalchemy.ext.declarative import declarative_base
-from ..models import Tag
-from ..models import TagResponse
+from db_init.schemas import Tag
+from db_init.schemas import TagResponse
 
 Base = declarative_base()
 class TagRepository:

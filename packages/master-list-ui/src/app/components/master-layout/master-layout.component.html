@@ -1,70 +1,102 @@
-<h1>Master List</h1>
-<p>This is a simple text editor with basic formatting options.</p>
+<!-- <h1>Master List</h1>
+<p>This is a simple text editor with basic formatting options.</p> -->
 <div class="editor-container">
-  <div class="toolbar">
-    <div class="text-style-group">
-      <button (click)="applyInlineStyle('bold')" title="Bold">B</button>
-      <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
-      <button (click)="applyInlineStyle('large')" title="Large Text">T</button>
-      <button [disabled]="!selectedParagraphId" (click)="showNoteEditor = true">
-        Add Note
-      </button>
-    </div>
-    <div class="style-group">
-      <button (click)="applyStyle('fontSize', '24px')">Large</button>
-      <button (click)="applyStyle('fontSize', '16px')">Normal</button>
-      <button (click)="applyStyle('fontWeight', 'bold')">Bold</button>
-      <button (click)="applyStyle('color', '#ff0000')">Red</button>
-      <button (click)="applyStyle('textAlign', 'left')">Left</button>
-      <button (click)="applyStyle('textAlign', 'center')">Center</button>
-    </div>
-    <div class="list-group">
-      <button (click)="toggleParagraphType('bullet')">Toggle Bullet</button>
-      <button (click)="toggleParagraphType('number')">Toggle Number</button>
-      <button (click)="changeLevel(1)" title="Increase indent">→</button>
-      <button (click)="changeLevel(-1)" title="Decrease indent">←</button>
-    </div>
-    <!-- <div class="list-group filters">
-      <button>Critical Pass x</button>
-      <button>Monte Carlo x</button>
-    </div> -->
-    <button (click)="getTags()">Get Tags</button>
-    <button (click)="deleteParagraph()" class="delete-btn">
-      Delete Paragraph
-    </button>
-  </div>
+  
 
   <div class="content-area">
+    <div class="nav-lists"></div>
+    <div class="note-list-area">
+      <div class="toolbar">
+        <div class="text-style-group">
+          <button (click)="applyInlineStyle('bold')" title="Bold">B</button>
+          <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
+          <button (click)="applyInlineStyle('large')" title="Large Text">T</button>
+          <button [disabled]="!selectedParagraphId" (click)="showNoteEditor = true">
+            Add Note
+          </button>
+        </div>
+        <!-- <div class="style-group">
+          <button (click)="applyStyle('fontSize', '24px')">Large</button>
+          <button (click)="applyStyle('fontSize', '16px')">Normal</button>
+          <button (click)="applyStyle('fontWeight', 'bold')">Bold</button>
+          <button (click)="applyStyle('color', '#ff0000')">Red</button>
+          <button (click)="applyStyle('textAlign', 'left')">Left</button>
+          <button (click)="applyStyle('textAlign', 'center')">Center</button>
+        </div> -->
+        <div class="list-group">
+          <button (click)="toggleParagraphType('bullet')">Toggle Bullet</button>
+          <button (click)="toggleParagraphType('number')">Toggle Number</button>
+          <button (click)="changeLevel(1)" title="Increase indent">→</button>
+          <button (click)="changeLevel(-1)" title="Decrease indent">←</button>
+        </div>
+        <!-- <div class="list-group filters">
+          <button>Critical Pass x</button>
+          <button>Monte Carlo x</button>
+        </div> -->
+        <select name="" id="">
+          <option value="">
+            Select To Highlight
+          </option>
+          <option value="">
+            All
+          </option>
+          <option value="">
+            Critical Pass
+          </option>
+          <option value="">Work</option>
+          <option value="">Group 3</option>
+          <option></option>
+        </select>
+        <button (click)="getTags()">Get Tags</button>
+        
+        
+      </div>
+      <div>
+      
+        <div class="bullet outside-bullet">
+          <div class="bullet">
+            <div class="bullet">bullet 1</div>
+          </div>
+        </div>
+        <div class="bullet outside-bullet white">
+          <div class="bullet ">
+            <div class="bullet">bullet 2</div>
+          </div>
+        </div>
+    </div>
+      <div class="note-editor-pannel">
+        <div class="paragraph-markers">
+          <div
+            *ngFor="let paragraph of paragraphs; let i = index"
+            class="marker"
+            [class.selected]="paragraph.id === selectedParagraphId"
+            [style.paddingLeft.px]="paragraph.level * 20"
+            (click)="selectParagraph(paragraph.id)"
     
-    <div class="paragraph-markers">
-      <div
-        *ngFor="let paragraph of paragraphs; let i = index"
-        class="marker"
-        [class.selected]="paragraph.id === selectedParagraphId"
-        [style.paddingLeft.px]="paragraph.level * 20"
-        (click)="selectParagraph(paragraph.id)"
-
-      >
-      <!-- [style.gridRow]="i + 1"
-      [style.gridColumn]="1" -->
-        <span *ngIf="paragraph.type === 'bullet'">•</span>
-        <span *ngIf="paragraph.type === 'number'"
-          >{{ getNumberForParagraph(paragraph, i) }}.</span
-        >
-        <span *ngIf="paragraph.type === 'none'" class="empty-marker">¶</span>
+          >
+          <!-- [style.gridRow]="i + 1"
+          [style.gridColumn]="1" -->
+            <span *ngIf="paragraph.type === 'bullet'">•</span>
+            <span *ngIf="paragraph.type === 'number'"
+              >{{ getNumberForParagraph(paragraph, i) }}.</span
+            >
+            <span *ngIf="paragraph.type === 'none'" class="empty-marker">¶</span>
+          </div>
+        </div>
+    
+        <div
+          #editor
+          class="editor"
+          contenteditable="true"
+          (paste)="handlePaste($event)"
+          (input)="onInput($event)"
+          (keydown)="onKeyDown($event)"
+          (click)="onEditorClick($event)"
+        ></div>
+     
       </div>
     </div>
-
-    <div
-      #editor
-      class="editor"
-      contenteditable="true"
-      (paste)="handlePaste($event)"
-      (input)="onInput($event)"
-      (keydown)="onKeyDown($event)"
-      (click)="onEditorClick($event)"
-    ></div>
- 
+   
 
     <div class="action-panel">
       <!-- <div class="tabs">
