@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
-import { TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TagButton, TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { TagManagerService } from '../../services/tag-manager.service';
 import { Project } from '../../types/projtect';
@@ -13,6 +13,10 @@ import { TagGroupComponent } from '../tag-group/tag-group.component';
   styleUrl: './meta-tags.component.scss',
 })
 export class MetaTagsComponent {
+  @Output() assignTag = new EventEmitter<string>();
+  @Output() unAssignTag = new EventEmitter<string>();
+  @Input() tags: TagButton[] = [];
+
   @Input() allowAdd = true;
   public tagGroups: TagSelectionGroup;
   public availableGroups: TagSelectionGroup[] = [];
@@ -137,6 +141,7 @@ export class MetaTagsComponent {
       this.project.profile.view.selectedTagGroup = name;
     }
     // this.dashboard.updateProject(this.project, true);
+    this.assignTag.emit(name);
   }
   public removeGroup(tag: TagSelection) {
     this.tagGroups.tags.splice(this.tagGroups.tags.indexOf(tag), 1);
@@ -149,6 +154,7 @@ export class MetaTagsComponent {
       this.availableGroups.splice(groupIndex, 1);
     }
     // this.dashboard.updateProject(this.project, true);
+    this.unAssignTag.emit(tag.name);
   }
   public addGroup(name: any) {
     const newTag = this.creatNewTag(name, this.tagGroups.tags.length, 0);

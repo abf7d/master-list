@@ -232,11 +232,14 @@ app-note-editor {
   // position: fixed;
   width: 400px;
   left: 0px;
+  position: sticky;
+  top: 0px;
 }
 
 .note-editor-pannel {
   display: flex;
   flex: 1;
+  min-height: calc(100vh - 163px);
   // position: relative;
 }
 //   .content-area {
@@ -355,6 +358,9 @@ app-note-editor {
   background-color: #f39c12; /* Orange */
   left: -7px;
 }
+.editor-row > .bullet::before, .editor-row > .bullet > .bullet::before, .editor-row > .bullet > .bullet > .bullet::before, .editor-row > .bullet > .bullet > .bullet > .bullet::before  {
+  background-color: white;
+} 
 
 /* Content div styling */
 .content-div {
@@ -364,15 +370,17 @@ app-note-editor {
   padding-left: 0px;
   /* Add line height to ensure consistent text spacing */
   line-height: 1.5;
-  padding-right: 50px;
+  // padding-right: 50px;
+  // width: calc(100% - 80px);
+  width: calc(100vw - 1063px);
 }
 
 /* Selected row styling */
-.editor-row.selected > div > div > div {
+.editor-row.selected .content-div{
   background-color: rgb(244, 242, 185);
 }
 
-.grouped  div > div > div {
+.grouped  .content-div{
   background-color: rgb(244, 242, 185);
 }
 
