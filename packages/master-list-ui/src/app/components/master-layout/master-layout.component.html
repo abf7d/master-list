@@ -11,9 +11,9 @@
           <button (click)="applyInlineStyle('bold')" title="Bold">B</button>
           <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
           <button (click)="applyInlineStyle('large')" title="Large Text">T</button>
-          <button [disabled]="!selectedParagraphId" (click)="showNoteEditor = true">
+          <!-- <button [disabled]="!selectedParagraphId" (click)="showNoteEditor = true">
             Add Note
-          </button>
+          </button> -->
         </div>
         <!-- <div class="style-group">
           <button (click)="applyStyle('fontSize', '24px')">Large</button>
@@ -23,12 +23,12 @@
           <button (click)="applyStyle('textAlign', 'left')">Left</button>
           <button (click)="applyStyle('textAlign', 'center')">Center</button>
         </div> -->
-        <div class="list-group">
+        <!-- <div class="list-group">
           <button (click)="toggleParagraphType('bullet')">Toggle Bullet</button>
           <button (click)="toggleParagraphType('number')">Toggle Number</button>
           <button (click)="changeLevel(1)" title="Increase indent">→</button>
           <button (click)="changeLevel(-1)" title="Decrease indent">←</button>
-        </div>
+        </div> -->
         <!-- <div class="list-group filters">
           <button>Critical Pass x</button>
           <button>Monte Carlo x</button>
@@ -51,7 +51,7 @@
         
         
       </div>
-      <div>
+      <!-- <div>
       
         <div class="bullet outside-bullet">
           <div class="bullet">
@@ -63,9 +63,9 @@
             <div class="bullet">bullet 2</div>
           </div>
         </div>
-    </div>
+    </div> -->
       <div class="note-editor-pannel">
-        <div class="paragraph-markers">
+        <!-- <div class="paragraph-markers">
           <div
             *ngFor="let paragraph of paragraphs; let i = index"
             class="marker"
@@ -74,15 +74,14 @@
             (click)="selectParagraph(paragraph.id)"
     
           >
-          <!-- [style.gridRow]="i + 1"
-          [style.gridColumn]="1" -->
+        
             <span *ngIf="paragraph.type === 'bullet'">•</span>
             <span *ngIf="paragraph.type === 'number'"
               >{{ getNumberForParagraph(paragraph, i) }}.</span
             >
             <span *ngIf="paragraph.type === 'none'" class="empty-marker">¶</span>
           </div>
-        </div>
+        </div> -->
     
         <div
           #editor

@@ -188,9 +188,9 @@ app-note-editor {
   position: fixed;
   right: 300px;
 }
-.grouped {
-  background-color: rgb(244, 242, 185);
-}
+// .grouped {
+//   background-color: rgb(244, 242, 185);
+// }
 
 .action-panel .tabs {
   padding: 9px;
@@ -275,10 +275,7 @@ app-note-editor {
 
 .bullet::before {
   content: "";
- 
-  // display: block;
-
-  top:0px;
+   top:0px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -300,3 +297,136 @@ app-note-editor {
     left: 15px;
     top: 0;
 }
+
+
+
+
+
+
+
+
+
+
+.editor-row {
+  position: relative;
+  margin: 0.75em 0;
+  min-height: 24px;
+  display: flex;
+}
+
+.bullet {
+  position: relative;
+  min-height: 1.5em;
+}
+
+/* Base bullet styling - aligned to top line */
+.bullet::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  left: -20px;
+  /* Position at top with a slight offset to align with text */
+  top: 6px; /* Fixed position from top instead of relative to text height */
+  transform: none; /* Remove vertical centering transform */
+}
+
+/* First level bullet (outermost) */
+.editor-row > .bullet::before {
+  background-color: #3498db; /* Blue */
+  left: -7px;
+}
+
+/* Second level bullet */
+.editor-row > .bullet > .bullet::before {
+  background-color: #e74c3c; /* Red */
+  left: -7px;
+}
+
+/* Third level bullet */
+.editor-row > .bullet > .bullet > .bullet::before {
+  background-color: #2ecc71; /* Green */
+  left: -7px;
+}
+
+/* Fourth level bullet (content div) */
+.editor-row > .bullet > .bullet > .bullet > .bullet::before {
+  background-color: #f39c12; /* Orange */
+  left: -7px;
+}
+
+/* Content div styling */
+.content-div {
+  outline: none;
+  min-width: 200px;
+  flex-grow: 1;
+  padding-left: 0px;
+  /* Add line height to ensure consistent text spacing */
+  line-height: 1.5;
+  padding-right: 50px;
+}
+
+/* Selected row styling */
+.editor-row.selected > div > div > div {
+  background-color: rgb(244, 242, 185);
+}
+
+.grouped  div > div > div {
+  background-color: rgb(244, 242, 185);
+}
+
+// .editor-row.grouped {
+//   background-color: rgba(46, 204, 113, 0.1);
+// }
+
+
+// .editor-row {
+//   position: relative;
+//   margin: 0.75em 0;
+//   min-height: 24px;
+// }
+
+// .bullet {
+//   position: relative;
+//   // padding-left: 15px;
+// }
+
+// .bullet::before {
+//   content: "";
+//   position: absolute;
+//   width: 10px;
+//   height: 10px;
+//   border-radius: 50%;
+//   background-color: #3498db;
+//   left: 0;
+//   top: 50%;
+//   transform: translateY(-50%);
+// }
+
+// /* Color for each bullet level */
+// .bullet:nth-child(1)::before {
+//   background-color: #3498db; /* Blue */
+// }
+
+// .bullet:nth-of-type(2)::before {
+//   background-color: #e74c3c; /* Red */
+// }
+
+// .bullet:nth-of-type(3)::before {
+//   background-color: #2ecc71; /* Green */
+// }
+
+// .bullet:nth-of-type(4)::before {
+//   background-color: #f39c12; /* Orange */
+// }
+
+// .content-div {
+//   min-height: 1em;
+//   outline: none;
+//   padding-left: 5px;
+// }
+
+// .content-div::before {
+//   // display: none; /* Hide bullet on the content div */
+// }
