@@ -7,10 +7,11 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { ParagraphNote, Paragraph } from '../../types/note'
+import { ParagraphNote, Paragraph } from '../../types/note';
 import { MetaTagService } from '../meta-tags/meta-tag.service';
 import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';
+import { TagCssGenerator } from '../../services/tag-css-generator';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
 
@@ -18,15 +19,14 @@ import { NotesApiService } from '../../services/notes-api.service';
   selector: 'app-master-layout',
   imports: [
     CommonModule,
-    MetaTagsComponent
+    MetaTagsComponent,
     // NoteEditorComponent,
     // NotesPanelComponent
   ],
   templateUrl: './master-layout.component.html',
   styleUrl: './master-layout.component.scss',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
-
 
 // BREAKPOINT 2!!!!
 export class MasterLayoutComponent implements AfterViewInit {
@@ -37,31 +37,61 @@ export class MasterLayoutComponent implements AfterViewInit {
   selectedParagraphIds: string[] = [];
   selectedTab = 'tags';
 
-  affectedRows: any[] = [];
-  constructor(private notesApi: NotesApiService) {}
+  affectedRows: Paragraph[] = [];
+  constructor(
+    private notesApi: NotesApiService,
+    private tagColorService: TagCssGenerator
+  ) {}
+
+  assignTagToRows(tagName: string) {
+    this.applyInlineStyle('');
+    const map = new Map<string, Paragraph>(
+      this.paragraphs.map((x) => [x.id, x])
+    );
+    if (this.affectedRows.length > 0) {
+      this.affectedRows.forEach((r) => {
+        r.tags = Array.from(new Set([tagName, ...r.tags]));
+        const p = map.get(r.id);
+        if (p) {
+          p.tags = Array.from(new Set([tagName, ...r.tags]));
+        }
+      });
+    } else if (this.selectedParagraphIds) {
+      this.selectedParagraphIds.forEach(x => {
+        const item = map.get(x);
+        if (item) {
+          item.tags = Array.from(new Set([tagName, ...item.tags]));
+        }
+      })
+    }
+    this.renderParagraphs();
+  }
 
   applyInlineStyle(style: string): void {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-  
+
     const range = selection.getRangeAt(0);
-  
+
     // Get start and end nodes
     let startNode = range.startContainer;
     let endNode = range.endContainer;
-  
+
     // Find the containing content divs and editor rows
     let startContentDiv = this.findParentWithClass(startNode, 'content-div');
     let endContentDiv = this.findParentWithClass(endNode, 'content-div');
-    
+
     if (!startContentDiv || !endContentDiv) return;
-    
+
     // Find the editor rows that contain these content divs
-    let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
+    let startEditorRow = this.findParentWithClass(
+      startContentDiv,
+      'editor-row'
+    );
     let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
-    
+
     if (!startEditorRow || !endEditorRow) return;
-  
+
     // Create the style span
     const span = document.createElement('span');
     switch (style) {
@@ -75,7 +105,7 @@ export class MasterLayoutComponent implements AfterViewInit {
         span.style.fontSize = '1.2em';
         break;
     }
-  
+
     // Handle single editor row case
     if (startEditorRow === endEditorRow) {
       const content = range.extractContents();
@@ -85,26 +115,29 @@ export class MasterLayoutComponent implements AfterViewInit {
     // Handle multiple editor rows
     else {
       // Get all affected editor rows
-      const affectedRows = this.getElementsBetween(startEditorRow, endEditorRow);
-  
+      const affectedRows = this.getElementsBetween(
+        startEditorRow,
+        endEditorRow
+      );
+
       affectedRows.forEach((row, index) => {
         // Find the content div within this row
         const contentDiv = row.querySelector('.content-div');
         if (!contentDiv) return;
-        
+
         const contentRange = document.createRange();
         contentRange.selectNodeContents(contentDiv);
-  
+
         // For first row, start from selection start
         if (index === 0) {
           contentRange.setStart(range.startContainer, range.startOffset);
         }
-  
+
         // For last row, end at selection end
         if (index === affectedRows.length - 1) {
           contentRange.setEnd(range.endContainer, range.endOffset);
         }
-  
+
         // Apply styling to the range
         const clonedSpan = span.cloneNode() as HTMLElement;
         const content = contentRange.extractContents();
@@ -113,10 +146,10 @@ export class MasterLayoutComponent implements AfterViewInit {
       });
       this.setAffectedElements(affectedRows);
     }
-    
+
     // Update our data model
     this.updateParagraphContent();
-  
+
     // Restore selection
     selection.removeAllRanges();
     selection.addRange(range);
@@ -126,22 +159,25 @@ export class MasterLayoutComponent implements AfterViewInit {
   // to aggregate selected paragraphs. Either use affectedRows or then selectedParagraphs (background yellow)
   // to associate tag then add class name to bullet points for color and dynamically set color with css variables
   private setAffectedElements(affectedRows: any[]) {
-    const ids = new Map<string, boolean>(affectedRows.map(x => [x.id, true]));
-    this.affectedRows = this.paragraphs.filter(x => {
+    const ids = new Map<string, boolean>(affectedRows.map((x) => [x.id, true]));
+    this.affectedRows = this.paragraphs.filter((x) => {
       return ids.get(x.id);
-    })
+    });
     console.log(this.affectedRows);
   }
-  
+
   // Helper method to find parent element with a specific class
-  private findParentWithClass(node: Node, className: string): HTMLElement | null {
+  private findParentWithClass(
+    node: Node,
+    className: string
+  ): HTMLElement | null {
     let current = node;
-    
+
     // If it's a text node, start with its parent
     if (current.nodeType === Node.TEXT_NODE) {
       current = current.parentElement!;
     }
-    
+
     // Traverse up the DOM tree looking for an element with the specified class
     while (current && current instanceof HTMLElement) {
       if (current.classList.contains(className)) {
@@ -149,10 +185,10 @@ export class MasterLayoutComponent implements AfterViewInit {
       }
       current = current.parentElement!;
     }
-    
+
     return null;
   }
-  
+
   // Helper method to get all editor rows between two elements
   private getElementsBetween(
     startElement: HTMLElement,
@@ -160,17 +196,18 @@ export class MasterLayoutComponent implements AfterViewInit {
   ): HTMLElement[] {
     const elements: HTMLElement[] = [];
     let currentElement: HTMLElement | null = startElement;
-  
+
     while (currentElement) {
       elements.push(currentElement);
-  
+
       if (currentElement === endElement) break;
-  
+
       // Get next editor row
       currentElement = currentElement.nextElementSibling as HTMLElement;
-      if (!currentElement || !currentElement.classList.contains('editor-row')) break;
+      if (!currentElement || !currentElement.classList.contains('editor-row'))
+        break;
     }
-  
+
     return elements;
   }
 
@@ -275,28 +312,30 @@ export class MasterLayoutComponent implements AfterViewInit {
   // }
 
   // Update the updateParagraphContent method to work with the new structure
-private updateParagraphContent(): void {
-  const rowElements = this.editorRef.nativeElement.querySelectorAll('.editor-row');
+  private updateParagraphContent(): void {
+    const rowElements =
+      this.editorRef.nativeElement.querySelectorAll('.editor-row');
 
-  this.paragraphs = Array.from(rowElements).map((row: any) => {
-    const contentDiv = row.querySelector('.content-div');
-    const existingParagraph = this.paragraphs.find(
-      (para) => para.id === row.id
-    );
-    
-    return {
-      id: row.id,
-      content: contentDiv.innerHTML,
-      styles: existingParagraph?.styles || {
-        fontSize: '16px',
-        textAlign: 'left',
-      },
-      type: existingParagraph?.type || 'none',
-      level: existingParagraph?.level || 0,
-      notes: existingParagraph?.notes || []
-    };
-  });
-}
+    this.paragraphs = Array.from(rowElements).map((row: any) => {
+      const contentDiv = row.querySelector('.content-div');
+      const existingParagraph = this.paragraphs.find(
+        (para) => para.id === row.id
+      );
+
+      return {
+        id: row.id,
+        content: contentDiv.innerHTML,
+        styles: existingParagraph?.styles || {
+          fontSize: '16px',
+          textAlign: 'left',
+        },
+        type: existingParagraph?.type || 'none',
+        level: existingParagraph?.level || 0,
+        notes: existingParagraph?.notes || [],
+        tags: existingParagraph?.tags || [],
+      };
+    });
+  }
   // private updateParagraphContent(): void {
   //   const paragraphElements =
   //     this.editorRef.nativeElement.getElementsByTagName('p');
@@ -318,7 +357,6 @@ private updateParagraphContent(): void {
   //     };
   //   });
   // }
-
 
   ngAfterViewInit() {
     if (!this.paragraphs.length) {
@@ -351,9 +389,10 @@ private updateParagraphContent(): void {
       },
       type: 'none',
       level: level,
-      notes: []
+      notes: [],
+      tags: [],
     };
-  
+
     this.paragraphs.push(paragraph);
     this.renderParagraphs();
   }
@@ -375,57 +414,196 @@ private updateParagraphContent(): void {
   //   this.renderParagraphs();
   // }
 
-  
-// Modify the renderParagraphs method to use nested divs instead of paragraphs
-private renderParagraphs(): void {
-  const editor = this.editorRef.nativeElement;
-  editor.innerHTML = '';
+  // Modified renderParagraphs Function with Tag-based Bullet Colors
 
-  // Define bullet styles - you can customize these colors
-  const bulletColors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12'];
+  private renderParagraphs(): void {
+    const allTags = this.paragraphs.reduce((tags: string[], paragraph) => {
+      if (paragraph.tags && Array.isArray(paragraph.tags)) {
+        return [...tags, ...paragraph.tags];
+      }
+      return tags;
+    }, []);
 
-  this.paragraphs.forEach((paragraph, i: number) => {
-    // Create the outermost div (replaces the p element)
-    const outerDiv = document.createElement('div');
-    outerDiv.className = 'editor-row';
-    outerDiv.id = paragraph.id;
-    
-    // Create nested structure with 4 levels of divs for bullets
-    const level3 = document.createElement('div');
-    level3.className = 'bullet';
-    
-    const level2 = document.createElement('div');
-    level2.className = 'bullet';
-    level3.appendChild(level2);
-    
-    const level1 = document.createElement('div');
-    level1.className = 'bullet';
-    level2.appendChild(level1);
-    
-    // This is the innermost div that will contain the actual content
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'bullet content-div';
-    contentDiv.setAttribute('contenteditable', 'true');
-    contentDiv.innerHTML = paragraph.content;
-    level1.appendChild(contentDiv);
-    
-    // Apply styles from paragraph to the content div
-    Object.assign(contentDiv.style, paragraph.styles);
-    
-    // Handle indentation
-    outerDiv.style.paddingLeft = `${paragraph.level * 40}px`;
-    
-    // Add the nested structure to the editor
-    outerDiv.appendChild(level3);
-    editor.appendChild(outerDiv);
-    
-    // Mark this row with its type if it's a list item
-    if (paragraph.type === 'number' || paragraph.type === 'bullet') {
-      outerDiv.setAttribute('data-list-type', paragraph.type);
-    }
-  });
-}
-  
+    // Call the service to ensure we have styles for all tags
+    this.tagColorService.ensureTagStyles(allTags);
+
+    const editor = this.editorRef.nativeElement;
+    editor.innerHTML = '';
+
+    this.paragraphs.forEach((paragraph, i: number) => {
+      // Create the outermost div (replaces the p element)
+      const outerDiv = document.createElement('div');
+      outerDiv.className = 'editor-row';
+      outerDiv.id = paragraph.id;
+
+      // Create nested structure with 4 levels of divs for bullets
+      const level3 = document.createElement('div');
+      level3.className = 'bullet';
+
+      const level2 = document.createElement('div');
+      level2.className = 'bullet';
+      level3.appendChild(level2);
+
+      const level1 = document.createElement('div');
+      level1.className = 'bullet';
+      level2.appendChild(level1);
+
+      // This is the innermost div that will contain the actual content
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'bullet content-div';
+      contentDiv.setAttribute('contenteditable', 'true');
+      contentDiv.innerHTML = paragraph.content;
+      level1.appendChild(contentDiv);
+
+      // Apply styles from paragraph to the content div
+      Object.assign(contentDiv.style, paragraph.styles);
+
+      // Handle indentation
+      outerDiv.style.paddingLeft = `${paragraph.level * 40}px`;
+
+      // Apply tag-based classes to bullets
+      this.applyTagClassesToBullets(paragraph.tags || [], [
+        contentDiv,
+        level1,
+        level2,
+        level3,
+      ]); ////[level3, level2, level1, contentDiv]);
+
+      // Add the nested structure to the editor
+      outerDiv.appendChild(level3);
+      editor.appendChild(outerDiv);
+
+      // Mark this row with its type if it's a list item
+      if (paragraph.type === 'number' || paragraph.type === 'bullet') {
+        outerDiv.setAttribute('data-list-type', paragraph.type);
+      }
+    });
+  }
+
+  /**
+   * Applies CSS classes to bullet elements based on the paragraph's tags
+   * @param tags Array of tag strings from the paragraph
+   * @param bulletElements Array of the 4 nested bullet div elements
+   */
+  private applyTagClassesToBullets(
+    tags: string[],
+    bulletElements: HTMLElement[]
+  ): void {
+    // We'll handle up to 4 tags, one for each bullet level
+    const maxBullets = 4;
+
+    // Take only the first 4 tags (if there are more)
+    const tagsToUse = tags.slice(0, maxBullets);
+
+    // Apply CSS classes to the corresponding bullet elements
+    bulletElements.forEach((element, index) => {
+      // First, remove any existing tag classes to avoid conflicts
+      element.classList.forEach((className) => {
+        if (className.startsWith('tag-')) {
+          element.classList.remove(className);
+        }
+      });
+
+      // If we have a tag for this bullet level, apply a class based on the tag
+      if (index < tagsToUse.length) {
+        const tag = tagsToUse[index];
+        // Use the service to generate the sanitized class name
+        const tagClass = `tag-${this.tagColorService.sanitizeTagForCssClass(
+          tag
+        )}`;
+        element.classList.add(tagClass);
+      } else {
+        // If we don't have a tag for this bullet level, apply a default white color class
+        element.classList.add('tag-default');
+      }
+    });
+  }
+  // private applyTagClassesToBullets(tags: string[], bulletElements: HTMLElement[]): void {
+  //   // We'll handle up to 4 tags, one for each bullet level
+  //   const maxBullets = 4;
+
+  //   // Take only the first 4 tags (if there are more)
+  //   const tagsToUse = tags.slice(0, maxBullets);
+
+  //   // Apply CSS classes to the corresponding bullet elements
+  //   bulletElements.forEach((element, index) => {
+  //     // If we have a tag for this bullet level, apply a class based on the tag
+  //     if (index < tagsToUse.length) {
+  //       const tag = tagsToUse[index];
+  //       // Add a class that combines 'tag-' prefix with the sanitized tag name
+  //       // This will allow CSS to target and color this specific tag
+  //       const tagClass = `tag-${this.tagColorService.sanitizeTagForCssClass(tag)}`;;
+  //       element.classList.add(tagClass);
+  //     } else {
+  //       // If we don't have a tag for this bullet level, apply a default white color class
+  //       element.classList.add('tag-default');
+  //     }
+  //   });
+  // }
+
+  // /**
+  //  * Sanitizes a tag string to be used as part of a CSS class name
+  //  * @param tag The original tag string
+  //  * @returns A sanitized string suitable for use in a CSS class name
+  //  */
+  // private sanitizeTagForCssClass(tag: string): string {
+  //   // Remove special characters, convert to lowercase, replace spaces with hyphens
+  //   return tag
+  //     .toLowerCase()
+  //     .replace(/[^a-z0-9]/g, '-')
+  //     .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+  //     .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+  // }
+  // // Modify the renderParagraphs method to use nested divs instead of paragraphs
+  // private renderParagraphs(): void {
+  //   const editor = this.editorRef.nativeElement;
+  //   editor.innerHTML = '';
+
+  //   // Define bullet styles - you can customize these colors
+  //   const bulletColors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12'];
+
+  //   this.paragraphs.forEach((paragraph, i: number) => {
+  //     // Create the outermost div (replaces the p element)
+  //     const outerDiv = document.createElement('div');
+  //     outerDiv.className = 'editor-row';
+  //     outerDiv.id = paragraph.id;
+
+  //     // Create nested structure with 4 levels of divs for bullets
+  //     const level3 = document.createElement('div');
+  //     level3.className = 'bullet';
+
+  //     const level2 = document.createElement('div');
+  //     level2.className = 'bullet';
+  //     level3.appendChild(level2);
+
+  //     const level1 = document.createElement('div');
+  //     level1.className = 'bullet';
+  //     level2.appendChild(level1);
+
+  //     // This is the innermost div that will contain the actual content
+  //     const contentDiv = document.createElement('div');
+  //     contentDiv.className = 'bullet content-div';
+  //     contentDiv.setAttribute('contenteditable', 'true');
+  //     contentDiv.innerHTML = paragraph.content;
+  //     level1.appendChild(contentDiv);
+
+  //     // Apply styles from paragraph to the content div
+  //     Object.assign(contentDiv.style, paragraph.styles);
+
+  //     // Handle indentation
+  //     outerDiv.style.paddingLeft = `${paragraph.level * 40}px`;
+
+  //     // Add the nested structure to the editor
+  //     outerDiv.appendChild(level3);
+  //     editor.appendChild(outerDiv);
+
+  //     // Mark this row with its type if it's a list item
+  //     if (paragraph.type === 'number' || paragraph.type === 'bullet') {
+  //       outerDiv.setAttribute('data-list-type', paragraph.type);
+  //     }
+  //   });
+  // }
+
   // // Modify the renderParagraphs method to handle numbered lists properly
   // private renderParagraphs(): void {
   //   const editor = this.editorRef.nativeElement;
@@ -439,7 +617,7 @@ private renderParagraphs(): void {
   //     p.innerHTML = paragraph.content;
   //     p.id = paragraph.id;
 
-  //     // const styles = { ...paragraph.styles, gridRow: i + 1, gridColumn: 2 }; 
+  //     // const styles = { ...paragraph.styles, gridRow: i + 1, gridColumn: 2 };
   //     // Object.assign(p.style, styles);
 
   //     Object.assign(p.style, paragraph.styles);
@@ -462,7 +640,6 @@ private renderParagraphs(): void {
   //   });
   // }
 
-  
   ctrlDown = false;
   @HostListener('keydown.meta', ['$event'])
   onMeta(event: KeyboardEvent): void {
@@ -481,10 +658,9 @@ private renderParagraphs(): void {
     this.ctrlDown = false;
   }
 
-
   onInput(event: Event): void {
     const editor = this.editorRef.nativeElement;
-  
+
     // Handle direct text nodes
     const childNodes = Array.from(editor.childNodes);
     childNodes.forEach((node: any) => {
@@ -493,29 +669,29 @@ private renderParagraphs(): void {
         const outerDiv = document.createElement('div');
         outerDiv.className = 'editor-row';
         outerDiv.id = crypto.randomUUID();
-        
+
         const level3 = document.createElement('div');
         level3.className = 'bullet';
-        
+
         const level2 = document.createElement('div');
         level2.className = 'bullet';
         level3.appendChild(level2);
-        
+
         const level1 = document.createElement('div');
         level1.className = 'bullet';
         level2.appendChild(level1);
-        
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'bullet content-div';
         contentDiv.setAttribute('contenteditable', 'true');
         contentDiv.textContent = node.textContent;
         level1.appendChild(contentDiv);
-        
+
         // Remove the text node and add our structure
         node.parentNode?.removeChild(node);
         outerDiv.appendChild(level3);
         editor.insertBefore(outerDiv, editor.firstChild);
-  
+
         // Add to our data model
         this.paragraphs.unshift({
           id: outerDiv.id,
@@ -527,11 +703,12 @@ private renderParagraphs(): void {
           },
           type: 'none',
           level: 0,
-          notes: []
+          notes: [],
+          tags: [],
         });
       }
     });
-  
+
     this.updateParagraphContent();
   }
   // onInput(event: Event): void {
@@ -565,90 +742,92 @@ private renderParagraphs(): void {
   //   this.updateParagraphContent();
   // }
 
-
   @HostListener('keydown', ['$event'])
-onKeyDown(event: KeyboardEvent): void {
-  if (event.key === 'Enter') {
-    event.preventDefault();
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
 
-    const selection = window.getSelection();
-    if (!selection) return;
+      const selection = window.getSelection();
+      if (!selection) return;
 
-    const range = selection.getRangeAt(0);
-    let currentNode = range.commonAncestorContainer;
+      const range = selection.getRangeAt(0);
+      let currentNode = range.commonAncestorContainer;
 
-    // Find the containing editor row
-    let editorRow = null;
-    let node = currentNode;
-    while (node && !editorRow) {
-      if (node.nodeType === Node.ELEMENT_NODE && 
-          (node as HTMLElement).classList.contains('editor-row')) {
-        editorRow = node;
-        break;
+      // Find the containing editor row
+      let editorRow = null;
+      let node = currentNode;
+      while (node && !editorRow) {
+        if (
+          node.nodeType === Node.ELEMENT_NODE &&
+          (node as HTMLElement).classList.contains('editor-row')
+        ) {
+          editorRow = node;
+          break;
+        }
+        node = node.parentNode!;
       }
-      node = node.parentNode!;
-    }
 
-    if (!editorRow) return;
-    const currentParagraph = editorRow as HTMLElement;
+      if (!editorRow) return;
+      const currentParagraph = editorRow as HTMLElement;
 
-    const currentIndex = this.paragraphs.findIndex(
-      (p) => p.id === currentParagraph.id
-    );
-    if (currentIndex === -1) return;
+      const currentIndex = this.paragraphs.findIndex(
+        (p) => p.id === currentParagraph.id
+      );
+      if (currentIndex === -1) return;
 
-    // Get content from the content div
-    const contentDiv = currentParagraph.querySelector('.content-div');
-    const currentContent = contentDiv ? contentDiv.innerHTML : '';
-    
-    // Check if we're at the end of an empty paragraph
-    const isEmptyParagraph =
-      currentContent.trim() === '' || currentContent === '<br>';
+      // Get content from the content div
+      const contentDiv = currentParagraph.querySelector('.content-div');
+      const currentContent = contentDiv ? contentDiv.innerHTML : '';
 
-    // If it's an empty list item, convert it to a regular paragraph
-    if (isEmptyParagraph && this.paragraphs[currentIndex].type !== 'none') {
-      this.paragraphs[currentIndex].type = 'none';
-      this.paragraphs[currentIndex].level = 0;
+      // Check if we're at the end of an empty paragraph
+      const isEmptyParagraph =
+        currentContent.trim() === '' || currentContent === '<br>';
+
+      // If it's an empty list item, convert it to a regular paragraph
+      if (isEmptyParagraph && this.paragraphs[currentIndex].type !== 'none') {
+        this.paragraphs[currentIndex].type = 'none';
+        this.paragraphs[currentIndex].level = 0;
+        this.renderParagraphs();
+        return;
+      }
+
+      // Create new paragraph with same properties
+      const newParagraph: Paragraph = {
+        id: crypto.randomUUID(),
+        content: '<br>', // Start with empty content
+        styles: { ...this.paragraphs[currentIndex].styles },
+        type: this.paragraphs[currentIndex].type, // Maintain the list type
+        level: this.paragraphs[currentIndex].level, // Maintain the indentation level
+        notes: this.paragraphs[currentIndex].notes,
+        tags: this.paragraphs[currentIndex].tags,
+      };
+
+      // Insert new paragraph
+      this.paragraphs.splice(currentIndex + 1, 0, newParagraph);
       this.renderParagraphs();
-      return;
-    }
 
-    // Create new paragraph with same properties
-    const newParagraph: Paragraph = {
-      id: crypto.randomUUID(),
-      content: '<br>', // Start with empty content
-      styles: { ...this.paragraphs[currentIndex].styles },
-      type: this.paragraphs[currentIndex].type, // Maintain the list type
-      level: this.paragraphs[currentIndex].level, // Maintain the indentation level
-      notes: this.paragraphs[currentIndex].notes
-    };
+      this.selectedParagraphId = newParagraph.id;
 
-    // Insert new paragraph
-    this.paragraphs.splice(currentIndex + 1, 0, newParagraph);
-    this.renderParagraphs();
+      // Set cursor position to new paragraph's content div
+      setTimeout(() => {
+        const newElement = document.getElementById(newParagraph.id);
+        if (newElement) {
+          const contentDiv = newElement.querySelector('.content-div');
+          if (contentDiv) {
+            const range = document.createRange();
+            range.setStart(contentDiv, 0);
+            range.collapse(true);
 
-    this.selectedParagraphId = newParagraph.id;
-    
-    // Set cursor position to new paragraph's content div
-    setTimeout(() => {
-      const newElement = document.getElementById(newParagraph.id);
-      if (newElement) {
-        const contentDiv = newElement.querySelector('.content-div');
-        if (contentDiv) {
-          const range = document.createRange();
-          range.setStart(contentDiv, 0);
-          range.collapse(true);
-
-          const selection = window.getSelection();
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(range);
+            const selection = window.getSelection();
+            if (selection) {
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
           }
         }
-      }
-    }, 0);
+      }, 0);
+    }
   }
-}
   // @HostListener('keydown', ['$event'])
   // onKeyDown(event: KeyboardEvent): void {
   //   if (event.key === 'Enter') {
@@ -707,7 +886,6 @@ onKeyDown(event: KeyboardEvent): void {
   //     this.renderParagraphs();
 
   //     this.selectedParagraphId = newParagraph.id;
-      
 
   //     // Set cursor position to new paragraph
   //     setTimeout(() => {
@@ -727,7 +905,6 @@ onKeyDown(event: KeyboardEvent): void {
   //   }
   // }
 
-
   // onEditorClick(event: MouseEvent): void {
   //   const target = event.target as HTMLElement;
   //   if (target.tagName === 'P') {
@@ -738,7 +915,7 @@ onKeyDown(event: KeyboardEvent): void {
   onEditorClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     let editorRow = target.closest('.editor-row');
-    
+
     if (editorRow) {
       this.selectParagraph(editorRow.id);
     }
@@ -754,22 +931,21 @@ onKeyDown(event: KeyboardEvent): void {
       } else {
         this.selectedParagraphIds?.push(id);
       }
-    }
-    else {
+    } else {
       this.selectedParagraphIds = [id];
     }
-  
+
     this.editorRef.nativeElement
       .querySelectorAll('.editor-row')
       .forEach((row: HTMLElement) => {
         row.classList.remove('selected');
       });
-  
+
     const selectedElement = document.getElementById(id);
     if (selectedElement) {
       selectedElement.classList.add('selected');
     }
-    
+
     if (this.selectedParagraphIds.length > 0) {
       this.paragraphs.forEach((p) => {
         const rowEl = document.getElementById(p.id);
@@ -814,7 +990,7 @@ onKeyDown(event: KeyboardEvent): void {
   //     this.paragraphs.forEach((p) => {
   //       const pEl = document.getElementById(p.id);
   //       if (this.selectedParagraphIds?.includes(p.id)) {
-         
+
   //         if (pEl) {
   //           pEl.classList.add('grouped');
   //         }
@@ -828,29 +1004,27 @@ onKeyDown(event: KeyboardEvent): void {
   //   }
   // }
 
- 
-
-
   showNoteEditor = false;
   editingNote: ParagraphNote | null = null;
 
   handlePaste(event: ClipboardEvent) {
     // Prevent default paste behavior
     event.preventDefault();
-    
+
     // Get the pasted text content
     const pastedText = event.clipboardData?.getData('text') || '';
-    
+
     // Split the text by newline characters
     // This handles different types of line breaks (\n, \r\n, \r)
-    const lines = pastedText.split(/\r?\n/)
-      .filter(line => line.trim().length > 0); // Remove empty lines
+    const lines = pastedText
+      .split(/\r?\n/)
+      .filter((line) => line.trim().length > 0); // Remove empty lines
 
-
-      
     let currentIndex = this.paragraphs.length - 1;
     if (this.selectedParagraphId) {
-      currentIndex = this.paragraphs.findIndex(p => p.id === this.selectedParagraphId);
+      currentIndex = this.paragraphs.findIndex(
+        (p) => p.id === this.selectedParagraphId
+      );
     }
     // Create new notes for each line
     lines.forEach((line, i) => {
@@ -860,12 +1034,12 @@ onKeyDown(event: KeyboardEvent): void {
         styles: { ...this.paragraphs[currentIndex + i].styles },
         type: this.paragraphs[currentIndex + i].type, // Maintain the list type
         level: this.paragraphs[currentIndex + i].level, // Maintain the indentation level
-        notes: this.paragraphs[currentIndex + i].notes
+        notes: this.paragraphs[currentIndex + i].notes,
+        tags: this.paragraphs[currentIndex + i].tags,
       };
 
       // Insert new paragraph
       this.paragraphs.splice(currentIndex + i, 0, newParagraph);
-      
     });
     this.renderParagraphs();
     // Clear the paste area

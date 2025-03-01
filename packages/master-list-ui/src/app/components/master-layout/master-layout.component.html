@@ -125,10 +125,10 @@
       </div> -->
       <div class="areas">
         <div [hidden]="selectedTab !== 'tags'">
-          <app-meta-tags></app-meta-tags>
+          <app-meta-tags (assignTag)="assignTagToRows($event)"></app-meta-tags>
         </div>
         <div [hidden]="selectedTab !== 'explore'">
-          <app-meta-tags [allowAdd]="false"></app-meta-tags>
+          <app-meta-tags [allowAdd]="false" (assignTag)="assignTagToRows($event)"></app-meta-tags>
         </div>
       </div>
     </div>

@@ -19,6 +19,7 @@ export interface Paragraph {
   };
   type: 'bullet' | 'number' | 'none';
   level: number; // Indentation level
+  tags: string[];
   notes: ParagraphNote[];
 }
 

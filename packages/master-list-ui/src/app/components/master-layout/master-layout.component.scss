@@ -337,29 +337,29 @@ app-note-editor {
 
 /* First level bullet (outermost) */
 .editor-row > .bullet::before {
-  background-color: #3498db; /* Blue */
+  // background-color: #3498db; /* Blue */
   left: -7px;
 }
 
 /* Second level bullet */
 .editor-row > .bullet > .bullet::before {
-  background-color: #e74c3c; /* Red */
+  // background-color: #e74c3c; /* Red */
   left: -7px;
 }
 
 /* Third level bullet */
 .editor-row > .bullet > .bullet > .bullet::before {
-  background-color: #2ecc71; /* Green */
+  // background-color: #2ecc71; /* Green */
   left: -7px;
 }
 
 /* Fourth level bullet (content div) */
 .editor-row > .bullet > .bullet > .bullet > .bullet::before {
-  background-color: #f39c12; /* Orange */
+  // background-color: #f39c12; /* Orange */
   left: -7px;
 }
 .editor-row > .bullet::before, .editor-row > .bullet > .bullet::before, .editor-row > .bullet > .bullet > .bullet::before, .editor-row > .bullet > .bullet > .bullet > .bullet::before  {
-  background-color: white;
+  // background-color: white;
 } 
 
 /* Content div styling */

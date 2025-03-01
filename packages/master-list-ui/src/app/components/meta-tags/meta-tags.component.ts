@@ -23,6 +23,10 @@ export class MetaTagsComponent {
   public activeGroup: TagSelectionGroup | null = null;
   public isResourceView = true;
   public project!: Project;
+  // tags are passed in to create the selecable buttons. You can create new buttons which
+  // should create new tags. These need to be shared with the top level so new tag name/color
+  // combinations can translate to new tag circles or highlight text with the tags get
+  // generated
   constructor(
     private colorFactory: ColorFactoryService,
     private metaTagService: TagManagerService
@@ -71,64 +75,64 @@ export class MetaTagsComponent {
   public ngOnDestroy(): void {
     // this.subscription?.unsubscribe();
   }
-  public assignToActivities(tags: string[]) {
-    this.metaTagService.assignTagsToSelectedActivities(
-      this.project,
-      tags,
-      this.activeGroup!
-    );
-    // this.dashboard.updateProject(this.project, true);
-  }
-  public unassignFromActivities() {
-    this.metaTagService.unassignFromActivities(
-      this.activeGroup!.name,
-      this.project
-    );
-    // this.dashboard.updateProject(this.project, true);
-  }
-  public selectTag(resource: any) {
-    const type = 'resource';
-  }
-  public removeTag(tag: TagSelection) {
-    if (
-      this.activeGroup !== null &&
-      this.project !== undefined &&
-      this.project.tags !== undefined
-    ) {
-      this.activeGroup.tags.splice(this.activeGroup.tags.indexOf(tag), 1);
-      const index = this.project.tags
-        .find((x) => x.name === this.activeGroup!.name)
-        ?.tags.indexOf(tag);
-      if (index && index > -1) {
-        this.project.tags
-          .find((x) => x.name === this.activeGroup!.name)
-          ?.tags.splice(index, 1);
-      }
-      this.metaTagService.removeTagFromActivities(
-        this.project,
-        this.activeGroup.name,
-        tag
-      );
-      // this.dashboard.updateProject(this.project, true);
-    }
-  }
-  public addTag(name: any) {
-    if (this.activeGroup !== null) {
-      const schemeIndex = this.availableGroups.indexOf(this.activeGroup) + 2;
-      const newTag = this.creatNewTag(
-        name,
-        this.activeGroup.tags.length,
-        schemeIndex
-      );
-      this.activeGroup.tags.push(newTag);
-      if (this.project.tags) {
-        this.project.tags
-          .find((x) => x.name === this.activeGroup!.name)
-          ?.tags.push(newTag);
-        // this.dashboard.updateProject(this.project, true);
-      }
-    }
-  }
+  // public assignToActivities(tags: string[]) {
+  //   this.metaTagService.assignTagsToSelectedActivities(
+  //     this.project,
+  //     tags,
+  //     this.activeGroup!
+  //   );
+  //   // this.dashboard.updateProject(this.project, true);
+  // }
+  // public unassignFromActivities() {
+  //   this.metaTagService.unassignFromActivities(
+  //     this.activeGroup!.name,
+  //     this.project
+  //   );
+  //   // this.dashboard.updateProject(this.project, true);
+  // }
+  // public selectTag(resource: any) {
+  //   const type = 'resource';
+  // }
+  // public removeTag(tag: TagSelection) {
+  //   if (
+  //     this.activeGroup !== null &&
+  //     this.project !== undefined &&
+  //     this.project.tags !== undefined
+  //   ) {
+  //     this.activeGroup.tags.splice(this.activeGroup.tags.indexOf(tag), 1);
+  //     const index = this.project.tags
+  //       .find((x) => x.name === this.activeGroup!.name)
+  //       ?.tags.indexOf(tag);
+  //     if (index && index > -1) {
+  //       this.project.tags
+  //         .find((x) => x.name === this.activeGroup!.name)
+  //         ?.tags.splice(index, 1);
+  //     }
+  //     this.metaTagService.removeTagFromActivities(
+  //       this.project,
+  //       this.activeGroup.name,
+  //       tag
+  //     );
+  //     // this.dashboard.updateProject(this.project, true);
+  //   }
+  // }
+  // public addTag(name: any) {
+  //   if (this.activeGroup !== null) {
+  //     const schemeIndex = this.availableGroups.indexOf(this.activeGroup) + 2;
+  //     const newTag = this.creatNewTag(
+  //       name,
+  //       this.activeGroup.tags.length,
+  //       schemeIndex
+  //     );
+  //     this.activeGroup.tags.push(newTag);
+  //     if (this.project.tags) {
+  //       this.project.tags
+  //         .find((x) => x.name === this.activeGroup!.name)
+  //         ?.tags.push(newTag);
+  //       // this.dashboard.updateProject(this.project, true);
+  //     }
+  //   }
+  // }
   public selectGroup(name: any) {
     if (this.project.profile.view.selectedTagGroup === name) {
       this.project.profile.view.selectedTagGroup = null;
@@ -141,7 +145,13 @@ export class MetaTagsComponent {
       this.project.profile.view.selectedTagGroup = name;
     }
     // this.dashboard.updateProject(this.project, true);
-    this.assignTag.emit(name);
+    // this.assignTag.emit(name);
+  }
+  public unassignGroup(name: string) {
+    this.unAssignTag.emit(name);
+  }
+  public assignGroup(name: string[]){
+    this.assignTag.emit(name[0]);
   }
   public removeGroup(tag: TagSelection) {
     this.tagGroups.tags.splice(this.tagGroups.tags.indexOf(tag), 1);
@@ -154,7 +164,7 @@ export class MetaTagsComponent {
       this.availableGroups.splice(groupIndex, 1);
     }
     // this.dashboard.updateProject(this.project, true);
-    this.unAssignTag.emit(tag.name);
+   
   }
   public addGroup(name: any) {
     const newTag = this.creatNewTag(name, this.tagGroups.tags.length, 0);
