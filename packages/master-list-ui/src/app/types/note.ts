@@ -16,8 +16,10 @@ export interface Paragraph {
     color?: string;
     textAlign?: string;
     minHeight?: string;
+    fontFamily?: string;
+    whiteSpace?: string;
   };
-  type: 'bullet' | 'number' | 'none';
+  type: 'bullet' | 'number' | 'none' | 'code';
   level: number; // Indentation level
   tags: string[];
   notes: ParagraphNote[];

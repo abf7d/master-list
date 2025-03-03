@@ -11,6 +11,7 @@
           <button (click)="applyInlineStyle('bold')" title="Bold">B</button>
           <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
           <button (click)="applyInlineStyle('large')" title="Large Text">T</button>
+          <button (click)="applyInlineStyle('strike')" title="Large Text">S</button>
           <!-- <button [disabled]="!selectedParagraphId" (click)="showNoteEditor = true">
             Add Note
           </button> -->
@@ -124,12 +125,15 @@
           </div>
       </div> -->
       <div class="areas">
-        <div [hidden]="selectedTab !== 'tags'">
-          <app-meta-tags (assignTag)="assignTagToRows($event)"></app-meta-tags>
+        <div *ngIf="(tagGroup$ | async) !== null">
+          <app-meta-tags 
+          [tagGroups]="(tagGroup$ | async) ?? {name: '', tags: []}" 
+          (assignTag)="assignTagToRows($event)"
+          (addTag)="addTag($event)"></app-meta-tags>
         </div>
-        <div [hidden]="selectedTab !== 'explore'">
+        <!-- <div [hidden]="selectedTab !== 'explore'">
           <app-meta-tags [allowAdd]="false" (assignTag)="assignTagToRows($event)"></app-meta-tags>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>

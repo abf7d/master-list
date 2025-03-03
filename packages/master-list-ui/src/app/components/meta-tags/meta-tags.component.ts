@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, input, Input, output, Output } from '@angular/core';
 import { TagButton, TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { TagManagerService } from '../../services/tag-manager.service';
 import { Project } from '../../types/projtect';
 import { CommonModule } from '@angular/common';
 import { TagGroupComponent } from '../tag-group/tag-group.component';
+import { TagCssGenerator } from '../../services/tag-css-generator';
 
 @Component({
   selector: 'app-meta-tags',
@@ -13,12 +14,18 @@ import { TagGroupComponent } from '../tag-group/tag-group.component';
   styleUrl: './meta-tags.component.scss',
 })
 export class MetaTagsComponent {
-  @Output() assignTag = new EventEmitter<string>();
-  @Output() unAssignTag = new EventEmitter<string>();
-  @Input() tags: TagButton[] = [];
+  // @Output() assignTag = new EventEmitter<string>();
+  // @Output() unAssignTag = new EventEmitter<string>();
+  // @Input() tags: TagButton[] = [];
+  readonly unAssignTag = output<string>();
+  readonly assignTag = output<string>();
+  // readonly tags = input<TagButton[]>([])
+  readonly tagGroups = input<TagSelectionGroup>({ name: 'Tag Group', tags: [] }); //({ name: 'Tag Group', tags: [] })
+  readonly addTag = output<TagSelection>();
+  readonly removeTag = output<string>();
 
   @Input() allowAdd = true;
-  public tagGroups: TagSelectionGroup;
+  // public tagGroups: TagSelectionGroup;
   public availableGroups: TagSelectionGroup[] = [];
   public activeGroup: TagSelectionGroup | null = null;
   public isResourceView = true;
@@ -29,7 +36,8 @@ export class MetaTagsComponent {
   // generated
   constructor(
     private colorFactory: ColorFactoryService,
-    private metaTagService: TagManagerService
+    private metaTagService: TagManagerService,
+    private tagNameColor: TagCssGenerator,
   ) {
     // this.id = +route.snapshot.params['id'];
     // this.project$ = this.dashboard.activeProject$;
@@ -37,7 +45,7 @@ export class MetaTagsComponent {
     // const backgroundTag = this.creatNewTag('Background', 1, 0); // low prioritiy
     // const storageTag = this.creatNewTag('Storage', 2, 0);
     // const deleteTag = this.creatNewTag('Delete', 3, 0);
-    this.tagGroups = { name: 'Tag Group', tags: [] };
+    // this.tagGroups = { name: 'Tag Group', tags: [] };
     this.availableGroups = [];
 
     this.project = {
@@ -52,9 +60,10 @@ export class MetaTagsComponent {
         },
       },
     };
-    this.addGroup('Critical Pass');
-    this.addGroup('Work')
-    this.addGroup('Misc Triage');
+    // this.addGroup('Critical Pass');
+    // this.addGroup('Work')
+    // this.addGroup('Misc Triage');
+    console.log(this.tagGroups());
     // this.addGroup('Focus');
     // this.addGroup('Background');
     // this.addGroup('Storage');
@@ -71,6 +80,7 @@ export class MetaTagsComponent {
     //     }
     //     this.project = project;
     // });
+    // this.tagNameColor.initTagColors(this.tagGroups())
   }
   public ngOnDestroy(): void {
     // this.subscription?.unsubscribe();
@@ -154,7 +164,7 @@ export class MetaTagsComponent {
     this.assignTag.emit(name[0]);
   }
   public removeGroup(tag: TagSelection) {
-    this.tagGroups.tags.splice(this.tagGroups.tags.indexOf(tag), 1);
+    this.tagGroups().tags.splice(this.tagGroups().tags.indexOf(tag), 1);
     const groupIndex = this.availableGroups.findIndex(
       (x) => x.name === tag.name
     );
@@ -163,12 +173,14 @@ export class MetaTagsComponent {
       this.metaTagService.removeTagGroupFromProject(this.project, tag);
       this.availableGroups.splice(groupIndex, 1);
     }
+    // This sends to master list to remove from map and page
+    this.removeTag.emit(tag.name)
     // this.dashboard.updateProject(this.project, true);
    
   }
   public addGroup(name: any) {
-    const newTag = this.creatNewTag(name, this.tagGroups.tags.length, 0);
-    this.tagGroups.tags.push(newTag);
+    const newTag = this.creatNewTag(name, this.tagGroups().tags.length, 0);
+    this.tagGroups().tags.push(newTag);
 
     const newSelectionGroup: TagSelectionGroup = { name, tags: [] };
     this.availableGroups.push(newSelectionGroup);
@@ -180,6 +192,12 @@ export class MetaTagsComponent {
       backgroundcolor: newTag.backgroundcolor,
     };
     this.metaTagService.addTagGroupToProject(this.project, newTagGroupOption);
+
+    // This sends to master list so the color can be added to map for page
+    const formatedTag: TagSelection = {
+      name, color: newTag.color, backgroundcolor: newTag.backgroundcolor, isSelected: false
+    }
+    this.addTag.emit(formatedTag)
     // this.dashboard.updateProject(this.project, true);
   }
   public creatNewTag(
@@ -196,4 +214,13 @@ export class MetaTagsComponent {
       isSelected: false,
     };
   }
+    // const bgColor = this.tagNameColor.addNewNameColor(name);
+    // const textColor = this.tagNameColor.getContrastTextColor(bgColor)
+    // return {
+    //   name,
+    //   color: textColor,
+    //   backgroundcolor: bgColor,
+    //   isSelected: false,
+    // };
+  // }
 }

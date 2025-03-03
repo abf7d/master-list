@@ -5,7 +5,7 @@
         *ngIf="isResourceView"
         title="Lists"
         [allowAdd]="allowAdd"
-        [tags]="tagGroups.tags"
+        [tags]="tagGroups().tags"
         (selectTag)="selectGroup($event)"
         (removeTag)="removeGroup($event)"
         (addTag)="addGroup($event)"

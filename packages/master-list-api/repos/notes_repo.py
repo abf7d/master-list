@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID
 from typing import List
-from models.models import Note, Tag
-from db_init.schemas import CreateNoteGroup, NoteGroupResponse, NoteResponse, TagResponse
+from db_init.schemas import Note, Tag
+from models.models import CreateNoteGroup, NoteGroupResponse, NoteResponse, TagResponse
 
 class NoteRepo:
     def __init__(self, db: Session):
