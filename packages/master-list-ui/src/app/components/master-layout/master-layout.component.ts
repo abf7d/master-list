@@ -21,9 +21,10 @@ import { MetaTagService } from '../meta-tags/meta-tag.service';
 import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';
 import { TagCssGenerator } from '../../services/tag-css-generator';
-import { BehaviorSubject, interval, Observable, tap } from 'rxjs';
+import { BehaviorSubject, debounceTime, interval, Observable, skip, Subject, tap } from 'rxjs';
 import { TagSelection, TagSelectionGroup } from '../../types/tag';
 import { TagApiService } from '../../services/tag-api';
+import { ToastrService } from 'ngx-toastr';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
 
@@ -80,13 +81,44 @@ export class MasterLayoutComponent implements AfterViewInit {
   selectedParagraphIds: string[] = [];
   selectedTab = 'tags';
 
+
+  private changeSubject = new Subject<void>();
+  private isDirty = false;
+  private isSaving = false;
+  public error = false;
+  private noteId!: string;
+ 
   affectedRows: Paragraph[] = [];
   constructor(
     private notesApi: NotesApiService,
     private tagApi: TagApiService,
-    private tagColorService: TagCssGenerator
+    private tagColorService: TagCssGenerator,
+    private toastr: ToastrService
   ) // private destroyRef: DestroyRef
   {
+    this.changeSubject.pipe(
+      debounceTime(2000), // 2 seconds of inactivity
+      skip(1),
+    ).subscribe(() => {
+      if (/*this.isDirty &&*/ !this.isSaving && !this.error) {
+        // this.isDirty = false;
+        
+        this.isSaving = true;
+        this.updateParagraphPositions();
+        this.notesApi.saveNote(this.paragraphs, this.noteId).subscribe({
+        next: result => {
+          if (result.message === 'success') {
+            this.isSaving = false;
+          }
+        },
+        error: result => {
+          this.error = true;
+          this.isSaving = false;
+          this.toastr.error('Note not saved', 'Error');
+        }
+      });
+    }
+    });
     // // can't change signal values inside effects
     // // ;you can call async code
     // // you can cause side effects (I think this is like rxjs tap)
@@ -116,6 +148,25 @@ export class MasterLayoutComponent implements AfterViewInit {
   ngOnInit() {
     this.tagApi.getLists().pipe(tap(x => this.tagColorService.initTagColors(x))).subscribe(x=> this.tagGroup$.next(x));
     this.tagGroup$.subscribe()
+  }
+
+  clearError() {
+    this.error = false;
+    this.changeSubject.next();
+  }
+
+  onDocumentChange(): void {
+    // Ensure positions are always up-to-date in memory
+    // This is used when clearing errors
+    // this.isDirty = true; 
+    this.changeSubject.next();
+  }
+  
+  private updateParagraphPositions(): void {
+    // Simple position update - just assign sequential numbers
+    this.paragraphs.forEach((paragraph, index) => {
+      paragraph.position = index;
+    });
   }
 
   addTag(tag: TagSelection) {
@@ -334,6 +385,8 @@ export class MasterLayoutComponent implements AfterViewInit {
         level: existingParagraph?.level || 0,
         notes: existingParagraph?.notes || [],
         tags: existingParagraph?.tags || [],
+        updatedAt: new Date(),
+        createdAt: existingParagraph?.createdAt || new Date()
       };
     });
   }
@@ -359,8 +412,12 @@ export class MasterLayoutComponent implements AfterViewInit {
   }
 
   private createNewParagraph(content: string = '', level: number = 0): void {
+    const timestamp = Date.now();
+    const randomUuid = crypto.randomUUID();
+    const id = randomUuid; //`${timestamp}-${randomUuid}`;
+
     const paragraph: Paragraph = {
-      id: crypto.randomUUID(),
+      id,
       content: content,
       styles: {
         fontSize: '16px',
@@ -371,6 +428,8 @@ export class MasterLayoutComponent implements AfterViewInit {
       level: level,
       notes: [],
       tags: [],
+      updatedAt: new Date(),
+      createdAt: new Date()
     };
 
     this.paragraphs.push(paragraph);
@@ -378,6 +437,8 @@ export class MasterLayoutComponent implements AfterViewInit {
   }
 
   private renderParagraphs(): void {
+  this.onDocumentChange();;
+
     const allTags = this.paragraphs.reduce((tags: string[], paragraph) => {
       if (paragraph.tags && Array.isArray(paragraph.tags)) {
         return [...tags, ...paragraph.tags];
@@ -545,6 +606,8 @@ export class MasterLayoutComponent implements AfterViewInit {
           level: 0,
           notes: [],
           tags: [],
+          updatedAt: new Date(),
+          createdAt: new Date()
         });
       }
     });
@@ -610,17 +673,17 @@ export class MasterLayoutComponent implements AfterViewInit {
         if (contentDiv) {
           this.paragraphs[currentIndex].content = contentDiv.innerHTML;
         }
-        
+      this.onDocumentChange();;
         return;
       }
 
       // If it's an empty list item, convert it to a regular paragraph
-      if (isEmptyParagraph && this.paragraphs[currentIndex].type !== 'none') {
-        this.paragraphs[currentIndex].type = 'none';
-        this.paragraphs[currentIndex].level = 0;
-        this.renderParagraphs();
-        return;
-      }
+      // if (isEmptyParagraph && this.paragraphs[currentIndex].type !== 'none') {
+      //   this.paragraphs[currentIndex].type = 'none';
+      //   this.paragraphs[currentIndex].level = 0;
+      //   this.renderParagraphs();
+      //   return;
+      // }
 
       // Create new paragraph with same properties
       const newParagraph: Paragraph = {
@@ -631,6 +694,8 @@ export class MasterLayoutComponent implements AfterViewInit {
         level: this.paragraphs[currentIndex].level, // Maintain the indentation level
         notes: this.paragraphs[currentIndex].notes,
         tags: this.paragraphs[currentIndex].tags,
+        updatedAt: this.paragraphs[currentIndex].updatedAt,
+        createdAt: this.paragraphs[currentIndex].createdAt
       };
 
       // Insert new paragraph
@@ -706,6 +771,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   
     // Update paragraph content in data model
     this.paragraphs[currentIndex].content = contentDiv.innerHTML;
+  this.onDocumentChange();;
   }
   /**
    * Inserts a tab character (4 spaces) at the cursor position
@@ -807,6 +873,8 @@ export class MasterLayoutComponent implements AfterViewInit {
         level: this.paragraphs[currentIndex].level,
         notes: this.paragraphs[currentIndex].notes,
         tags: [...(this.paragraphs[currentIndex].tags || [])],
+        updatedAt: this.paragraphs[currentIndex].updatedAt,
+        createdAt: this.paragraphs[currentIndex].createdAt
       };
   
       // Insert the code paragraph
@@ -827,6 +895,8 @@ export class MasterLayoutComponent implements AfterViewInit {
           level: this.paragraphs[currentIndex].level,
           notes: this.paragraphs[currentIndex].notes,
           tags: this.paragraphs[currentIndex].tags,
+          updatedAt: new Date(),
+          createdAt: new Date()
         };
   
         // Insert new paragraph

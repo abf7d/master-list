@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
-import { NoteElement } from "../types/note";
-import { HttpClient } from "@angular/common/http";
+import { NoteElement, Paragraph } from "../types/note";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "@master-list/environments";
 import urlJoin from "url-join";
 import { Observable } from "rxjs";
@@ -10,6 +10,11 @@ import { Observable } from "rxjs";
 })
 export class NotesApiService {
     constructor(private http: HttpClient) {}
+    public saveNote(paragraphs: Paragraph[], noteId: string ): Observable<NoteSaveResult> {
+        const body = JSON.stringify({noteId, paragraphs});
+        const headers = new HttpHeaders().set('Content-Type', 'application/json');
+        return this.http.post<NoteSaveResult>(urlJoin(environment.baseUrl, 'notes'),  body, { headers });
+    }
     // API calls for notes
     getNoteElements(noteId: string): Observable<NoteElement[]> {
         // Call the API to get elements for a note
@@ -28,4 +33,8 @@ export class NotesApiService {
     async deleteNoteElement(noteId: string, elementId: string): Promise<void> {
         // Call the API to delete an element
     }
+}
+export interface NoteSaveResult {
+    message:string;
+    data:any;
 }

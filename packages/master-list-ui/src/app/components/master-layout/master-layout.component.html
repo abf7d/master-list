@@ -12,9 +12,9 @@
           <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
           <button (click)="applyInlineStyle('large')" title="Large Text">T</button>
           <button (click)="applyInlineStyle('strike')" title="Large Text">S</button>
-          <!-- <button [disabled]="!selectedParagraphId" (click)="showNoteEditor = true">
-            Add Note
-          </button> -->
+          <button [disabled]="!error" (click)="clearError()">
+            Clear Error
+          </button>
         </div>
         <!-- <div class="style-group">
           <button (click)="applyStyle('fontSize', '24px')">Large</button>

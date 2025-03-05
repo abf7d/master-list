@@ -23,6 +23,9 @@ export interface Paragraph {
   level: number; // Indentation level
   tags: string[];
   notes: ParagraphNote[];
+  createdAt: Date;
+  updatedAt: Date;
+  position?: number;
 }
 
 
