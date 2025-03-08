@@ -1,0 +1,21 @@
+.note-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 25px;
+    margin: 5px;
+    border-bottom: 1px solid #ccc;
+    & > div {
+        display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    }
+    
+
+    .title {
+        font-weight: bold;
+    }
+    .timestamp {
+        margin: 20px 0px;
+    }
+}

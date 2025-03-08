@@ -4,7 +4,9 @@
   
 
   <div class="content-area">
-    <div class="nav-lists"></div>
+    <div class="nav-lists">
+      <ml-nav-list></ml-nav-list>
+    </div>
     <div class="note-list-area">
       <div class="toolbar">
         <div class="text-style-group">
@@ -130,11 +132,21 @@
           [tagGroups]="(tagGroup$ | async) ?? {name: '', tags: []}" 
           (assignTag)="assignTagToRows($event)"
           (addTag)="addTag($event)"></app-meta-tags>
+          <div class="active-list-panel">
+            <div class="active-list">
+              <ol>
+                <li>This is the first item</li>
+                <li>This is the second item</li>
+                <li>This is the third item</li>
+              </ol>
+            </div>
+          </div>
         </div>
         <!-- <div [hidden]="selectedTab !== 'explore'">
           <app-meta-tags [allowAdd]="false" (assignTag)="assignTagToRows($event)"></app-meta-tags>
         </div> -->
       </div>
+      
     </div>
   </div>
 </div>

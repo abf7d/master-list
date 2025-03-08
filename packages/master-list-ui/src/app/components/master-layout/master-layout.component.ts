@@ -26,6 +26,7 @@ import { TagSelection, TagSelectionGroup } from '../../types/tag';
 import { TagApiService } from '../../services/tag-api';
 import { ToastrService } from 'ngx-toastr';
 import { MasterLayoutService } from './master-layout.service';
+import { NavListComponent } from '../nav-list/nav-list.component';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
 
@@ -34,6 +35,7 @@ import { MasterLayoutService } from './master-layout.service';
   imports: [
     CommonModule,
     MetaTagsComponent,
+    NavListComponent
     // NoteEditorComponent,
     // NotesPanelComponent
   ],
@@ -182,7 +184,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   //   });
   // }
 
-  assignTagToRows(tagName: string) {
+  public assignTagToRows(tagName: string) {
     this.manager.assignTagToRows(tagName, this.paragraphs)
     // this.applyInlineStyle('');
     // const map = new Map<string, Paragraph>(
@@ -208,7 +210,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   }
 
   // Bold, italics, lineThrough click event
-  applyInlineStyle(style: string): void {
+  public applyInlineStyle(style: string): void {
     this.manager.applyInlineStyle(style, this.paragraphs)
   }
   //   const selection = window.getSelection();
@@ -854,7 +856,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   // }
   // showNoteEditor = false;
   // editingNote: ParagraphNote | null = null;
-  handlePaste(event: ClipboardEvent) {
+  public handlePaste(event: ClipboardEvent) {
     this.manager.handlePaste(event, this.paragraphs)
     // Prevent default paste behavior
     // event.preventDefault();

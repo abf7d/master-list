@@ -438,3 +438,17 @@ app-note-editor {
 // .content-div::before {
 //   // display: none; /* Hide bullet on the content div */
 // }
+.active-list-panel {
+  margin: 20px;
+  .active-list {
+    // position: sticky;
+    // top: calc(100vh - 425px);
+    background-color: #f4f4f4;
+    padding: 10px;
+    margin-right: 52px;
+  }
+}
+ml-nav-list {
+  position: sticky;
+  top: 0px;
+}

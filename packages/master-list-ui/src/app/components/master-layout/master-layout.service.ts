@@ -698,7 +698,7 @@ export class MasterLayoutService {
     const pastedText = event.clipboardData?.getData('text') || '';
 
     // Check if the content appears to be code
-    const isLikelyCode = this.isCodeContent(pastedText);
+    const isLikelyCode = false; //this.isCodeContent(pastedText);
 
     let currentIndex = paragraphs.length - 1;
     if (this.selectedParagraphId) {
