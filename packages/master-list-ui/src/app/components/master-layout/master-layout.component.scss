@@ -214,6 +214,9 @@ app-note-editor {
 .action-panel .areas {
   width: 544px;
 }
+.action-panel .areas.expanded {
+  width: 844px;
+}
 .filters {
   margin-left: calc(100vw - 1694px);
 }
@@ -440,15 +443,43 @@ app-note-editor {
 // }
 .active-list-panel {
   margin: 20px;
-  .active-list {
-    // position: sticky;
-    // top: calc(100vh - 425px);
-    background-color: #f4f4f4;
-    padding: 10px;
-    margin-right: 52px;
-  }
+  // .active-list {
+  //   // position: sticky;
+  //   // top: calc(100vh - 425px);
+  //   background-color: #f4f4f4;
+  //   padding: 10px;
+  //   margin-right: 52px;
+  //   // height: calc(100vh - 355px);
+  //   height: 100%;
+  // }
+  flex: 1;
 }
 ml-nav-list {
   position: sticky;
   top: 0px;
+}
+.maximize-icon {
+  padding-left: 10px;
+  font-size: .8rem;
+}
+
+.action-panel {
+  .areas{
+    height: calc(100vh - 120px);
+    display: flex;
+    .side-groups {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      .active-list {
+        // position: sticky;
+        // top: calc(100vh - 425px);
+        background-color: #f4f4f4;
+        padding: 10px;
+        margin-right: 52px;
+        // height: calc(100vh - 355px);
+        height: 100%;
+      }
+    }
+  }
 }

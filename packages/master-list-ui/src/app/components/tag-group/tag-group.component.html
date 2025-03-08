@@ -1,16 +1,32 @@
 <div class="tag-group-container">
+    @if(!isSearching) {
 <div class="actions">
-    <span class="tag-title">{{ title }}</span>
+    <span class="tag-title">{{ title }}</span> 
+    <span class="search"><i class="fa-solid fa-magnifying-glass" (click)="isSearching = true"></i></span>
     <div class="tag-description">{{ description }}</div>
     <span class="float-right assign-button" [hidden]="hideAssignLinks || !allowAdd">
         <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>
         <span class="center">|</span>
         <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
-        <!-- <span class="center">|</span>
-        <a href="javascript:void(0)" class="explore" (click)="filterTags()">View</a> -->
+        <span class="center">|</span>
+        <a href="javascript:void(0)" class="explore" (click)="filterTags()">Clear</a>
         
     </span>
 </div>
+    } @else {
+        <div class="actions">
+            <span class="tag-title">Search</span> <span class="search"><i class="fa-solid fa-times" (click)="isSearching = false"></i></span>
+            <span class="search-text"><input type="text" text=""></span>
+            <div class="float-right assign-button" [hidden]="hideAssignLinks || !allowAdd">
+                <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>
+                <span class="center">|</span>
+                <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
+                <span class="center">|</span>
+                <a href="javascript:void(0)" class="explore" (click)="filterTags()">Clear</a>
+                
+            </div>
+        </div>
+    }
 <div class="tags">
     <button
         type="button"

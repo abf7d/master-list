@@ -90,6 +90,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   private isSaving = false;
   public error = false;
   private noteId!: string;
+  public popListOut = false;
  
   affectedRows: Paragraph[] = [];
   constructor(

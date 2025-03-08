@@ -95,6 +95,16 @@
           (keydown)="onKeyDown($event)"
           (click)="onEditorClick($event)"
         ></div>
+        <!-- <div class="active-list-panel" *ngIf="popListOut">
+          <div class="active-list">
+            <div>Preview Panel <i class="maximize-icon fa-solid fa-down-left-and-up-right-to-center" (click)="popListOut = false"></i></div>
+            <ol>
+              <li>This is the first item</li>
+              <li>This is the second item</li>
+              <li>This is the third item</li>
+            </ol>
+          </div>
+        </div> -->
      
       </div>
     </div>
@@ -126,14 +136,23 @@
             <span>Visualizations</span>
           </div>
       </div> -->
-      <div class="areas">
-        <div *ngIf="(tagGroup$ | async) !== null">
+      <div class="areas" [ngClass]="{expanded: popListOut}">
+        <div *ngIf="(tagGroup$ | async) !== null" class="side-groups">
           <app-meta-tags 
+          [hidden]="popListOut"
           [tagGroups]="(tagGroup$ | async) ?? {name: '', tags: []}" 
           (assignTag)="assignTagToRows($event)"
           (addTag)="addTag($event)"></app-meta-tags>
-          <div class="active-list-panel">
+          <div class="active-list-panel" >
             <div class="active-list">
+              <div>Preview Panel 
+                <i class="maximize-icon fa-solid fa-up-right-and-down-left-from-center" 
+                  *ngIf="popListOut === false" 
+                  (click)="popListOut = true"></i>
+                <i class="maximize-icon fa-solid fa-down-left-and-up-right-to-center" 
+                  *ngIf="popListOut === true" 
+                  (click)="popListOut = false"></i>
+              </div>
               <ol>
                 <li>This is the first item</li>
                 <li>This is the second item</li>

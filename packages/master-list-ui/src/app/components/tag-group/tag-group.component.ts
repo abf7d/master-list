@@ -19,7 +19,7 @@ export class TagGroupComponent implements OnInit {
     @Input() tags: TagSelection[] = [];
     @Input() description!: string;
     @Input() allowAdd = true;
-
+    
     @Input() hideAssignLinks!: boolean;
     @Output() assignTags = new EventEmitter<string[]>();
     @Output() unassignTags = new EventEmitter<string>();
@@ -27,6 +27,7 @@ export class TagGroupComponent implements OnInit {
     @Output() removeTag = new EventEmitter<TagSelection>();
     @Output() addTag = new EventEmitter<string>();
     public newTag = '';
+    public isSearching = false;
     constructor() {}
     public assign = () => this.assignTags.emit(this.tags.filter(x => x.isSelected).map(x => x.name));
     public removeAll = () => this.unassignTags.emit();
