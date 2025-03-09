@@ -36,18 +36,18 @@
           <button>Critical Pass x</button>
           <button>Monte Carlo x</button>
         </div> -->
-        <select name="" id="">
+        <select name="" id="" (change)="setHighlight($event)">
           <option value="">
             Select To Highlight
           </option>
           <option value="">
             All
           </option>
-          <option value="">
+          <option value="Critical Pass">
             Critical Pass
           </option>
-          <option value="">Work</option>
-          <option value="">Group 3</option>
+          <option value="Work">Work</option>
+          <option value="Misc Triage">Misc Triage</option>
           <option></option>
         </select>
         <button (click)="getTags()">Get Tags</button>

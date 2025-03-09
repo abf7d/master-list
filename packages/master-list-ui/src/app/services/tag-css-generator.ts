@@ -143,14 +143,41 @@ export class TagCssGenerator {
   
       // Get the color for this tag
       const color = this.getColorForTag(tag);
+
+      const textColor = this.getContrastColor(color);
   
       // Add CSS rule for this tag targeting the ::before pseudo-element
       cssRules += `.tag-${sanitizedTag}::before { background-color: ${color}; }\n`;
+      cssRules += `.highlight-${sanitizedTag} { color: ${color}; }\n`;
+    //   cssRules += `.highlight-${sanitizedTag} { background-color: ${color}; color: ${textColor};}\n`;
     });
   
     // Set the CSS content
     styleElement.textContent = cssRules;
   }
+  private getContrastColor(hexColor: string): 'black' | 'white' {
+    // Remove '#' if included
+    if (hexColor.startsWith('#')) {
+      hexColor = hexColor.slice(1);
+    }
+  
+    // Expand shorthand hex to full form if necessary (e.g., #abc -> #aabbcc)
+    if (hexColor.length === 3) {
+      hexColor = hexColor.split('').map(char => char + char).join('');
+    }
+  
+    // Extract the RGB components
+    const r = parseInt(hexColor.substring(0, 2), 16);
+    const g = parseInt(hexColor.substring(2, 4), 16);
+    const b = parseInt(hexColor.substring(4, 6), 16);
+  
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+    // Return black or white based on luminance
+    return luminance > 0.5 ? 'black' : 'white';
+  }
+  
 //   public ensureTagStyles(tags: string[]): void {
 //     // Get or create the style element for our dynamic tag styles
 //     let styleElement = document.getElementById(

@@ -161,6 +161,11 @@ export class MasterLayoutComponent implements AfterViewInit {
     this.changeSubject.next();
   }
 
+  public setHighlight(event: Event): void {
+    const name = (event.target as any).value;
+    this.manager.setHighlightName(this.paragraphs, name); 
+
+  }
   // onDocumentChange(): void {
   //   // Ensure positions are always up-to-date in memory
   //   // This is used when clearing errors

@@ -14,6 +14,9 @@ export class MasterLayoutService {
   selectedParagraphIds: string[] = [];
   affectedRows: Paragraph[] = [];
   editorRef!: ElementRef;
+
+  selectedHighlightTag: string | null = null
+
   public ctrlDown = false;
   constructor(
     private notesApi: NotesApiService,
@@ -296,6 +299,11 @@ export class MasterLayoutService {
     this.renderParagraphs(paragraphs);
   }
 
+  public setHighlightName(paragraphs: Paragraph[], name: string) {
+    this.selectedHighlightTag = name;
+    this.renderParagraphs(paragraphs);
+  }
+
   private renderParagraphs(paragraphs: Paragraph[]): void {
     this.onDocumentChange();
 
@@ -351,6 +359,14 @@ export class MasterLayoutService {
         level3,
       ]); ////[level3, level2, level1, contentDiv]);
 
+        this.applyTagClassToContent(
+            paragraph.tags || [],
+            this.selectedHighlightTag,
+            contentDiv
+        );
+      
+        
+
       // Add the nested structure to the editor
       outerDiv.appendChild(level3);
       editor.appendChild(outerDiv);
@@ -399,6 +415,38 @@ export class MasterLayoutService {
         element.classList.add('tag-default');
       }
     });
+  }
+
+  applyTagClassToContent(
+    tags: string[],
+    selectedHighlightTag: string | null,
+    contentDiv: HTMLElement
+  ) {
+    contentDiv.classList.forEach((className) => {
+      if (className.startsWith('highlight-')) {
+        contentDiv.classList.remove(className);
+      }
+    });
+    if(selectedHighlightTag === null) {
+        return;
+    }
+    if (selectedHighlightTag === '' && tags.length > 0) {
+        const tag = tags[0];
+        const tagClass = `highlight-${this.tagColorService.sanitizeTagForCssClass(
+            tag
+          )}`;
+        contentDiv.classList.add(tagClass);
+    } else if (selectedHighlightTag)  {
+        
+      const foundTag = tags.find(x => x === selectedHighlightTag);
+      if (foundTag) {
+        const tag = foundTag;
+        const tagClass = `highlight-${this.tagColorService.sanitizeTagForCssClass(
+            tag
+          )}`;
+        contentDiv.classList.add(tagClass);
+      }
+    }
   }
 
   onInput(event: Event, paragraphs: Paragraph[]): void {
@@ -570,7 +618,6 @@ export class MasterLayoutService {
       }, 0);
     }
   }
-
 
   onTabKey(paragraphs: Paragraph[], event: KeyboardEvent): void {
     // Prevent default tab behavior (which would move focus to next element)
