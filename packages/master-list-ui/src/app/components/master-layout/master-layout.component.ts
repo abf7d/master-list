@@ -79,7 +79,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   @ViewChild('editor') editorRef!: ElementRef;
 
   tagGroup$: BehaviorSubject<TagSelectionGroup> = new BehaviorSubject<TagSelectionGroup>({ name: 'Lists', tags: []});
-  paragraphs: Paragraph[] = [];
+  paragraphs: Paragraph[] = []
   // selectedParagraphId: string | null = null;
   // selectedParagraphIds: string[] = [];
   // selectedTab = 'tags';
@@ -125,6 +125,11 @@ export class MasterLayoutComponent implements AfterViewInit {
       });
     }
     });
+
+    // HotModuleReload wasn't calling ngOnAfterInit (which adds firs paragraph) so I added below to force it
+    // Consider taking this out in the future
+    // this.manager.ngAfterViewInit(this.editorRef, this.paragraphs)
+
     // // can't change signal values inside effects
     // // ;you can call async code
     // // you can cause side effects (I think this is like rxjs tap)
@@ -151,9 +156,47 @@ export class MasterLayoutComponent implements AfterViewInit {
     // // destroyRef.onDestroy(() => sub.unsubscribe())
   }
 
+  private componentVersion = 0;
+
   ngOnInit() {
     this.tagApi.getLists().pipe(tap(x => this.tagColorService.initTagColors(x))).subscribe(x=> this.tagGroup$.next(x));
     this.tagGroup$.subscribe()
+  }
+
+  ngAfterViewInit() {
+    console.log('not called after HotModuleReload after init!!!')
+    // if (!this.paragraphs.length) {
+    //   this.manager.createNewParagraph(this.paragraphs, '');
+    //   // this.paragraphs.push(const newParagraph: Paragraph = {
+    //     //     id: crypto.randomUUID(),
+    //     //     content: '<br>', // Start with empty content
+    //     //     styles: { ...this.paragraphs[currentIndex].styles },
+    //     //     type: this.paragraphs[currentIndex].type, // Maintain the list type
+    //     //     level: this.paragraphs[currentIndex].level, // Maintain the indentation level
+    //     //     notes: this.paragraphs[currentIndex].notes,
+    //     //     tags: this.paragraphs[currentIndex].tags,
+    //     //     updatedAt: this.paragraphs[currentIndex].updatedAt,
+    //     //     createdAt: this.paragraphs[currentIndex].createdAt
+    //     //   };)
+    // }
+    this.paragraphs = this.manager.ngAfterViewInit(this.editorRef, this.paragraphs)
+    // if (!this.paragraphs.length) {
+    //   this.createNewParagraph();
+    // }
+    // this.renderParagraphs();
+
+    // // Set focus to the first paragraph
+    // const firstP = this.editorRef.nativeElement.querySelector('p');
+    // if (firstP) {
+    //   const range = document.createRange();
+    //   range.setStart(firstP, 0);
+    //   range.collapse(true);
+    //   const selection = window.getSelection();
+    //   if (selection) {
+    //     selection.removeAllRanges();
+    //     selection.addRange(range);
+    //   }
+    // }
   }
 
   clearError() {
@@ -406,26 +449,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   //   });
   // }
 
-  ngAfterViewInit() {
-    this.manager.ngAfterViewInit(this.editorRef, this.paragraphs)
-    // if (!this.paragraphs.length) {
-    //   this.createNewParagraph();
-    // }
-    // this.renderParagraphs();
 
-    // // Set focus to the first paragraph
-    // const firstP = this.editorRef.nativeElement.querySelector('p');
-    // if (firstP) {
-    //   const range = document.createRange();
-    //   range.setStart(firstP, 0);
-    //   range.collapse(true);
-    //   const selection = window.getSelection();
-    //   if (selection) {
-    //     selection.removeAllRanges();
-    //     selection.addRange(range);
-    //   }
-    // }
-  }
 
   // private createNewParagraph(content: string = '', level: number = 0): void {
   //   const timestamp = Date.now();

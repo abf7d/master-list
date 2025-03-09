@@ -148,7 +148,7 @@ export class TagCssGenerator {
   
       // Add CSS rule for this tag targeting the ::before pseudo-element
       cssRules += `.tag-${sanitizedTag}::before { background-color: ${color}; }\n`;
-      cssRules += `.highlight-${sanitizedTag} { color: ${color}; }\n`;
+      cssRules += `.highlight-${sanitizedTag} { color: ${color};}\n`;
     //   cssRules += `.highlight-${sanitizedTag} { background-color: ${color}; color: ${textColor};}\n`;
     });
   

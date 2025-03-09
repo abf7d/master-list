@@ -243,7 +243,7 @@ export class MasterLayoutService {
     paragraphs.push(...newParagraphs);
   }
 
-  ngAfterViewInit(editorRef: any, paragraphs: Paragraph[]) {
+  ngAfterViewInit(editorRef: any, paragraphs: Paragraph[]): Paragraph[] {
     this.editorRef = editorRef;
     if (!paragraphs.length) {
       this.createNewParagraph(paragraphs);
@@ -262,6 +262,7 @@ export class MasterLayoutService {
         selection.addRange(range);
       }
     }
+    return paragraphs;
   }
 
   onDocumentChange(): void {

@@ -145,18 +145,38 @@
           (addTag)="addTag($event)"></app-meta-tags>
           <div class="active-list-panel" >
             <div class="active-list">
-              <div>Preview Panel 
-                <i class="maximize-icon fa-solid fa-up-right-and-down-left-from-center" 
-                  *ngIf="popListOut === false" 
-                  (click)="popListOut = true"></i>
-                <i class="maximize-icon fa-solid fa-down-left-and-up-right-to-center" 
-                  *ngIf="popListOut === true" 
-                  (click)="popListOut = false"></i>
+              <div class="preview-container">
+                <div class="preview-header">Preview Panel 
+                  <select name="" id="">
+                    <option value="">Sort Preview</option>
+                    <option value="">Pre-Assign</option>
+                    <option value="">Priority</option>
+                    <option value="">Updated</option>
+                    <option value="">Created</option>
+                  </select>
+                  
+                </div>
+                <div>
+                  <i class="fa-solid fa-arrow-left"></i> 1 2 3 4 5 6 7 <i class="fa-solid fa-arrow-right"></i>
+                </div>
+                  <div class="pop-out">
+                    <i class="maximize-icon fa-solid fa-up-right-and-down-left-from-center" 
+                      *ngIf="popListOut === false" 
+                      (click)="popListOut = true"></i>
+                    <i class="maximize-icon fa-solid fa-down-left-and-up-right-to-center" 
+                      *ngIf="popListOut === true" 
+                      (click)="popListOut = false"></i>
+                  </div>
               </div>
+              <!-- <div>
+                <i class="fa-solid fa-arrow-left"></i> 1 2 3 4 5 6 7 <i class="fa-solid fa-arrow-right"></i>
+              </div> -->
               <ol>
-                <li>This is the first item</li>
-                <li>This is the second item</li>
-                <li>This is the third item</li>
+                <li>This panel can be used to preview lists</li>
+                <li>Or it can be used to view similar notes</li>
+                <li>When entries are added and tag them it populates this list</li>
+                <li>With previous notes if similar text is found elsewhere</li>
+                <li>Pagination is available above to navigate between similar notes</li>
               </ol>
             </div>
           </div>
