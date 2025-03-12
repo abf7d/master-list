@@ -1,5 +1,5 @@
 .editor-container {
-  width: 100%;
+  width: calc(100vw - 26px);
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -136,7 +136,7 @@ p {
   display: flex;
   gap: 16px;
 
-  width: 100vw;
+  
   justify-content: center;
   align-items: flex-start;
 }
@@ -476,7 +476,7 @@ ml-nav-list {
         // top: calc(100vh - 425px);
         background-color: #f4f4f4;
         padding: 10px;
-        margin-right: 52px;
+        // margin-right: 52px;
         // height: calc(100vh - 355px);
         height: 100%;
       }
