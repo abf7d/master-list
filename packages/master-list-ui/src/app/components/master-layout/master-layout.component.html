@@ -14,10 +14,7 @@
           <button (click)="applyInlineStyle('italic')" title="Italic">I</button>
           <button (click)="applyInlineStyle('large')" title="Large Text">T</button>
           <button (click)="applyInlineStyle('strike')" title="Large Text">S</button>
-          <button [disabled]="!error" (click)="clearError()">
-            Clear Error
-          </button>
-          <button (click)="logOut()">Log Out</button>
+          <button (click)="applyInlineStyle('merge')" title="Large Text">Merge</button>
         </div>
         <!-- <div class="style-group">
           <button (click)="applyStyle('fontSize', '24px')">Large</button>
@@ -52,7 +49,10 @@
           <option></option>
         </select>
         <button (click)="getTags()">Get Tags (current getToken)</button>
-        
+        <button [disabled]="!error" (click)="clearError()">
+          Clear Error
+        </button>
+        <button (click)="logOut()">Log Out</button>
         
       </div>
       <!-- <div>

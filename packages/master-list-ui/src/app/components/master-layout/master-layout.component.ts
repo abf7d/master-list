@@ -603,6 +603,14 @@ export class MasterLayoutComponent implements AfterViewInit {
   offCtrl(event: KeyboardEvent): void {
     this.manager.ctrlDown = false;
   }
+  @HostListener('keydown.shift', ['$event'])
+  onShift(event: KeyboardEvent): void {
+    this.manager.shiftDown = true;
+  }
+  @HostListener('keyup.shift', ['$event'])
+  offShift(event: KeyboardEvent): void {
+    this.manager.shiftDown = false;
+  }
 
   onInput(event: Event): void {
     this.manager.onInput(event, this.paragraphs)
