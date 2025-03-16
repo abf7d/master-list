@@ -27,6 +27,8 @@ import { TagApiService } from '../../services/tag-api';
 import { ToastrService } from 'ngx-toastr';
 import { MasterLayoutService } from './master-layout.service';
 import { NavListComponent } from '../nav-list/nav-list.component';
+import { MsalService } from '@azure/msal-angular';
+// import { MsalService } from '@master-list/auth';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
 
@@ -98,7 +100,8 @@ export class MasterLayoutComponent implements AfterViewInit {
     private tagApi: TagApiService,
     private tagColorService: TagCssGenerator,
     private toastr: ToastrService,
-    private manager: MasterLayoutService
+    private manager: MasterLayoutService,
+    private msal: MsalService
   ) // private destroyRef: DestroyRef
   {
     this.manager.setChangeSubject(this.changeSubject);
@@ -198,7 +201,9 @@ export class MasterLayoutComponent implements AfterViewInit {
     //   }
     // }
   }
-
+  logOut() {
+    this.msal.logout();
+  }
   clearError() {
     this.error = false;
     this.changeSubject.next();
@@ -998,8 +1003,11 @@ export class MasterLayoutComponent implements AfterViewInit {
   //   );
   // }
   getTags(): void {
-    this.notesApi.getNoteElements('temp').subscribe((elements) => {
-      console.log(elements);
-    });
+    this.tagApi.getTags('test').subscribe(x =>
+      console.log('token', x)
+    );
+    // this.notesApi.getNoteElements('temp').subscribe((elements) => {
+    //   console.log(elements);
+    // });
   }
 }

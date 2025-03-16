@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, Inject, OnDestroy, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { AuthStateService, MsalService } from '@master-list/auth';
-import { BehaviorSubject, catchError, from, map, Observable, of } from 'rxjs';
+import { AuthCoreService, AuthStateService } from '@master-list/auth';
+import { BehaviorSubject, catchError, filter, from, map, Observable, of, Subject, Subscription, takeUntil } from 'rxjs';
 
 export const COOKIES_BLOCKED_ID: string = 'MM:3PCunsupported';
 export const COOKIES_AVAIL_ID: string = 'MM:3PCsupported';
@@ -21,7 +21,7 @@ export class HomeComponent {
   public thirdPartyCookiesBlocked: boolean;
 
   constructor(
-      private authService: MsalService,
+     private authService: AuthCoreService,
       private authStore: AuthStateService,
   ) {
       this.isLoggedIn$ = this.authStore.isLoggedIn$;
@@ -29,19 +29,8 @@ export class HomeComponent {
       this.online$ = this.checkInternetConnection();
   }
 
-  public ngOnInit() {
-      this.isLoggedIn$.subscribe((loggedIn: boolean | null) => {
-          this.name = this.authService.getUserName() ?? '';
-          this.isLoggedIn = !!loggedIn && !this.authService.accessExpired();
-      });
-  }
-
-  public login() {
-      this.authService.login();
-  }
-
-  public logout() {
-      this.authService.logout();
+  loginClicked() {
+    this.authService.login();
   }
 
   @HostListener('window:message', ['$event'])

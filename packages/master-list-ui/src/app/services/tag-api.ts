@@ -12,10 +12,10 @@ import { Observable, of } from "rxjs";
 export class TagApiService {
     constructor(private http: HttpClient) {}
     // API calls for notes
-    async getTags(noteId: string): Promise<NoteElement[]> {
+    getTags(noteId: string): Observable<any> {
         // Call the API to get elements for a note
-        this.http.get(urlJoin(environment.masterListApi, '/account/get-token?token_type=claims'));
-        return [];
+        return this.http.get(urlJoin(environment.masterListApi, '/account/get-token?token_type=claims'));
+        
     }
 
     public getLists(): Observable<TagSelectionGroup> {

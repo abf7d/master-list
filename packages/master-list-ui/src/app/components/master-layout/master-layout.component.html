@@ -17,6 +17,7 @@
           <button [disabled]="!error" (click)="clearError()">
             Clear Error
           </button>
+          <button (click)="logOut()">Log Out</button>
         </div>
         <!-- <div class="style-group">
           <button (click)="applyStyle('fontSize', '24px')">Large</button>
@@ -50,7 +51,7 @@
           <option value="Misc Triage">Misc Triage</option>
           <option></option>
         </select>
-        <button (click)="getTags()">Get Tags</button>
+        <button (click)="getTags()">Get Tags (current getToken)</button>
         
         
       </div>
