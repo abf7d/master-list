@@ -1,0 +1,20 @@
+model
+  schema 1.1
+
+type user
+
+type tag
+  relations
+    define owner: [user] # The creator of the tag
+    define editor: [user] # Users who can edit the tag
+    define viewer: [user] # Users who can view the tag
+    define can_edit: owner or editor
+    define can_view: can_edit or viewer
+
+type note
+  relations
+    define owner: [user] # The creator of the note
+    define editor: [user] # Users who can edit the note
+    define viewer: [user] # Users who can view the note
+    define can_edit: owner or editor
+    define can_view: can_edit or viewer

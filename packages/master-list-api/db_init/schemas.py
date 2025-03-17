@@ -14,8 +14,9 @@ class Tag(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(50), index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)  # Owner of the tag
     parent_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=True)
-    
+    #created_by, using openfga, sharing a "list" (tag or note)
     __table_args__ = (
         UniqueConstraint('name', 'parent_id', name='uix_tag_name_parent'),
     )
@@ -25,6 +26,7 @@ class Tag(Base):
     children = relationship("Tag", back_populates="parent")
     notes = relationship("Note", secondary="note_tags", back_populates="tags")
     created_notes = relationship("Note", back_populates="creation_tag")
+    created_by_user = relationship("User")  # Track the owner
 
 class Note(Base):
     __tablename__ = "notes"
@@ -32,13 +34,17 @@ class Note(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)  # Owner of the note
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     creation_tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=False)
     sequence_number = Column(Integer)
+    #created_by_user open fga : used to look up if you have something already written by you or to classify
+    #assigned_user
     
     # Relationships
     tags = relationship("Tag", secondary="note_tags", back_populates="notes")
     creation_tag = relationship("Tag", back_populates="created_notes")
+    created_by_user = relationship("User") 
 
 class NoteTag(Base):
     __tablename__ = "note_tags"
