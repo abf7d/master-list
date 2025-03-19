@@ -1,7 +1,8 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from schemas import Base, User, Tag, Note, NoteTag  # Note: added User import
 import uuid  # Added for UUID generation
+import sys
 
 # Only import the SQLAlchemy models, not the Pydantic models
 # If you need settings, import only what you need
@@ -23,6 +24,31 @@ def init_db():
     
     return engine, SessionLocal
 
+def create_openfga_schema(engine):
+    """Create OpenFGA schema and set permissions"""
+    try:
+        print("Creating OpenFGA schema...")
+        with engine.connect() as connection:
+            # Create schema for OpenFGA
+            connection.execute(text("CREATE SCHEMA IF NOT EXISTS openfga"))
+            
+            # Grant permissions on the schema to the postgres user
+            connection.execute(text(f"GRANT ALL ON SCHEMA openfga TO {settings.POSTGRES_USER}"))
+            
+            # Set the search path for convenience (optional)
+            connection.execute(text(f"ALTER DATABASE {settings.POSTGRES_DB} SET search_path TO public,openfga"))
+            
+            # Make sure changes are committed
+            connection.commit()
+            
+        print("OpenFGA schema created successfully")
+        
+    except Exception as e:
+        print(f"Error creating OpenFGA schema: {str(e)}")
+        return False
+    
+    return True
+
 def get_db():
     """Dependency to get DB session"""
     db = SessionLocal()
@@ -37,6 +63,10 @@ engine, SessionLocal = init_db()
 if __name__ == "__main__":
     # Example usage
     print(f"Initializing database with URL: {settings.DATABASE_URL}")
+
+    if not create_openfga_schema(engine):
+        print("Failed to create OpenFGA schema. Exiting.")
+        sys.exit(1)
     
     # Create a test session
     db = SessionLocal()
