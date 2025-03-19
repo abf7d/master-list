@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from schemas import Base, Tag, Note, NoteTag  # Use absolute import
+from schemas import Base, User, Tag, Note, NoteTag  # Note: added User import
+import uuid  # Added for UUID generation
 
 # Only import the SQLAlchemy models, not the Pydantic models
 # If you need settings, import only what you need
@@ -41,8 +42,21 @@ if __name__ == "__main__":
     db = SessionLocal()
     
     try:
+
+        # Create a test user first
+        test_user = User(
+            oauth_id="test_oauth_id_123",
+            email="testuser@example.com"
+        )
+        db.add(test_user)
+        db.commit()
+        print(f"Created test user with ID: {test_user.id} and email: {test_user.email}")
+
         # Create a test tag
-        test_tag = Tag(name="Test Notebook")
+        test_tag = Tag(
+            name="Test Notebook",
+            created_by=test_user.id  # Assign the user's ID to created_by
+        )
         db.add(test_tag)
         db.commit()
         

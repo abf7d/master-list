@@ -1,15 +1,58 @@
 # Repository
+import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID
 from typing import List, Optional, Dict
 from sqlalchemy.ext.declarative import declarative_base
 from db_init.schemas import Tag
 from db_init.schemas import TagResponse
+import requests
 
 Base = declarative_base()
 class TagRepository:
     def __init__(self, db: Session):
         self.db = db
+    
+    # obsidian note taking app can connect via symantic links saves into markdonwn
+    # start with trying this, create a tag
+    def create_tag(db: Session, user_id: str, tag_name: str):
+        """Creates a new tag and assigns ownership in OpenFGA."""
+
+        OPENFGA_URL = '127.0.0.1:1234'
+        STORE_ID = 'critical-notes'
+        # Step 1: Create Tag in Database (UUID is auto-generated)
+        new_tag = Tag(
+            name=tag_name,
+            created_by=user_id
+        )
+        db.add(new_tag)
+        db.commit()
+        db.refresh(new_tag)  # ✅ The UUID is now available from the database
+
+        # Step 2: Assign Ownership in OpenFGA
+        fga_payload = {
+            "writes": [
+                {
+                    "tuple_key": {
+                        "user": f"user:{user_id}",
+                        "relation": "owner",
+                        "object": f"tag:{new_tag.id}"
+                    }
+                }
+            ]
+        }
+
+        headers = {"Content-Type": "application/json"}
+        fga_response = requests.post(
+            f"{OPENFGA_URL}/stores/{STORE_ID}/write",
+            json=fga_payload,
+            headers=headers
+        )
+
+        if fga_response.status_code != 200:
+            print("Error setting OpenFGA permissions:", fga_response.json())
+
+        return new_tag
     
     def create_tag(self, name: str, parent_id: Optional[UUID] = None) -> TagResponse:
         """Create a new tag"""
@@ -32,6 +75,41 @@ class TagRepository:
         """Get a tag by ID"""
         tag = self.db.query(Tag).filter(Tag.id == tag_id).first()
         return TagResponse.from_orm(tag) if tag else None
+    
+    # def get_tag(db: Session, user_id: str, tag_id: str):
+    #     """Fetches a tag if the user is either the owner or has view access via OpenFGA."""
+
+    #     # Step 1: Fetch the Tag from the Database
+    #     tag = db.query(Tag).filter(Tag.id == tag_id).first()
+
+    #     if not tag:
+    #         return None  # Tag not found
+
+    #     # Step 2: If User is the Creator, Return Immediately
+    #     if str(tag.created_by) == user_id:
+    #         return tag  # Owner gets direct access ✅
+
+    #     # Step 3: If Not Owner, Check OpenFGA for `can_view` Permission
+    #     fga_payload = {
+    #         "tuple_key": {
+    #             "user": f"user:{user_id}",
+    #             "relation": "can_view",
+    #             "object": f"tag:{tag_id}"
+    #         }
+    #     }
+
+    #     headers = {"Content-Type": "application/json"}
+    #     fga_response = requests.post(
+    #         f"{OPENFGA_URL}/stores/{STORE_ID}/check",
+    #         json=fga_payload,
+    #         headers=headers
+    #     )
+
+    #     if fga_response.status_code == 200 and fga_response.json().get("allowed"):
+    #         return tag  # User has view access via OpenFGA ✅
+    #     else:
+    #         return None  # User does not have access 🚫
+        
     
     def get_tags_by_parent(self, parent_id: Optional[UUID] = None) -> List[TagResponse]:
         """Get all tags under a parent (or top-level tags if parent_id is None)"""
@@ -59,6 +137,11 @@ class TagRepository:
         self.db.refresh(tag)
         return TagResponse.from_orm(tag)
     
+    
+
+
+
+
     def move_tag(self, tag_id: UUID, new_parent_id: Optional[UUID]) -> TagResponse:
         """Move a tag to a new parent"""
         tag = self.db.query(Tag).filter(Tag.id == tag_id).first()

@@ -1,3 +1,4 @@
+
 version: '3.8'
 
 services:
@@ -10,20 +11,18 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-
     ports:
       - "5432:5432"
     env_file:
       - ../.env
-    
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-# the load database should be a separate shell script, need to create a schema for database
-# but i do want the database created if you provide the right parameter so I can modify the python and the table updates
+  # the load database should be a separate shell script, need to create a schema for database
+  # but i do want the database created if you provide the right parameter so I can modify the python and the table updates
   db-init:
     build:
       context: ..
@@ -34,12 +33,144 @@ services:
     env_file:
       - ../.env
     environment:
-      - POSTGRES_HOST=db 
+      - POSTGRES_HOST=db
+      - PYTHONPATH=/app  # Make sure your app directory is in PYTHONPATH
     profiles:
       - init
+
+  # migrate:
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   image: openfga/openfga:latest
+  #   container_name: migrate
+  #   environment:
+  #     - OPENFGA_DATASTORE_ENGINE=postgres
+  #     - OPENFGA_DATASTORE_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+  #   command: migrate
+  #   networks:
+  #     - default
+  #   profiles:
+  #     - init
+
+  # openfga:
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   image: openfga/openfga:latest
+  #   container_name: openfga
+  #   command: run
+  #   environment:
+  #     - OPENFGA_DATASTORE_ENGINE=postgres
+  #     - OPENFGA_DATASTORE_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+  #     - OPENFGA_DATASTORE_MAX_OPEN_CONNS=100
+  #     - OPENFGA_PLAYGROUND_ENABLED=true
+  #   networks:
+  #     - default
+  #   ports:
+  #     - "8080:8080" #http
+  #     - "8081:8081" #grpc
+  #     - "3000:3000" #playground
+  #     - "2112:2112" #prometheus metrics
+  #   healthcheck:
+  #     test: [ "CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:8081" ]
+  #     interval: 5s
+  #     timeout: 30s
+  #     retries: 3
 
 volumes:
   postgres_data:
 
-# cd docker
-# docker compose --profile init up
+# version: '3.8'
+
+# services:
+#   db:
+#     image: postgres:15
+#     container_name: postgres_list_container
+#     volumes:
+#       - ./postgres/data:/var/lib/postgresql/data
+#     environment:
+#       - POSTGRES_USER=${POSTGRES_USER}
+#       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#       - POSTGRES_DB=${POSTGRES_DB}
+
+#     ports:
+#       - "5432:5432"
+#     env_file:
+#       - ../.env
+
+#     healthcheck:
+#       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   # the load database should be a separate shell script, need to create a schema for database
+#   # but i do want the database created if you provide the right parameter so I can modify the python and the table updates
+#   db-init:
+#     build:
+#       context: ..
+#       dockerfile: docker/postgres/Dockerfile
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#     env_file:
+#       - ../.env
+#     environment:
+#       - POSTGRES_HOST=db
+#     profiles:
+#       - init
+
+
+# #   # cd docker
+# #   # docker compose --profile init up
+
+#   migrate:
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#     image: openfga/openfga:latest
+#     container_name: migrate
+#     environment:
+#       - OPENFGA_DATASTORE_ENGINE=postgres
+#       - OPENFGA_DATASTORE_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+#     command: migrate
+#     networks:
+#       - default
+
+#   openfga:
+#     depends_on:
+#       migrate:
+#         condition: service_completed_successfully
+#     image: openfga/openfga:latest
+#     container_name: openfga
+#     command: run
+#     environment:
+#       - OPENFGA_DATASTORE_ENGINE=postgres
+#       - OPENFGA_DATASTORE_URI=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+#       - OPENFGA_DATASTORE_MAX_OPEN_CONNS=100
+#       - OPENFGA_PLAYGROUND_ENABLED=true
+#     networks:
+#       - default
+#     ports:
+#       - "8080:8080" #http
+#       - "8081:8081" #grpc
+#       - "3000:3000" #playground
+#       - "2112:2112" #prometheus metrics
+#     healthcheck:
+#       test: [ "CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:8081" ]
+#       interval: 5s
+#       timeout: 30s
+#       retries: 3
+
+# volumes:
+#   postgres_data:
+
+
+
+
+  #   # cd docker
+#   # docker compose --profile init up
+
+# for running the newer scripts teh above is not recognizing script changes
+# docker-compose --profile init up --build

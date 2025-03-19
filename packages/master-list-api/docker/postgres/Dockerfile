@@ -8,7 +8,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy your initialization script and related files
 COPY db_init/pg_db_init.py .
-COPY db_init/schemas.py ./db_init/
+
+COPY db_init/__init__.py .
+COPY db_init/schemas.py . 
+#./db_init/
 COPY core/config.py ./core/
 COPY core/database.py ./core/
 

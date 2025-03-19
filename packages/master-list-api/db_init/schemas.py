@@ -8,6 +8,14 @@ import uuid
 # SQLAlchemy Base
 Base = declarative_base()
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    oauth_id = Column(String(255), unique=True, nullable=False) 
+    email = Column(String(255), unique=True, nullable=False)  # Unique user lookup
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class Tag(Base):
     __tablename__ = "tags"
     
@@ -16,7 +24,7 @@ class Tag(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)  # Owner of the tag
     parent_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=True)
-    #created_by, using openfga, sharing a "list" (tag or note)
+
     __table_args__ = (
         UniqueConstraint('name', 'parent_id', name='uix_tag_name_parent'),
     )
@@ -38,8 +46,6 @@ class Note(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     creation_tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=False)
     sequence_number = Column(Integer)
-    #created_by_user open fga : used to look up if you have something already written by you or to classify
-    #assigned_user
     
     # Relationships
     tags = relationship("Tag", secondary="note_tags", back_populates="notes")
