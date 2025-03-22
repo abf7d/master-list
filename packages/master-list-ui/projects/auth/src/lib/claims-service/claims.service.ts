@@ -14,29 +14,10 @@ export class ClaimsService {
         this.jwtHelper = new JwtHelperService();
     }
 
-    public initializeClaims(): Observable<any> {
-        return this.claimsApi
-            .getClaims()
-            .pipe(tap(token => {
-                const auth_token = this.jwtHelper.decodeToken(token.Result.Token);
-                const expDate = this.jwtHelper.getTokenExpirationDate(token.Result.Token);
-                const tokenString = JSON.stringify({
-                    username: auth_token.sub,
-                    token: { auth_token: token.Result.Token },
-                });
-                if (typeof sessionStorage !== 'undefined') {
-                    sessionStorage.setItem(CONST.CLAIMS_TOKEN_CACHE_KEY, tokenString);
-                }
-                const isAuthorized = this.isAuthorized();
-                return isAuthorized;
-            }));
-    }
-
-    // public initializeClaims(): Promise<any> {
+    // public initializeClaims(): Observable<any> {
     //     return this.claimsApi
     //         .getClaims()
-    //         .toPromise()
-    //         .then(token => {
+    //         .pipe(tap(token => {
     //             const auth_token = this.jwtHelper.decodeToken(token.Result.Token);
     //             const expDate = this.jwtHelper.getTokenExpirationDate(token.Result.Token);
     //             const tokenString = JSON.stringify({
@@ -48,8 +29,27 @@ export class ClaimsService {
     //             }
     //             const isAuthorized = this.isAuthorized();
     //             return isAuthorized;
-    //         });
+    //         }));
     // }
+
+    public initializeClaims(): Promise<any> {
+        return this.claimsApi
+            .getClaims()
+            .toPromise()
+            .then(token => {
+                const auth_token = this.jwtHelper.decodeToken(token.Result.Token);
+                const expDate = this.jwtHelper.getTokenExpirationDate(token.Result.Token);
+                const tokenString = JSON.stringify({
+                    username: auth_token.sub,
+                    token: { auth_token: token.Result.Token },
+                });
+                if (typeof sessionStorage !== 'undefined') {
+                    sessionStorage.setItem(CONST.CLAIMS_TOKEN_CACHE_KEY, tokenString);
+                }
+                const isAuthorized = this.isAuthorized();
+                return isAuthorized;
+            });
+    }
 
     public clearClaims(): void {
         if (typeof sessionStorage !== 'undefined') {

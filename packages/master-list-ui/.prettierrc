@@ -1,0 +1,26 @@
+{
+    "bracketSpacing": true,
+    "singleQuote": true,
+    "printWidth": 160,
+    "trailingComma": "all",
+    "tabWidth": 4,
+    "arrowParens": "avoid",
+    "endOfLine": "auto",
+    "overrides": [
+      {
+        "files": "**/*.md",
+        "options": {
+          "parser": "markdown",
+          "proseWrap": "always"
+        }
+      },
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "html"
+          
+        }
+      }
+      
+    ]
+  }

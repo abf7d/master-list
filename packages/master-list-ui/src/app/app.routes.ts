@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
+import { AuthorizedUserGuard } from '../../projects/auth/src/lib/gaurd/authorized-user.guard';
 
 export const routes: Routes = [
     {
@@ -14,6 +15,7 @@ export const routes: Routes = [
     {
         path: 'main',
         loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-        canActivate: [MsalGuard],
+        // canActivate: [MsalGuard],
+        canActivate: [AuthorizedUserGuard]
     },
 ];

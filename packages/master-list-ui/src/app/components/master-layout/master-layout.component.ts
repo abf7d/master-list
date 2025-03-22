@@ -28,6 +28,7 @@ import { ToastrService } from 'ngx-toastr';
 import { MasterLayoutService } from './master-layout.service';
 import { NavListComponent } from '../nav-list/nav-list.component';
 import { MsalService } from '@azure/msal-angular';
+import { AuthCoreService } from '@master-list/auth';
 // import { MsalService } from '@master-list/auth';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
@@ -101,7 +102,7 @@ export class MasterLayoutComponent implements AfterViewInit {
     private tagColorService: TagCssGenerator,
     private toastr: ToastrService,
     private manager: MasterLayoutService,
-    private msal: MsalService
+    private authService: AuthCoreService
   ) // private destroyRef: DestroyRef
   {
     this.manager.setChangeSubject(this.changeSubject);
@@ -202,7 +203,7 @@ export class MasterLayoutComponent implements AfterViewInit {
     // }
   }
   logOut() {
-    this.msal.logout();
+    this.authService.logout();
   }
   clearError() {
     this.error = false;
