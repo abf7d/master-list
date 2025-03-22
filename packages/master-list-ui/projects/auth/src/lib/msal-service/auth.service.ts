@@ -20,7 +20,7 @@ export const accessTokenRequest: Msal.SilentRequest = {
 export class AuthCoreService {
     sub!: Subscription;
    
-    constructor( private authService: MsalService ){
+    constructor( private msalService: MsalService ){
     }
     public login () {
         let signUpSignInFlowRequest: RedirectRequest | PopupRequest  = {
@@ -28,8 +28,21 @@ export class AuthCoreService {
             scopes: [...environment.apiConfig.scopes],
         };
         const userFlowRequest = signUpSignInFlowRequest;
-        this.authService.loginRedirect(userFlowRequest);
+        this.msalService.loginRedirect(userFlowRequest);
     }
+
+    // public getAuthToken(): Promise<Msal.AuthenticationResult> {
+    //             const accounts = this.msalService.getAllAccounts();
+    //             this.accessTokenRequest.account = accounts[0];
+    //             return this.msalInstance.acquireTokenSilent(this.accessTokenRequest);
+    //         }
+    //         public accessExpired(): boolean {
+    //                     return !this.msalInstance.getAllAccounts()[0];
+    //                 }
+    // this.authService
+    //         .getAuthToken()
+    //         .then(token => {
+    //             const isLoggedIn = !this.authService.accessExpired();
 
 //     public initAccesTokenRetrieval(){
 //          this.sub = this.msalBroadcastService.msalSubject$

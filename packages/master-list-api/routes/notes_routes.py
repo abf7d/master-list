@@ -17,6 +17,7 @@ import logging
 from services.graph_service import GraphService
 
 router = APIRouter()
+# router = APIRouter(prefix="/account")
 
 """ Initialize the logger """
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -38,11 +39,11 @@ async def get_tags(
     note_service: NoteService = Depends(get_note_service),
 ):
     """Create a new tag"""
-    print('USERID!!!!!!!!! ', request.state.user_id)
+    # print('USERID!!!!!!!!! ', request.state.user_id)
     claims = await graph_service.get_claims(request.state.user_id)
     print('CLAIMS!!!!!!!!! ', claims)
     
-    return note_service.get_tags(parent_tag_id=None)
+    return note_service.get_tags(name='TestTag', parent_tag_id=None, user_id=request.state.user_id)
 @router.get("/tags/{parent_tag_id}/children", response_model=List[TagResponse])
 async def get_child_tags(
     parent_tag_id: UUID,
@@ -50,14 +51,26 @@ async def get_child_tags(
 ):
     """Get child tags for a specific parent tag"""
     return note_service.get_tags(parent_tag_id=parent_tag_id)
+
+
+
+
+# Look at modified files and use this 
 @router.post("/tags/", response_model=TagResponse)
 async def create_tag(
+    request: Request,
     name: str, 
     parent_tag_id: Optional[UUID] = None,
     note_service: NoteService = Depends(get_note_service)
 ):
     """Create a new tag"""
-    return note_service.create_tag(name=name, parent_tag_id=parent_tag_id)
+   
+    return note_service.create_tag( name=name, user_id=request.state.user_id, parent_tag_id=parent_tag_id)
+    # return note_service.create_tag(name=name, parent_tag_id=parent_tag_id)
+
+
+
+
 
 @router.post("/tags/{tag_id}/notes/", response_model=NoteGroupResponse)
 async def create_notes_for_tag(

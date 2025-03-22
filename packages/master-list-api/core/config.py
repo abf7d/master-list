@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     JWKS_URL: Optional[str] = None
     AZURE_AD_CLIENT_ID: Optional[str] = None
     AZURE_AD_CLIENT_SECRET: Optional[str] = None
+
+    OPENFGA_USER: str
+    OPENFGA_PASSWORD: str
+    OPENFGA_DB: str
+    OPENFGA_PORT: str
+    OPENFGA_STORAGE_TYPE: str
+    OPENFGA_POSTGRES_URI: str
     
     @property
     def DATABASE_URL(self) -> str:

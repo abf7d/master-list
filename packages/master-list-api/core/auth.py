@@ -188,8 +188,14 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
         
         # print('decoded_payload', decoded_payload)
         user_email = get_user_info(decoded_payload)
+
+
         user_id = decoded_payload.get("oid", None)
         exp =  exp_claim = decoded_payload.get("ext", None)
+
+        # Check if user id exists in User DB, if not create the entry
+
+
         # print('user_id', user_id)
         # user_data = "tempuser"
         request.state.email = user_email

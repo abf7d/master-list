@@ -86,7 +86,7 @@ class NoteService:
             notes=note_responses
         )
 
-    def create_tag(self, name: str, parent_tag_id: Optional[UUID] = None) -> TagResponse:
+    def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> TagResponse:
         """
         Create a new tag with the specified name and optional parent.
         
@@ -99,7 +99,8 @@ class NoteService:
         """
         tag = Tag(
             name=name,
-            parent_id=parent_tag_id
+            parent_id=parent_tag_id,
+            user_id=user_id
         )
         self.db.add(tag)
         self.db.commit()

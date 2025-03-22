@@ -14,7 +14,8 @@ export class TagApiService {
     // API calls for notes
     getTags(noteId: string): Observable<any> {
         // Call the API to get elements for a note
-        return this.http.get(urlJoin(environment.masterListApi, '/account/get-token?token_type=claims'));
+        return this.http.get(urlJoin(environment.masterListApi, '/tags'));
+        // return this.http.get(urlJoin(environment.masterListApi, '/account/get-token?token_type=claims'));
         
     }
 
