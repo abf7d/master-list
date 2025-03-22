@@ -6,7 +6,7 @@ from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Tag, Note, NoteTag
 from models.models import CreateNoteGroup, NoteGroupResponse, TagResponse, NoteResponse
-
+from sqlalchemy import and_
 
 class NoteService:
     def __init__(self, db: Session):
@@ -112,7 +112,7 @@ class NoteService:
             parent_id=tag.parent_id,
             created_at=tag.created_at
         )
-    def get_tags(self, parent_tag_id: Optional[UUID] = None) -> Optional[List[TagResponse]]:
+    def get_tags(self, user_id: str, parent_tag_id: Optional[UUID] = None) -> Optional[List[TagResponse]]:
         """
         Create a new tag with the specified name and optional parent.
         
@@ -123,7 +123,8 @@ class NoteService:
         Returns:
             TagResponse for the created tag
         """
-        tags = self.db.query(Tag).filter(Tag.parent_id == parent_tag_id)
+
+        tags = self.db.query(Tag).filter(and_(Tag.parent_id == parent_tag_id, Tag.created_by == user_id))
 
         tag_responses = []
         for tag in tags:

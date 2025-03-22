@@ -43,7 +43,7 @@ async def get_tags(
     claims = await graph_service.get_claims(request.state.user_id)
     print('CLAIMS!!!!!!!!! ', claims)
     
-    return note_service.get_tags(name='TestTag', parent_tag_id=None, user_id=request.state.user_id)
+    return note_service.get_tags(parent_tag_id=None, user_id=request.state.user_id)
 @router.get("/tags/{parent_tag_id}/children", response_model=List[TagResponse])
 async def get_child_tags(
     parent_tag_id: UUID,
