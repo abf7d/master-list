@@ -14,6 +14,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     oauth_id = Column(String(255), unique=True, nullable=False) 
     email = Column(String(255), unique=True, nullable=False)  # Unique user lookup
+    name = Column(String(255), unique=True, nullable=False)  
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Tag(Base):

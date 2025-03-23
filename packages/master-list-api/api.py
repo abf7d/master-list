@@ -1,15 +1,25 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from logging.handlers import RotatingFileHandler
 import logging
 import uvicorn 
 
-#ask chatgpt about logger, test writing some logs
-""" Initialize the logger """
-logging.basicConfig(
-    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
-    datefmt="%d-%b-%y %H:%M:%S",
+# Configure the logger with rotation
+handler = RotatingFileHandler(
+    "app.log", 
+    maxBytes=10485760,  # 10MB
+    backupCount=5       # Keep up to 5 backup files
 )
-logger = logging.getLogger("plots.api")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        handler,
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger('list.api')
 
 
 # from .models import NoteDB, NoteCreate, NoteResponse

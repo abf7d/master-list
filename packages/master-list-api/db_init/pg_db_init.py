@@ -76,7 +76,8 @@ if __name__ == "__main__":
         # Create a test user first
         test_user = User(
             oauth_id="test_oauth_id_123",
-            email="testuser@example.com"
+            email="testuser@example.com",
+            name="test name"
         )
         db.add(test_user)
         db.commit()
