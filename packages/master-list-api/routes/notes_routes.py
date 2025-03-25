@@ -90,6 +90,7 @@ async def create_tag_button(request: Request, tag_button: TagButton,
     print('tag response', response)
     return response
 
+#TODO: move this to tag_routes
 @router.delete("/tag", response_model=TagResponse,)
 @authenticate
 async def delete_tag_button(request: Request, tag_button: TagButton,
