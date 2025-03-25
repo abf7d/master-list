@@ -12,7 +12,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    oauth_id = Column(String(255), unique=True, nullable=False) 
+    oauth_id = Column(UUID(as_uuid=True), unique=True, nullable=False)  
     email = Column(String(255), unique=True, nullable=False)  # Unique user lookup
     name = Column(String(255), unique=True, nullable=False)  
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -22,8 +22,9 @@ class Tag(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     name = Column(String(50), index=True)
+    creation_order = Column(Integer, nullable=False, default=0) #for color indexing
     created_at = Column(DateTime, default=datetime.utcnow)
-    created_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)  # Owner of the tag
+    created_by = Column(UUID(as_uuid=True), ForeignKey('users.oauth_id'), nullable=False, index=True)  # Owner of the tag
     parent_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=True)
 
     __table_args__ = (

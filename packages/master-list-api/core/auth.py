@@ -271,12 +271,7 @@ def authenticate(func: Callable[..., Any]) -> Callable[..., Any]:
                 status_code=401, 
                 detail="Token issuer validation failed"
             )
-        except Exception as ex:
-            logger.error(f"Authentication failed: Unexpected error: {str(ex)}")
-            raise HTTPException(
-                status_code=401, 
-                detail="Authentication failed"
-            )
+        
 
     # Preserve function signature for FastAPI dependency injection
     wrapper.__signature__ = inspect.Signature(

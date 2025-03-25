@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
         # Create a test user first
         test_user = User(
-            oauth_id="test_oauth_id_123",
+            oauth_id="a922c82d-486d-4148-8d77-1bb900049ed1",
             email="testuser@example.com",
             name="test name"
         )
@@ -84,10 +84,17 @@ if __name__ == "__main__":
         print(f"Created test user with ID: {test_user.id} and email: {test_user.email}")
 
         # Create a test tag
+        # test_tag = Tag(
+        #     name="Test Notebook",
+        #     created_by=test_user.id  # Assign the user's ID to created_by
+        # )
+        
         test_tag = Tag(
+            creation_order=0,
             name="Test Notebook",
-            created_by=test_user.id  # Assign the user's ID to created_by
+            created_by=test_user.oauth_id  # Assign the user's ID to created_by
         )
+         
         db.add(test_tag)
         db.commit()
         

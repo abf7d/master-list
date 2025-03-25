@@ -1,12 +1,14 @@
 from typing import List, Optional
 from uuid import UUID
 import uuid
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Tag, Note, NoteTag
 from models.models import CreateNoteGroup, NoteGroupResponse, TagResponse, NoteResponse
 from sqlalchemy import and_
+from sqlalchemy import func
 
 class NoteService:
     def __init__(self, db: Session):
@@ -86,7 +88,8 @@ class NoteService:
             notes=note_responses
         )
 
-    def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> TagResponse:
+    # TODO: Move to tag repo, then call from here
+    def create_tag(self, name: str, user_id:  Optional[UUID], color: str, backgroundcolor: str, parent_tag_id: Optional[UUID] = None) -> int:
         """
         Create a new tag with the specified name and optional parent.
         
@@ -97,21 +100,78 @@ class NoteService:
         Returns:
             TagResponse for the created tag
         """
+        
+        # Check if a tag with this name already exists for this user
+        existing_tag = self.db.query(Tag).filter(
+            Tag.name == name,
+            Tag.created_by == user_id
+        ).first()
+        
+        if existing_tag:
+            # Return a 409 Conflict status code with a clear message
+            raise HTTPException(
+                status_code=409,  # Conflict is appropriate for this case
+                detail=f"A tag named '{name}' already exists for this user"
+            )
+        
+        
+        max_sequence = self.db.query(func.max(Tag.creation_order)).filter(Tag.created_by == user_id).scalar() or 0
         tag = Tag(
             name=name,
             parent_id=parent_tag_id,
-            user_id=user_id
+            created_by=user_id,
+            creation_order=max_sequence + 1
         )
         self.db.add(tag)
         self.db.commit()
         self.db.refresh(tag)
         
-        return TagResponse(
-            id=tag.id,
-            name=tag.name,
-            parent_id=tag.parent_id,
-            created_at=tag.created_at
-        )
+        return tag.creation_order
+        # return TagResponse(
+        #     id=tag.id,
+        #     name=tag.name,
+        #     parent_id=tag.parent_id,
+        #     created_at=tag.created_at
+        # )
+        
+    
+    #TODO Delete all of the notes_tags that are linked to tag with the id from the selecated userid and name
+    #TODO: Move to tag repo
+    def delete_tag(self, name: str, user_id:  Optional[UUID]) -> int:
+        """
+        Delete a tag with the specified ID.
+        
+        Args:
+            tag_id: UUID of the tag to delete
+            user_id: UUID of the user requesting the deletion
+            
+        Returns:
+            bool: True if deletion was successful
+            
+        Raises:
+            HTTPException: If tag doesn't exist or user doesn't have permission
+        """
+        
+        # Check if a tag with this name already exists for this user
+        existing_tag = self.db.query(Tag).filter(
+            Tag.name == name,
+            Tag.created_by == user_id
+        ).first()
+        
+        if not existing_tag:
+            # Return a 409 Conflict status code with a clear message
+            raise HTTPException(
+                status_code=409,  # Conflict is appropriate for this case
+                detail=f"A tag named '{name}' doesn't exist for this user"
+            )
+        
+        # Delete the tag
+        self.db.delete(existing_tag)
+        self.db.commit()
+        
+        return True
+        
+        
     def get_tags(self, user_id: str, parent_tag_id: Optional[UUID] = None) -> Optional[List[TagResponse]]:
         """
         Create a new tag with the specified name and optional parent.

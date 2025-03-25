@@ -1,10 +1,16 @@
 import { Injectable } from "@angular/core";
 import { NoteElement } from "../types/note";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from '@master-list/environments';
 import urlJoin from "url-join";
-import { TagSelectionGroup } from "../types/tag";
+import { TagButton, TagSelection, TagSelectionGroup } from "../types/tag";
 import { Observable, of } from "rxjs";
+
+export interface Response<T> {
+    message: string;
+    error?: string;
+    data: T;
+}
 
 @Injectable({
     providedIn: 'root',
@@ -17,6 +23,20 @@ export class TagApiService {
         return this.http.get(urlJoin(environment.masterListApi, '/tags'));
         // return this.http.get(urlJoin(environment.masterListApi, '/account/get-token?token_type=claims'));
         
+    }
+
+    public createTag(tag: TagButton): Observable<any>{
+        const body = JSON.stringify(tag);
+        const headers = new HttpHeaders().set('Content-Type', 'application/json');
+
+        return this.http
+            .post<Response<any>>(urlJoin(environment.masterListApi, '/tag'), body, { headers });
+    }
+
+    public deleteTag(name: string): Observable<any> {
+        const nameEncoded = encodeURIComponent(name);
+        return this.http
+            .delete<Response<any>>(urlJoin(environment.masterListApi, '/tag', nameEncoded));
     }
 
     public getLists(): Observable<TagSelectionGroup> {

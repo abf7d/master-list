@@ -6,6 +6,8 @@ from typing import List, Optional, Dict
 from sqlalchemy.ext.declarative import declarative_base
 from db_init.schemas import Tag
 from db_init.schemas import TagResponse
+from sqlalchemy import and_
+
 import requests
 
 Base = declarative_base()
@@ -13,9 +15,66 @@ class TagRepository:
     def __init__(self, db: Session):
         self.db = db
     
-    # obsidian note taking app can connect via symantic links saves into markdonwn
+   
+    # def create_tag(self, name: str, parent_id: Optional[UUID] = None) -> TagResponse:
+    #     """Create a new tag"""
+    #     # Check if tag with same name exists under the same parent
+    #     existing_tag = self.db.query(Tag).filter(
+    #         Tag.name == name,
+    #         Tag.parent_id == parent_id
+    #     ).first()
+        
+    #     if existing_tag:
+    #         raise ValueError(f"Tag '{name}' already exists in this scope")
+        
+    #     tag = Tag(name=name, parent_id=parent_id)
+    #     self.db.add(tag)
+    #     self.db.commit()
+    #     self.db.refresh(tag)
+    #     return TagResponse.from_orm(tag)
+    
+    # # def delete_tag(self, tag_id: UUID, recursive: bool = False):
+    # def delete_tag(self, name: str, user_id: UUID, recursive: bool = False):
+    #     """
+    #     Delete a tag. If recursive=True, also delete all child tags.
+    #     Otherwise, raise an error if the tag has children.
+    #     """
+    #     tag = self.db.query(Tag).filter(Tag.name == name, Tag.created_by == user_id).first()
+    #     if not tag:
+    #         raise ValueError(f"Tag with name {name} user_id {user_id} not found")
+        
+    #     # Check for child tags
+    #     # children = self.db.query(Tag).filter(Tag.parent_id == tag_id).all()
+    #     # if children and not recursive:
+    #     #     raise ValueError("Cannot delete tag with children. Use recursive=True to delete children as well.")
+        
+    #     # if recursive:
+    #     #     # Delete all descendants
+    #     #     def delete_descendants(parent_id):
+    #     #         children = self.db.query(Tag).filter(Tag.parent_id == parent_id).all()
+    #     #         for child in children:
+    #     #             delete_descendants(child.id)
+    #     #             self.db.delete(child)
+            
+    #     #     delete_descendants(tag_id)
+        
+    #     # Delete the tag itself
+    #     self.db.delete(tag)
+    #     self.db.commit()
+    
+    
+    
+    
+    
+    
+    def get_tag(self, tag_id: UUID) -> Optional[TagResponse]:
+        """Get a tag by ID"""
+        tag = self.db.query(Tag).filter(Tag.id == tag_id).first()
+        return TagResponse.from_orm(tag) if tag else None
+    
+     # obsidian note taking app can connect via symantic links saves into markdonwn
     # start with trying this, create a tag
-    def create_tag(db: Session, user_id: str, tag_name: str):
+    def create_tag_openfga_todo(db: Session, user_id: str, tag_name: str):
         """Creates a new tag and assigns ownership in OpenFGA."""
 
         OPENFGA_URL = '127.0.0.1:1234'
@@ -54,27 +113,6 @@ class TagRepository:
 
         return new_tag
     
-    def create_tag(self, name: str, parent_id: Optional[UUID] = None) -> TagResponse:
-        """Create a new tag"""
-        # Check if tag with same name exists under the same parent
-        existing_tag = self.db.query(Tag).filter(
-            Tag.name == name,
-            Tag.parent_id == parent_id
-        ).first()
-        
-        if existing_tag:
-            raise ValueError(f"Tag '{name}' already exists in this scope")
-        
-        tag = Tag(name=name, parent_id=parent_id)
-        self.db.add(tag)
-        self.db.commit()
-        self.db.refresh(tag)
-        return TagResponse.from_orm(tag)
-    
-    def get_tag(self, tag_id: UUID) -> Optional[TagResponse]:
-        """Get a tag by ID"""
-        tag = self.db.query(Tag).filter(Tag.id == tag_id).first()
-        return TagResponse.from_orm(tag) if tag else None
     
     # def get_tag(db: Session, user_id: str, tag_id: str):
     #     """Fetches a tag if the user is either the owner or has view access via OpenFGA."""
@@ -171,33 +209,7 @@ class TagRepository:
         self.db.refresh(tag)
         return TagResponse.from_orm(tag)
     
-    def delete_tag(self, tag_id: UUID, recursive: bool = False):
-        """
-        Delete a tag. If recursive=True, also delete all child tags.
-        Otherwise, raise an error if the tag has children.
-        """
-        tag = self.db.query(Tag).filter(Tag.id == tag_id).first()
-        if not tag:
-            raise ValueError(f"Tag with ID {tag_id} not found")
-        
-        # Check for child tags
-        children = self.db.query(Tag).filter(Tag.parent_id == tag_id).all()
-        if children and not recursive:
-            raise ValueError("Cannot delete tag with children. Use recursive=True to delete children as well.")
-        
-        if recursive:
-            # Delete all descendants
-            def delete_descendants(parent_id):
-                children = self.db.query(Tag).filter(Tag.parent_id == parent_id).all()
-                for child in children:
-                    delete_descendants(child.id)
-                    self.db.delete(child)
-            
-            delete_descendants(tag_id)
-        
-        # Delete the tag itself
-        self.db.delete(tag)
-        self.db.commit()
+
     
     def get_tag_hierarchy(self, root_id: Optional[UUID] = None) -> List[Dict]:
         """

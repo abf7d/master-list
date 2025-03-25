@@ -8,13 +8,14 @@ from fastapi import Request
 from fastapi import APIRouter, Depends, HTTPException
 from services.note_service import NoteService
 from core.database import get_db
-from models.models import TagResponse, NoteGroupResponse
+from models.models import TagButton, TagCreation, TagResponse, NoteGroupResponse
 from core.auth import authenticate
 
 from sqlalchemy.orm import Session
 from typing import List
 import logging
 from services.graph_service import GraphService
+from services.token_service import JwtResponse, TokenService
 
 router = APIRouter()
 # router = APIRouter(prefix="/account")
@@ -30,6 +31,11 @@ def get_note_service(db: Session = Depends(get_db)):
 
 def get_graph_service():
     return GraphService()
+
+
+def get_token_service():
+    return TokenService()
+
 
 @router.get("/tags/", response_model=List[TagResponse])
 @authenticate
@@ -54,22 +60,65 @@ async def get_child_tags(
 
 
 
+#TODO: move this to tag_routes
+@router.post("/tag", response_model=TagResponse,)
+@authenticate
+async def create_tag_button(request: Request, tag_button: TagButton,
+    graph_service: GraphService = Depends(get_graph_service),
+    note_service: NoteService = Depends(get_note_service),
+    token_service: TokenService = Depends(get_token_service)):
+    # tag_buttons_db.append(tag_button)
+    # Convert it to a TagCreation by unpacking and adding the id
+    claims = await graph_service.get_claims(request.state.user_id)
+    role = token_service.get_role(request.state.user_id, request.state.exp, claims, request.state.decoded_token)
 
-# Look at modified files and use this 
-@router.post("/tags/", response_model=TagResponse)
-async def create_tag(
-    request: Request,
-    name: str, 
-    parent_tag_id: Optional[UUID] = None,
-    note_service: NoteService = Depends(get_note_service)
-):
-    """Create a new tag"""
-   
-    return note_service.create_tag( name=name, user_id=request.state.user_id, parent_tag_id=parent_tag_id)
-    # return note_service.create_tag(name=name, parent_tag_id=parent_tag_id)
+    tag_creation = TagCreation(**tag_button.dict(), id=-1)
 
+    if(role == "user" or role == "admin"):
+        print('IS AUTHORIZED!!!!!!!!!')
+        index = note_service.create_tag(tag_button.name, request.state.user_id, tag_button.color, tag_button.backgroundcolor)
+        print('Finished Save!!!!!!!!!')
+        tag_creation.id = index
+    # Now create the TagResponse
+    response = TagResponse(
+        message="Tag created successfully",
+        error="",
+        data=tag_creation
+    )
+    # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
+    # response = TagResponse('success', None, data)
+    print('tag response', response)
+    return response
 
+@router.delete("/tag", response_model=TagResponse,)
+@authenticate
+async def delete_tag_button(request: Request, tag_button: TagButton,
+    graph_service: GraphService = Depends(get_graph_service),
+    note_service: NoteService = Depends(get_note_service),
+    token_service: TokenService = Depends(get_token_service)):
+    # tag_buttons_db.append(tag_button)
+    # Convert it to a TagCreation by unpacking and adding the id
+    claims = await graph_service.get_claims(request.state.user_id)
+    role = token_service.get_role(request.state.user_id, request.state.exp, claims, request.state.decoded_token)
 
+    tag_creation = TagCreation(**tag_button.dict(), id=-1)
+
+    if(role == "user" or role == "admin"):
+        print('IS AUTHORIZED!!!!!!!!!')
+        
+        index = note_service.delete_tag(tag_button.name, request.state.user_id, tag_button.color, tag_button.backgroundcolor)
+        print('Finished Save!!!!!!!!!')
+        tag_creation.id = index
+    # Now create the TagResponse
+    response = TagResponse(
+        message="Tag deleted successfully",
+        error="",
+        data=tag_creation
+    )
+    # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
+    # response = TagResponse('success', None, data)
+    print('tag response', response)
+    return response
 
 
 @router.post("/tags/{tag_id}/notes/", response_model=NoteGroupResponse)

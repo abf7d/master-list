@@ -48,4 +48,8 @@ export class HomeComponent {
           catchError(() => of(false)),
       );
   }
+
+  public logout() {
+    this.authService.logout()
+  }
 }

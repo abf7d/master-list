@@ -35,3 +35,17 @@ class NoteGroupResponse(BaseModel):
     notes: List[NoteResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+class TagButton(BaseModel):
+    name: str
+    color: str
+    backgroundcolor: str
+
+class TagCreation(TagButton):
+    id: int
+
+class TagResponse(BaseModel):
+    message: Optional[str]
+    error: Optional[str]
+    data: TagCreation
+    

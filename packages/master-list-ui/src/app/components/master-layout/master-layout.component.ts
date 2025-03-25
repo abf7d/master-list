@@ -29,6 +29,7 @@ import { MasterLayoutService } from './master-layout.service';
 import { NavListComponent } from '../nav-list/nav-list.component';
 import { MsalService } from '@azure/msal-angular';
 import { AuthCoreService } from '@master-list/auth';
+import { TagUpdate } from '../../types/tag/tag-update';
 // import { MsalService } from '@master-list/auth';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
@@ -94,6 +95,8 @@ export class MasterLayoutComponent implements AfterViewInit {
   public error = false;
   private noteId!: string;
   public popListOut = false;
+  public updateDeleteName!: string;
+  public updateAddName!: TagUpdate;
  
   affectedRows: Paragraph[] = [];
   constructor(
@@ -231,7 +234,20 @@ export class MasterLayoutComponent implements AfterViewInit {
 
   public addTag(tag: TagSelection) {
     this.tagColorService.addTag(tag);
+    this.tagApi.createTag(tag).subscribe(response =>
+      console.log('add tag response', response)
+    );
   }
+  public deleteTag(name: string) {
+    this.tagApi.deleteTag(name).subscribe(response =>
+      console.log('add tag response', response)
+    );
+    // this.tagColorService.addTag(tag);
+    // this.tagApi.createTag(tag).subscribe(response =>
+    //   console.log('tag response', response)
+    // );
+  }
+  public removeTag () {}
   // nextProduct() {
   //   this.selectedProduct.update((selected) => {
   //     const index = this.products().indexOf(selected);

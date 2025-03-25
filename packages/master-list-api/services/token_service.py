@@ -104,3 +104,32 @@ class TokenService:
         except Exception as ex:
             logger.exception(f"Error creating token: {str(ex)}")
             return None
+    
+    # TODO: change to dictionary for gtroups so you return mutliple    
+    def get_role(self, username: str, exp: Any, groups: List[Claim], decoded_token: dict) -> JwtResponse:
+        """
+        Create an unsigned JWT token with claims.
+        
+        Args:
+            username: The username to include in the token
+            identity: Dictionary containing identity claims
+            groups: List of group claims
+            
+        Returns:
+            JwtResponse containing the token and expiration time, or None if creation fails
+        """
+        isAuthorized = False
+        for group in groups:
+            if group.value == 'Site Admin':
+                isAdmin = True
+            if group.value == 'Authorized User':
+                isAuthorized = True
+        
+            # Get role
+        role = 'guest'
+        if isAdmin:
+            role = 'admin'
+        elif isAuthorized:
+            role = 'user'
+
+        return role
