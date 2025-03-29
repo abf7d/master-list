@@ -232,21 +232,34 @@ export class MasterLayoutComponent implements AfterViewInit {
     });
   }
 
-  public addTag(tag: TagSelection) {
-    this.tagColorService.addTag(tag);
-    this.tagApi.createTag(tag).subscribe(response =>
-      console.log('add tag response', response)
-    );
+  public addTag(tag: string) {
+    
+    this.tagApi.createTag(tag).subscribe(response => {
+      this.tagColorService.addTag(response.data);
+      console.log('add tag response', response);
+      this.updateAddName = response.data;
+    });
   }
   public deleteTag(name: string) {
-    this.tagApi.deleteTag(name).subscribe(response =>
-      console.log('add tag response', response)
+    this.tagApi.deleteTag(name).subscribe(response => {
+        console.log('add tag response', response);
+        if (response.data) {
+          this.updateDeleteName = name
+          }
+      }
     );
-    // this.tagColorService.addTag(tag);
-    // this.tagApi.createTag(tag).subscribe(response =>
-    //   console.log('tag response', response)
-    // );
   }
+  // public addTag(tag: TagSelection) {
+  //   this.tagColorService.addTag(tag);
+  //   this.tagApi.createTag(tag).subscribe(response =>
+  //     console.log('add tag response', response)
+  //   );
+  // }
+  // public deleteTag(name: string) {
+  //   this.tagApi.deleteTag(name).subscribe(response =>
+  //     console.log('add tag response', response)
+  //   );
+  // }
   public removeTag () {}
   // nextProduct() {
   //   this.selectedProduct.update((selected) => {

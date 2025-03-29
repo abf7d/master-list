@@ -6,6 +6,7 @@ import * as Msal from '@azure/msal-browser';
 import { filter, Subject, Subscription, takeUntil } from 'rxjs';
 import { ClaimsService } from '../claims-service/claims.service';
 import { AuthStateService } from '../auth-state/auth-state';
+import * as CONST from '../constants';
 
 type IdTokenClaimsWithPolicyId = Msal.IdTokenClaims & {
     acr?: string;
@@ -112,11 +113,59 @@ export class AuthCoreService {
         return accounts && accounts.length > 0;
     }
 
+    public acquireSilent(): Promise<Msal.AuthenticationResult | null> {
+        const authState = this.authState;
+        const claimService = this.claimsService;
+        return this.msalInstance.acquireTokenSilent(this.accessTokenRequest).then(
+            access_token => {
+                if (!access_token.accessToken) {
+                    this.msalInstance.acquireTokenRedirect(accessTokenRequest);
+                    this.authState.loginError$.next(true);
+                    this.claimsService.setError(true);
+                } else {
+                    sessionStorage.removeItem(CONST.CLAIMS_TOKEN_CACHE_KEY);
+                    this.claimsService.initializeClaims().then(
+                        isAuthorized => {
+                            this.authState.isAuthorized$.next(isAuthorized);
+                        },
+                        reason => {
+                            if (reason.status === 401) {
+                                this.authState.isAuthorized$.next(false);
+                                this.authState.isLoggedIn$.next(false);
+                                return;
+                            }
+                            console.error('claims error:', reason);
+                            this.authState.loginError$.next(true);
+                        },
+                    );
+                    // this.isLoggedIn$.next(true);
+                }
+                return access_token;
+            },
+            function (reason) {
+                console.error(reason);
+                authState.loginError$.next(true);
+                claimService.setError(true);
+                return null;
+            },
+        );
+    }
+    
+    
+    
+    
     private readonly destroying$ = new Subject<void>();
+    
+    
+    
+    
+    
     ngOnDestroy(): void {
         this.destroying$.next();
         this.destroying$.complete();
     }
+
+
 
     // private checkAndLoadClaims(): void {
     //     // Check if user is logged in

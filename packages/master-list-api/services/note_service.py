@@ -1,14 +1,15 @@
 from typing import List, Optional
 from uuid import UUID
 import uuid
-from fastapi import HTTPException
+from fastapi import HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Tag, Note, NoteTag
-from models.models import CreateNoteGroup, NoteGroupResponse, TagResponse, NoteResponse
+from models.models import CreateNoteGroup, NoteGroupResponse, TagEntry, TagResponse, NoteResponse
 from sqlalchemy import and_
-from sqlalchemy import func
+from sqlalchemy import func, case
+
 
 class NoteService:
     def __init__(self, db: Session):
@@ -89,7 +90,7 @@ class NoteService:
         )
 
     # TODO: Move to tag repo, then call from here
-    def create_tag(self, name: str, user_id:  Optional[UUID], color: str, backgroundcolor: str, parent_tag_id: Optional[UUID] = None) -> int:
+    def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> int:
         """
         Create a new tag with the specified name and optional parent.
         
@@ -161,7 +162,7 @@ class NoteService:
         if not existing_tag:
             # Return a 409 Conflict status code with a clear message
             raise HTTPException(
-                status_code=409,  # Conflict is appropriate for this case
+                status_code=404,  # Conflict is appropriate for this case
                 detail=f"A tag named '{name}' doesn't exist for this user"
             )
         
@@ -172,28 +173,60 @@ class NoteService:
         return True
         
         
-    def get_tags(self, user_id: str, parent_tag_id: Optional[UUID] = None) -> Optional[List[TagResponse]]:
+    def get_tags(
+        self,
+        user_id: str,
+        query: Optional[str] = None,
+        page: int = 1,
+        pageSize: int = 10,
+        parent_tag_id: Optional[UUID] = None
+    ) -> Optional[List[TagEntry]]:
         """
-        Create a new tag with the specified name and optional parent.
-        
+        Get tags by user with optional filtering and pagination.
+
         Args:
-            name: Name for the tag
+            user_id: ID of the user
+            query: Optional string to search tag names
+            page: Page number (1-indexed)
+            pageSize: Number of tags per page
             parent_tag_id: Optional UUID of parent tag
-            
+
         Returns:
-            TagResponse for the created tag
+            A list of TagResponse models
         """
 
-        tags = self.db.query(Tag).filter(and_(Tag.parent_id == parent_tag_id, Tag.created_by == user_id))
+        # Base filters
+        filters = [Tag.created_by == user_id]
+        if parent_tag_id is not None:
+            filters.append(Tag.parent_id == parent_tag_id)
+
+        # Optional search query (e.g., for autocomplete)
+        if query:
+            filters.append(Tag.name.ilike(f"{query}%"))  # Starts with; for partial match use `%{query}%`
+
+        # Query with filters and pagination
+        tags_query: Query = self.db.query(Tag).filter(and_(*filters))
+        
+        # Need to track usage statistics: https://claude.ai/chat/5f7f1716-0dca-4db7-9d21-fcf1de0c92a6
+        tags_query = tags_query.order_by(
+            case((Tag.name == query, 1), else_=0).desc(),
+            func.length(Tag.name),
+            Tag.name.asc()
+        )  # Optional ordering
+        tags_query = tags_query.offset((page - 1) * pageSize).limit(pageSize)
+
+        tags = tags_query.all()
 
         tag_responses = []
         for tag in tags:
+            
             tag_responses.append(
-                TagResponse(
+                TagEntry(
                     id=tag.id,
                     name=tag.name,
                     parent_id=tag.parent_id,
-                    created_at=tag.created_at
+                    created_at=tag.created_at,
+                    order=tag.creation_order
                 )
             )
         

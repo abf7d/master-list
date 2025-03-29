@@ -4,12 +4,21 @@ import { Injectable } from '@angular/core';
     providedIn: 'root',
 })
 export class ColorFactoryService {
+    defaultSchemeIndex = 0;
     schemes;
     constructor() {
         this.schemes = this.getColorSchemes();
     }
 
-    public getColor(name: string, index: number) {
+    public getColor(colorIndex: number, schemeIndex: number = 0) {
+        schemeIndex = schemeIndex ? schemeIndex : this.defaultSchemeIndex;
+        schemeIndex = schemeIndex % this.schemes.length;
+        const scheme = this.schemes[schemeIndex];
+        const color = scheme.colors[colorIndex % scheme.colors.length];
+        return color;
+    }
+
+    public getSchemeColor(name: string, index: number) {
         const scheme = this.schemes.find(s => s.name === name);
         if (scheme == null) {
             return { backgroundcolor: 'black', color: 'white', name: 'default', inactive: '', inactiveText: '', mouseover: '' };

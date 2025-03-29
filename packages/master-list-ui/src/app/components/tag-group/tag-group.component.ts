@@ -2,13 +2,15 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { TagSelection } from '../../types/tag';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TagApiService, TagProps } from '../../services/tag-api';
+import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 // import { TagSelection } from '@critical-pass/project/types';
 
 @Component({
     selector: 'app-tag-group',
     templateUrl: './tag-group.component.html',
     styleUrls: ['./tag-group.component.scss'],
-    imports: [CommonModule, FormsModule]
+    imports: [CommonModule, FormsModule, ClickOutsideDirective]
     // standalone: false,
 })
 export class TagGroupComponent implements OnInit {
@@ -24,11 +26,16 @@ export class TagGroupComponent implements OnInit {
     @Output() assignTags = new EventEmitter<string[]>();
     @Output() unassignTags = new EventEmitter<string>();
     @Output() selectTag = new EventEmitter<string>();
-    @Output() removeTag = new EventEmitter<TagSelection>();
-    @Output() addTag = new EventEmitter<string>();
+    @Output() removeTag = new EventEmitter<RemoveTag>();
+    @Output() addTag = new EventEmitter<AddTag>();
     public newTag = '';
+    public matchedEntries: TagProps[] = [];
     public isSearching = false;
-    constructor() {}
+    public autoCompleteInput = '';
+    public uniqeName = false;
+    public selectedIndex = 0;
+    public autoCloseMenuToggle = false;
+    constructor(private tagApi: TagApiService) {}
     public assign = () => this.assignTags.emit(this.tags.filter(x => x.isSelected).map(x => x.name));
     public removeAll = () => this.unassignTags.emit();
     public select = (tag: TagSelection) => {
@@ -40,15 +47,63 @@ export class TagGroupComponent implements OnInit {
         }
         tag.isSelected = !tag.isSelected;
     };
-    public remove = (tag: TagSelection) => this.removeTag.emit(tag);
-    public add(event: any) {
+    public remove = (tag: TagSelection) => this.removeTag.emit({tag, delete: true});
+    public add(event: any, create = true, tag?: TagProps) {
         const name = event.value;
         if (this.tags.find(x => x.name === name)) {
             return;
         }
-        this.addTag.emit(name);
-        this.newTag = '';
+        this.addTag.emit({name, tag, create});
+        this.autoCompleteInput = '';
     }
     public filterTags(): void {}
     public ngOnInit(): void {}
+
+    public autoComplete(currentValue: string) { //event: KeyboardEvent, previousValue: string) {
+        // const key = event.key;
+        // const isPrintable = key.length === 1 && /^[\w\d\s`~!@#$%^&*()_\-+={}[\]|\\:;"'<>,.?/]$/.test(key);
+
+        // // if (key === 'Backspace' || key === 'Delete')
+        // if (isPrintable) {
+        //     const currentValue = previousValue + event.key;
+        this.autoCloseMenuToggle = false;
+            console.log('currentValue', currentValue);
+            this.matchedEntries = []
+            if (currentValue.length > 2) {
+                this.tagApi.autoCompleteTags(currentValue, 1, 10).subscribe(tags => {
+                    console.log('matched tags', tags);
+                    // this.matchedEntries = tags.data.map((y: any) => y.name);
+                    
+                    const map = new Map<string, boolean>(this.tags.map(t => [t.name, true]))
+                    this.matchedEntries = tags.data.filter(t => !map.get(t.name))
+                    this.uniqeName = !this.matchedEntries.map(t => t.name).includes(this.autoCompleteInput);
+                })
+        //     }
+        }  else {
+            this.uniqeName = false;
+        }
+    }
+    public showTagMenu(tag: TagSelection) {
+        this.tags.forEach(t => t.showDelMenu = t.name !== tag.name ? false : !tag.showDelMenu)
+    }
+    public closeCreateMenu = () => this.autoCloseMenuToggle = true;
+    public closeDeleteMenu = (tag: TagSelection) => tag.showDelMenu = false; 
+    public includeInList(tag: TagProps) {
+       this.add({value: tag.name}, false, tag);
+       this.matchedEntries = this.matchedEntries.filter(t => t.name !== tag.name)
+    }
+    public excludeFromList = (tag: TagSelection) => {
+        this.removeTag.emit({tag, delete: false})
+        this.tags = this.tags.filter(t => t.name !== tag.name);
+    }  
+}
+
+export interface AddTag {
+    name?: string;
+    tag?: TagProps;
+    create: boolean;
+}
+export interface RemoveTag {
+    tag?: TagSelection;
+    delete: boolean;
 }

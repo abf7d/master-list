@@ -67,3 +67,15 @@ svg {
 .search-text {
     padding-left: 4px;
 }
+.autocomplete {
+    width: 200px;
+    height: auto;
+    padding: 10px;
+    background-color: #fafafa;
+    position: absolute;
+    .entry {
+        padding: 6px;
+    }
+}
+.unique-name { display: flex; justify-content: space-between; }
+.tab { color: #999}

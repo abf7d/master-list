@@ -144,7 +144,9 @@
           [tagGroups]="(tagGroup$ | async) ?? {name: '', tags: []}" 
           (assignTag)="assignTagToRows($event)"
           (removeTag)="deleteTag($event)"
-          (addTag)="addTag($event)"></app-meta-tags>
+          (addTag)="addTag($event)"
+          [completeAdd]="updateAddName"
+          [completeDelete]="updateDeleteName"></app-meta-tags>
           <div class="active-list-panel" >
             <div class="active-list">
               <div class="preview-container">

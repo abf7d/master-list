@@ -3,6 +3,7 @@ import { ColorFactoryService } from './color-factory.service';
 import { Activity, Project } from '../types/projtect';
 // import { TagGroupOption } from '../types/tag/tag-group-option';
 import { TagGroup, TagGroupOption, TagSelection, TagSelectionGroup } from '../types/tag';
+import { TagUpdate } from '../types/tag/tag-update';
 // import { Activity, Project, TagGroup, TagGroupOption, TagLoad, TagSelection, TagSelectionGroup } from '@critical-pass/project/types';
 // import { ColorFactoryService } from '@critical-pass/shared/serializers';
 
@@ -11,7 +12,7 @@ import { TagGroup, TagGroupOption, TagSelection, TagSelectionGroup } from '../ty
 })
 export class TagCssGenerator {
   // Add this to your component or create a separate service
-
+  constructor(private colorFactory: ColorFactoryService) {}
   /**
    * A map of known tag names to their respective colors
    * You can populate this from your application settings or API
@@ -76,7 +77,7 @@ export class TagCssGenerator {
 //     return color;
 //   }
 
-  addTag(tag: TagSelection) {
+  addTag(tag: TagUpdate){ //tag: TagSelection) {
     // let styleElement = document.getElementById(
     //     'dynamic-tag-styles'
     //   ) as HTMLStyleElement;
@@ -99,10 +100,12 @@ export class TagCssGenerator {
      
     //     const sanitizedTag = this.sanitizeTagForCssClass(tag.name);
         const normalizedTag = tag.name.toLowerCase().trim();
+        const colors = this.colorFactory.getColor(tag.id);
     
         // Get the color for this tag
         // const color = this.getColorForTag(tag);
-        const color = tag.backgroundcolor;
+        // const color = tag.backgroundcolor;
+        const color = colors.backgroundcolor;
         this.tagColorMap.set(normalizedTag, color);
     
         // Add CSS rule for this tag targeting the ::before pseudo-element
