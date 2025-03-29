@@ -28,7 +28,7 @@
     </div>
     }
     <div class="tags">
-        <div *ngFor="let tag of tags">
+        <div *ngFor="let tag of tags()">
             <button
                 type="button"
                 (click)="select(tag)"

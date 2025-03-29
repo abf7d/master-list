@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, input, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { TagSelection } from '../../types/tag';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +18,7 @@ export class TagGroupComponent implements OnInit {
     @Input() nameAttr!: string;
     @Input() colorBucket!: string;
     @Input() multiselect: boolean = false;
-    @Input() tags: TagSelection[] = [];
+    readonly tags = input<TagSelection[]>([])//<TagSelection[]>{[]);
     @Input() description!: string;
     @Input() allowAdd = true;
     
@@ -36,12 +36,12 @@ export class TagGroupComponent implements OnInit {
     public selectedIndex = 0;
     public autoCloseMenuToggle = false;
     constructor(private tagApi: TagApiService) {}
-    public assign = () => this.assignTags.emit(this.tags.filter(x => x.isSelected).map(x => x.name));
+    public assign = () => this.assignTags.emit(this.tags().filter(x => x.isSelected).map(x => x.name));
     public removeAll = () => this.unassignTags.emit();
     public select = (tag: TagSelection) => {
         this.selectTag.emit(tag.name);
         if (!this.multiselect) {
-            this.tags.forEach(x => {
+            this.tags().forEach(x => {
                 if (x.name !== tag.name) x.isSelected = false;
             });
         }
@@ -50,7 +50,7 @@ export class TagGroupComponent implements OnInit {
     public remove = (tag: TagSelection) => this.removeTag.emit({tag, delete: true});
     public add(event: any, create = true, tag?: TagProps) {
         const name = event.value;
-        if (this.tags.find(x => x.name === name)) {
+        if (this.tags().find(x => x.name === name)) {
             return;
         }
         this.addTag.emit({name, tag, create});
@@ -74,7 +74,7 @@ export class TagGroupComponent implements OnInit {
                     console.log('matched tags', tags);
                     // this.matchedEntries = tags.data.map((y: any) => y.name);
                     
-                    const map = new Map<string, boolean>(this.tags.map(t => [t.name, true]))
+                    const map = new Map<string, boolean>(this.tags().map(t => [t.name, true]))
                     this.matchedEntries = tags.data.filter(t => !map.get(t.name))
                     this.uniqeName = !this.matchedEntries.map(t => t.name).includes(this.autoCompleteInput);
                 })
@@ -84,7 +84,7 @@ export class TagGroupComponent implements OnInit {
         }
     }
     public showTagMenu(tag: TagSelection) {
-        this.tags.forEach(t => t.showDelMenu = t.name !== tag.name ? false : !tag.showDelMenu)
+        this.tags().forEach(t => t.showDelMenu = t.name !== tag.name ? false : !tag.showDelMenu)
     }
     public closeCreateMenu = () => this.autoCloseMenuToggle = true;
     public closeDeleteMenu = (tag: TagSelection) => tag.showDelMenu = false; 
@@ -94,7 +94,8 @@ export class TagGroupComponent implements OnInit {
     }
     public excludeFromList = (tag: TagSelection) => {
         this.removeTag.emit({tag, delete: false})
-        this.tags = this.tags.filter(t => t.name !== tag.name);
+        // const filteredTags = this.tags().filter(t => t.name !== tag.name)
+        // this.tags.set(filteredTags);
     }  
 }
 
