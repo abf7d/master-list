@@ -156,7 +156,7 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
         note_service: NoteService = Depends(get_note_service),):
     print('NOTE GROUP', note_group)
     
-    # note_service.create_note_items(note_group.items, note_group.parent_tag_id, request.state.user_id)
+    note_service.update_note_items(note_group, request.state.user_id)
     
     
     # db_note = Note(

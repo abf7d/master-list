@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Tag, Note, NoteTag
-from models.models import CreateNoteGroup, NoteGroupResponse, TagEntry, TagResponse, NoteResponse
+from models.models import CreateNoteGroup, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
 from sqlalchemy import and_
 from sqlalchemy import func, case
 
@@ -15,7 +15,81 @@ class NoteService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_notes_for_tag(self, tag_id: UUID, content_list: List[str]) -> NoteGroupResponse:
+    # def create_notes_for_tag(self, tag_id: UUID, content_list: List[str]) -> NoteGroupResponse:
+    #     """
+    #     Create notes under an existing tag.
+        
+    #     Args:
+    #         tag_id: UUID of the existing parent tag
+    #         content_list: List of text content for each note
+            
+    #     Returns:
+    #         NoteGroupResponse with the tag and created notes
+            
+    #     Raises:
+    #         NoResultFound: If the tag_id doesn't exist
+    #     """
+    #     # Verify tag exists
+    #     tag = self.db.query(Tag).filter(Tag.id == tag_id).first()
+    #     if not tag:
+    #         raise NoResultFound(f"Tag with id {tag_id} not found")
+        
+    #     # Create notes
+    #     notes = []
+    #     for i, content_item in enumerate(content_list):
+    #         note = Note(
+    #             content=content_item,
+    #             creation_tag_id=tag_id,
+    #             sequence_number=i
+    #         )
+    #         self.db.add(note)
+    #         notes.append(note)
+        
+    #     self.db.flush()
+        
+    #     # Create note-tag associations
+    #     for note in notes:
+    #         note_tag = NoteTag(
+    #             note_id=note.id,
+    #             tag_id=tag_id
+    #         )
+    #         self.db.add(note_tag)
+        
+    #     # Commit changes
+    #     self.db.commit()
+        
+    #     # Refresh objects from DB to get all fields
+    #     for note in notes:
+    #         self.db.refresh(note)
+        
+    #     # Construct response
+    #     tag_response = TagResponse(
+    #         id=tag.id,
+    #         name=tag.name,
+    #         parent_id=tag.parent_id,
+    #         created_at=tag.created_at
+    #     )
+        
+    #     note_responses = []
+    #     for note in notes:
+    #         note_responses.append(
+    #             NoteResponse(
+    #                 id=note.id,
+    #                 content=note.content,
+    #                 created_at=note.created_at,
+    #                 updated_at=note.updated_at,
+    #                 creation_tag_id=note.creation_tag_id,
+    #                 sequence_number=note.sequence_number,
+    #                 tags=[tag_response]  # Each note has the parent tag
+    #             )
+    #         )
+        
+    #     return NoteGroupResponse(
+    #         tag=tag_response,
+    #         notes=note_responses
+    #     )
+    
+    def create_notes_items(self, note_group: CreateNoteGroup, user_id: UUID) -> NoteGroupResponse:
         """
         Create notes under an existing tag.
         
@@ -29,31 +103,63 @@ class NoteService:
         Raises:
             NoResultFound: If the tag_id doesn't exist
         """
-        # Verify tag exists
-        tag = self.db.query(Tag).filter(Tag.id == tag_id).first()
+        # Verify tag/list/note exists
+        tag = self.db.query(Tag).filter(Tag.id == note_group.parent_tag_id, Tag.created_by == user_id).first()
         if not tag:
-            raise NoResultFound(f"Tag with id {tag_id} not found")
+            raise NoResultFound(f"Tag with id {note_group.parent_tag_id} by {user_id} not found")
+        
+        # delete all of the notes with the parent_tag_id
+        self.db.query(Note).filter(Note.creation_tag_id == note_group.parent_tag_id, Note.created_by == user_id).delete()
+        self.db.commit()
         
         # Create notes
         notes = []
-        for i, content_item in enumerate(content_list):
+        for i, item in enumerate(note_group.items):
             note = Note(
-                content=content_item,
-                creation_tag_id=tag_id,
-                sequence_number=i
+                id=item.id,
+                content=item.content,
+                creation_tag_id=note_group.parent_tag_id,
+                sequence_number=item.position,
+                created_by=user_id
             )
             self.db.add(note)
             notes.append(note)
         
         self.db.flush()
         
+        # Delete all of the NoteTag associations for the parent tag
+        self.db.query(NoteTag).filter(NoteTag.tag_id == note_group.parent_tag_id, NoteTag.tag_id == note_group.parent_tag_id).delete() # NoteTag.note_id.in_([note.id for note in notes])).delete()
+        
         # Create note-tag associations
-        for note in notes:
+        for note, item in zip(notes, note_group.items):
             note_tag = NoteTag(
                 note_id=note.id,
-                tag_id=tag_id
+                tag_id=note_group.parent_tag_id
             )
             self.db.add(note_tag)
+            
+            # assign tags to the note, need to not duplicate tags
+            for tag in item.tags:
+                
+                #get the tag id first
+                tag_obj = self.db.query(Tag).filter(Tag.name == tag.name, Tag.created_by == user_id).first()
+                if not tag_obj:
+                    raise NoResultFound(f"Tag with name {tag.name} by {user_id} not found")
+                
+                # create NoteTag if it doesn't exist
+                existing_note_tag = self.db.query(NoteTag).filter(
+                    NoteTag.note_id == note.id,
+                    NoteTag.tag_id == tag_obj.id,
+                ).first()
+                if not existing_note_tag:
+                    # Create a new NoteTag association
+                    note_tag = NoteTag(
+                        note_id=note.id,
+                        tag_id=tag_obj.id
+                    )
+                    self.db.add(note_tag)
+                
+               
         
         # Commit changes
         self.db.commit()
@@ -63,30 +169,36 @@ class NoteService:
             self.db.refresh(note)
         
         # Construct response
-        tag_response = TagResponse(
-            id=tag.id,
-            name=tag.name,
-            parent_id=tag.parent_id,
-            created_at=tag.created_at
-        )
+        # tag_response = TagResponse(
+        #     id=tag.id,
+        #     name=tag.name,
+        #     parent_id=tag.parent_id,
+        #     created_at=tag.created_at
+        # )
         
-        note_responses = []
-        for note in notes:
-            note_responses.append(
-                NoteResponse(
-                    id=note.id,
-                    content=note.content,
-                    created_at=note.created_at,
-                    updated_at=note.updated_at,
-                    creation_tag_id=note.creation_tag_id,
-                    sequence_number=note.sequence_number,
-                    tags=[tag_response]  # Each note has the parent tag
-                )
-            )
+        # note_responses = []
+        # for note in notes:
+        #     note_responses.append(
+        #         NoteResponse(
+        #             id=note.id,
+        #             content=note.content,
+        #             created_at=note.created_at,
+        #             updated_at=note.updated_at,
+        #             creation_tag_id=note.creation_tag_id,
+        #             sequence_number=note.sequence_number,
+        #             tags=[tag_response]  # Each note has the parent tag
+        #         )
+        #     )
         
-        return NoteGroupResponse(
-            tag=tag_response,
-            notes=note_responses
+        # return NoteGroupResponse(
+        #     tag=tag_response,
+        #     notes=note_responses
+        # )
+        
+        return NoteItemsResponse(
+            message="Success",
+            error=None,
+            data='test1234'
         )
 
     # TODO: Move to tag repo, then call from here
