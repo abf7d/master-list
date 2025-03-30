@@ -15,7 +15,11 @@ export const routes: Routes = [
     {
         path: 'main',
         loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-        // canActivate: [MsalGuard],
+        canActivate: [AuthorizedUserGuard]
+    },
+    {
+        path: 'main/:id',
+        loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
         canActivate: [AuthorizedUserGuard]
     },
 ];

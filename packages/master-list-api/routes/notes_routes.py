@@ -8,7 +8,7 @@ from fastapi import Request
 from fastapi import APIRouter, Depends, HTTPException
 from services.note_service import NoteService
 from core.database import get_db
-from models.models import ResponseData, TagButton, TagCreation, TagResponse, NoteGroupResponse
+from models.models import CreateNoteGroup, NoteItemsResponse, ResponseData, TagButton, TagCreation, TagResponse, NoteGroupResponse
 from core.auth import authenticate
 
 from sqlalchemy.orm import Session
@@ -129,40 +129,99 @@ async def delete_tag_button(request: Request, tag_name: str,
     return response
 
 
-@router.post("/tags/{tag_id}/notes/", response_model=NoteGroupResponse)
-async def create_notes_for_tag(
-    tag_id: UUID, 
-    content_list: List[str],
-    note_service: NoteService = Depends(get_note_service)
-):
-    """Create notes under an existing tag"""
-    try:
-        return note_service.create_notes_for_tag(tag_id=tag_id, content_list=content_list)
-    except NoResultFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/tags/{tag_id}/notes/", response_model=NoteGroupResponse)
-async def get_note_group(
-    tag_id: UUID,
-    note_service: NoteService = Depends(get_note_service)
-):
-    """Get all notes for a specific tag"""
-    note_group = note_service.get_note_group_by_tag_id(tag_id)
-    if not note_group:
-        raise HTTPException(status_code=404, detail=f"Tag with id {tag_id} not found")
-    return note_group
+# @router.get("/note-items/{note_id}", response_model=NoteResponse)
+# async def get_note(note_id: str, db: Session = Depends(get_db)):
+#     try:
+#         note_uuid = uuid.UUID(note_id)
+#     except ValueError:
+#         raise HTTPException(status_code=400, detail="Invalid UUID format")
+        
+#     note = db.query(Note).filter(Note.id == note_uuid).first()
+#     if note is None:
+#         raise HTTPException(status_code=404, detail="Note not found")
+        
+#     return NoteResponse(
+#         id=note.id,
+#         title=note.title,
+#         content=note.content,
+#         tags=note.tags.split(",") if note.tags else [],
+#         created_at=note.created_at,
+#         updated_at=note.updated_at
+#     )
 
-@router.patch("/tags/{tag_id}/name", response_model=TagResponse)
-async def update_tag_name(
-    tag_id: UUID,
-    new_name: str,
-    note_service: NoteService = Depends(get_note_service)
-):
-    """Update a tag's name"""
-    try:
-        return note_service.update_tag_name(tag_id=tag_id, new_name=new_name)
-    except NoResultFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+@authenticate
+@router.post("/note-items/", response_model=NoteItemsResponse)
+async def post_note_items(request: Request, note_group: CreateNoteGroup, 
+        note_service: NoteService = Depends(get_note_service),):
+    print('NOTE GROUP', note_group)
+    
+    # note_service.create_note_items(note_group.items, note_group.parent_tag_id, request.state.user_id)
+    
+    
+    # db_note = Note(
+    #     title=note.title,
+    #     content=note.content,
+    #     tags=",".join(note.tags) if note.tags else ""
+    # )
+    # db.add(db_note)
+    # db.commit()
+    # db.refresh(db_note)
+    
+    # Convert db_note to NoteResponse format
+    return NoteItemsResponse(
+        message="Success",
+        error=None,
+        data='test1234'
+    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @router.post("/tags/{tag_id}/notes/", response_model=NoteGroupResponse)
+# async def create_notes_for_tag(
+#     tag_id: UUID, 
+#     content_list: List[str],
+#     note_service: NoteService = Depends(get_note_service)
+# ):
+#     """Create notes under an existing tag"""
+#     try:
+#         return note_service.create_notes_for_tag(tag_id=tag_id, content_list=content_list)
+#     except NoResultFound as e:
+#         raise HTTPException(status_code=404, detail=str(e))
+
+# @router.get("/tags/{tag_id}/notes/", response_model=NoteGroupResponse)
+# async def get_note_group(
+#     tag_id: UUID,
+#     note_service: NoteService = Depends(get_note_service)
+# ):
+#     """Get all notes for a specific tag"""
+#     note_group = note_service.get_note_group_by_tag_id(tag_id)
+#     if not note_group:
+#         raise HTTPException(status_code=404, detail=f"Tag with id {tag_id} not found")
+#     return note_group
+
+# @router.patch("/tags/{tag_id}/name", response_model=TagResponse)
+# async def update_tag_name(
+#     tag_id: UUID,
+#     new_name: str,
+#     note_service: NoteService = Depends(get_note_service)
+# ):
+#     """Update a tag's name"""
+#     try:
+#         return note_service.update_tag_name(tag_id=tag_id, new_name=new_name)
+#     except NoResultFound as e:
+#         raise HTTPException(status_code=404, detail=str(e))
 
 # from fastapi import APIRouter, Depends, HTTPException
 # from services.note_service import NoteService
