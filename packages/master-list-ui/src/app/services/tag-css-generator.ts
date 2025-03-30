@@ -99,6 +99,8 @@ export class TagCssGenerator {
     // //   const uniqueTags = [...new Set(tags)];
      
     //     const sanitizedTag = this.sanitizeTagForCssClass(tag.name);
+
+    console.log('!!!Color id', tag.id)
         const normalizedTag = tag.name.toLowerCase().trim();
         const colors = this.colorFactory.getColor(tag.id);
     

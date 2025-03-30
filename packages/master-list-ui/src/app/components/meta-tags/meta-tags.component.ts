@@ -1,5 +1,5 @@
 import { Component, effect, EventEmitter, input, Input, output, Output } from '@angular/core';
-import { TagButton, TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
+import { TagButton, TagDelete, TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { TagManagerService } from '../../services/tag-manager.service';
 import { Project } from '../../types/projtect';
@@ -22,11 +22,11 @@ export class MetaTagsComponent {
     readonly assignTag = output<string>();
     // readonly tags = input<TagButton[]>([])
     readonly tagGroups = input<TagSelectionGroup>({ name: 'Tag Group', tags: [] }); //({ name: 'Tag Group', tags: [] })
-    readonly addTag = output<string>();
+    readonly addTag = output<AddTag>();
     readonly removeTag = output<string>();
 
     readonly completeAdd = input<TagUpdate>();
-    readonly completeDelete = input<string>();
+    readonly completeDelete = input<TagDelete>();
 
     @Input() allowAdd = true;
     // public tagGroups: TagSelectionGroup;
@@ -84,7 +84,7 @@ export class MetaTagsComponent {
         effect(() => {
             const deletedTagName = this.completeDelete();
             if (deletedTagName) {
-                this.handleDeleteTagComplete(deletedTagName);
+                this.handleDeleteTagComplete(deletedTagName.name);
             }
         });
     }
@@ -222,9 +222,9 @@ export class MetaTagsComponent {
     }
 
     public removeGroup(tag: RemoveTag) {
-      if(!tag.delete){
-        this.handleDeleteTagComplete(tag.tag!.name)
-      }
+        if (!tag.delete) {
+            this.handleDeleteTagComplete(tag.tag!.name);
+        }
         // this.tagGroups().tags.splice(this.tagGroups().tags.indexOf(tag), 1);
         // const groupIndex = this.availableGroups.findIndex(
         //   (x) => x.name === tag.name
@@ -235,47 +235,24 @@ export class MetaTagsComponent {
         //   this.availableGroups.splice(groupIndex, 1);
         // }
         // This sends to master list to remove from map and page
-        else{
-        this.removeTag.emit(tag.tag!.name);
+        else {
+            this.removeTag.emit(tag.tag!.name);
         }
         // this.dashboard.updateProject(this.project, true);
     }
     // Add tag should include an id so the color can be tracked which means the backend getTags should get the id
     // when autocompleting so the tag color can be used here
     public addGroup(tag: AddTag) {
-      const name = tag.name!;
+        const name = tag.name!;
         if (!tag.create) {
-          const tagUpdate: TagUpdate = {name: tag.tag!.name, id: tag.tag!.order}
-          this.handleAddTagComplete(tagUpdate)
-            // const newTag = this.creatNewTag(name, this.tagGroups().tags.length, 0);
-            // this.tagGroups().tags.push(newTag);
-
-            // const newSelectionGroup: TagSelectionGroup = { name, tags: [] };
-            // this.availableGroups.push(newSelectionGroup);
-
-            // const newTagGroupOption: TagGroupOption = {
-            //     name,
-            //     tags: [],
-            //     color: newTag.color,
-            //     backgroundcolor: newTag.backgroundcolor,
-            // };
-            // this.metaTagService.addTagGroupToProject(this.project, newTagGroupOption);
-
-            // // This sends to master list so the color can be added to map for page
-            // const formatedTag: TagSelection = {
-            //     name,
-            //     color: newTag.color,
-            //     backgroundcolor: newTag.backgroundcolor,
-            //     isSelected: false,
-            // };
-        } else {
-        this.addTag.emit(name);
+            const tagUpdate: TagUpdate = { name: tag.tag!.name, id: tag.tag!.order };
+            this.handleAddTagComplete(tagUpdate);
         }
+        this.addTag.emit(tag);
+
         // this.dashboard.updateProject(this.project, true);
     }
     public creatNewTag(name: string, nameIndex: number, groupIndex: number): TagSelection {
-        // const scheme = this.colorFactory.getSchemeByIndex(groupIndex);
-        // const color = scheme.colors[nameIndex % scheme.colors.length];
         const color = this.colorFactory.getColor(nameIndex);
         return {
             name,
@@ -284,13 +261,4 @@ export class MetaTagsComponent {
             isSelected: false,
         };
     }
-    // const bgColor = this.tagNameColor.addNewNameColor(name);
-    // const textColor = this.tagNameColor.getContrastTextColor(bgColor)
-    // return {
-    //   name,
-    //   color: textColor,
-    //   backgroundcolor: bgColor,
-    //   isSelected: false,
-    // };
-    // }
 }

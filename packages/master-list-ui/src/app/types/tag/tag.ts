@@ -37,3 +37,6 @@ export interface TagGroup {
     name: string;
     tags: Tag[];
 }
+export interface TagDelete {
+    name: string;
+}

@@ -22,7 +22,7 @@ import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';
 import { TagCssGenerator } from '../../services/tag-css-generator';
 import { BehaviorSubject, debounceTime, interval, Observable, skip, Subject, tap } from 'rxjs';
-import { TagSelection, TagSelectionGroup } from '../../types/tag';
+import { TagDelete, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { TagApiService } from '../../services/tag-api';
 import { ToastrService } from 'ngx-toastr';
 import { MasterLayoutService } from './master-layout.service';
@@ -30,6 +30,7 @@ import { NavListComponent } from '../nav-list/nav-list.component';
 import { MsalService } from '@azure/msal-angular';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
+import { AddTag } from '../tag-group/tag-group.component';
 // import { MsalService } from '@master-list/auth';
 // import { NoteEditorComponent } from '../note-editor/note-editor.component';
 // import { NotesPanelComponent } from '../notes-panel/notes-panel.component';
@@ -95,7 +96,7 @@ export class MasterLayoutComponent implements AfterViewInit {
   public error = false;
   private noteId!: string;
   public popListOut = false;
-  public updateDeleteName!: string;
+  public updateDeleteName!: TagDelete;
   public updateAddName!: TagUpdate;
  
   affectedRows: Paragraph[] = [];
@@ -232,19 +233,23 @@ export class MasterLayoutComponent implements AfterViewInit {
     });
   }
 
-  public addTag(tag: string) {
-    
-    this.tagApi.createTag(tag).subscribe(response => {
-      this.tagColorService.addTag(response.data);
-      console.log('add tag response', response);
-      this.updateAddName = response.data;
-    });
+  public addTag(tag: AddTag) {
+    if (tag.create) {
+      this.tagApi.createTag(tag.name!).subscribe(response => {
+        this.tagColorService.addTag(response.data);
+        console.log('add tag response', response);
+        this.updateAddName = response.data;
+      });
+    } else {
+      const tagUpdate = {id: tag.tag!.order, name: tag.tag!.name}
+      this.tagColorService.addTag(tagUpdate)
+    }
   }
   public deleteTag(name: string) {
     this.tagApi.deleteTag(name).subscribe(response => {
         console.log('add tag response', response);
         if (response.data) {
-          this.updateDeleteName = name
+          this.updateDeleteName = { name }
           }
       }
     );
