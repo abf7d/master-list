@@ -4,6 +4,7 @@ import { Activity, Project } from '../types/projtect';
 // import { TagGroupOption } from '../types/tag/tag-group-option';
 import { TagGroup, TagGroupOption, TagSelection, TagSelectionGroup } from '../types/tag';
 import { TagUpdate } from '../types/tag/tag-update';
+import { TagProps } from './tag-api';
 // import { Activity, Project, TagGroup, TagGroupOption, TagLoad, TagSelection, TagSelectionGroup } from '@critical-pass/project/types';
 // import { ColorFactoryService } from '@critical-pass/shared/serializers';
 
@@ -77,7 +78,7 @@ export class TagCssGenerator {
 //     return color;
 //   }
 
-  addTag(tag: TagUpdate){ //tag: TagSelection) {
+  addTag(tag: TagProps){ //tag: TagSelection) {
     // let styleElement = document.getElementById(
     //     'dynamic-tag-styles'
     //   ) as HTMLStyleElement;
@@ -102,7 +103,7 @@ export class TagCssGenerator {
 
     console.log('!!!Color id', tag.id)
         const normalizedTag = tag.name.toLowerCase().trim();
-        const colors = this.colorFactory.getColor(tag.id);
+        const colors = this.colorFactory.getColor(tag.order);
     
         // Get the color for this tag
         // const color = this.getColorForTag(tag);

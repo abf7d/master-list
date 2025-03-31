@@ -89,7 +89,9 @@ class NoteService:
     #         notes=note_responses
     #     )
     
-    def create_notes_items(self, note_group: CreateNoteGroup, user_id: UUID) -> NoteGroupResponse:
+        
+    
+    def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID) -> NoteGroupResponse:
         """
         Create notes under an existing tag.
         
@@ -202,7 +204,7 @@ class NoteService:
         )
 
     # TODO: Move to tag repo, then call from here
-    def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> int:
+    def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> TagEntry:
         """
         Create a new tag with the specified name and optional parent.
         
@@ -239,13 +241,23 @@ class NoteService:
         self.db.commit()
         self.db.refresh(tag)
         
-        return tag.creation_order
+        
+        # todo: add id for the tag, return the same object as get tag so you can get id when creating a note
+        # return TagCreation(
+        # return tag.creation_order
         # return TagResponse(
         #     id=tag.id,
         #     name=tag.name,
         #     parent_id=tag.parent_id,
         #     created_at=tag.created_at
         # )
+        return TagEntry(
+            id=tag.id,
+            name=tag.name,
+            parent_id=tag.parent_id,
+            created_at=tag.created_at,
+            order=tag.creation_order
+        )
         
     
     #TODO Delete all of the notes_tags that are linked to tag with the id from the selecated userid and name

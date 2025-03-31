@@ -227,10 +227,11 @@ export class MasterLayoutComponent implements AfterViewInit {
             this.tagApi.createTag(tag.name!).subscribe(response => {
                 this.tagColorService.addTag(response.data);
                 console.log('add tag response', response);
-                this.updateAddName = response.data;
+                const tagUpdate = { id: response.data.order, name: response.data.name};
+                this.updateAddName = tagUpdate;
             });
         } else {
-            const tagUpdate = { id: tag.tag!.order, name: tag.tag!.name };
+            const tagUpdate = { order: tag.tag!.order, name: tag.tag!.name, id: '' , parent_id:'', created_at: ''};
             this.tagColorService.addTag(tagUpdate);
         }
     }

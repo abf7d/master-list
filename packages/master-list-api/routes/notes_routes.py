@@ -66,7 +66,7 @@ async def get_child_tags(
 
 
 #TODO: move this to tag_routes
-@router.post("/tag", response_model=TagResponse,)
+@router.post("/tag", response_model=ResponseData,)
 @authenticate
 async def create_tag_button(request: Request, tag_button: TagButton,
     graph_service: GraphService = Depends(get_graph_service),
@@ -79,19 +79,19 @@ async def create_tag_button(request: Request, tag_button: TagButton,
     # claims = await graph_service.get_claims(request.state.user_id)
     # role = token_service.get_role(request.state.user_id, request.state.exp, claims, request.state.decoded_token)
 
-    tag_creation = TagCreation(**tag_button.dict(), id=-1)
+    # tag_creation = TagCreation(**tag_button.dict(), id=-1)
 
     # if(role == "user" or role == "admin"):
     print('IS AUTHORIZED!!!!!!!!!')
     # index = note_service.create_tag(tag_button.name, request.state.user_id, tag_button.color, tag_button.backgroundcolor)
-    index = note_service.create_tag(tag_button.name, request.state.user_id)
+    tag_info = note_service.create_tag(tag_button.name, request.state.user_id)
     print('Finished Save!!!!!!!!!')
-    tag_creation.id = index
+    # tag_creation.id = tag_info
     # Now create the TagResponse
-    response = TagResponse(
+    response = ResponseData(
         message="Tag created successfully",
         error="",
-        data=tag_creation
+        data=tag_info
     )
     # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
     # response = TagResponse('success', None, data)
@@ -150,8 +150,9 @@ async def delete_tag_button(request: Request, tag_name: str,
 #         updated_at=note.updated_at
 #     )
 
-@authenticate
+
 @router.post("/note-items/", response_model=NoteItemsResponse)
+@authenticate
 async def post_note_items(request: Request, note_group: CreateNoteGroup, 
         note_service: NoteService = Depends(get_note_service),):
     print('NOTE GROUP', note_group)

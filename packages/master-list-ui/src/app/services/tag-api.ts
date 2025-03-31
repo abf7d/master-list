@@ -24,6 +24,8 @@ export interface TagProps {
 export interface TagSerch extends Response<TagProps[]>{
 
 }
+export interface TagCreate extends Response<TagProps>{
+}
 
 @Injectable({
     providedIn: 'root',
@@ -50,11 +52,11 @@ export class TagApiService {
     //         .post<Response<any>>(urlJoin(environment.masterListApi, '/tag'), body, { headers });
     // }
 
-    public createTag(tag: string): Observable<Response<TagUpdate>> {
+    public createTag(tag: string): Observable<TagCreate> {
         const body = JSON.stringify({ name: tag });
         const headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-        return this.http.post<Response<TagUpdate>>(urlJoin(environment.masterListApi, '/tag'), body, { headers });
+        return this.http.post<TagCreate>(urlJoin(environment.masterListApi, '/tag'), body, { headers });
     }
 
     public deleteTag(name: string): Observable<any> {
