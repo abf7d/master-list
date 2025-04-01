@@ -117,6 +117,10 @@ class NoteService:
         # Create notes
         notes = []
         for i, item in enumerate(note_group.items):
+            # Note table has user_id as foreign key
+            # but we need oauth_id because that is what
+            # we are using for the user_id here
+            
             note = Note(
                 id=item.id,
                 content=item.content,
@@ -128,6 +132,7 @@ class NoteService:
             notes.append(note)
         
         self.db.flush()
+        
         
         # Delete all of the NoteTag associations for the parent tag
         self.db.query(NoteTag).filter(NoteTag.tag_id == note_group.parent_tag_id, NoteTag.tag_id == note_group.parent_tag_id).delete() # NoteTag.note_id.in_([note.id for note in notes])).delete()

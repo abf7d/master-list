@@ -35,16 +35,11 @@ import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'app-master-layout',
-    imports: [
-        CommonModule,
-        MetaTagsComponent,
-        NavListComponent,
-    ],
+    imports: [CommonModule, MetaTagsComponent, NavListComponent],
     templateUrl: './master-layout.component.html',
     styleUrl: './master-layout.component.scss',
     encapsulation: ViewEncapsulation.None,
 })
-
 export class MasterLayoutComponent implements AfterViewInit {
     // readonly firstSignal = signal(42);
     // readonly secondSignal = signal(10);
@@ -80,7 +75,6 @@ export class MasterLayoutComponent implements AfterViewInit {
 
     tagGroup$: BehaviorSubject<TagSelectionGroup> = new BehaviorSubject<TagSelectionGroup>({ name: 'Lists', tags: [] });
     paragraphs: Paragraph[] = [];
-  
 
     private changeSubject = new Subject<void>();
     private isSaving = false;
@@ -98,7 +92,7 @@ export class MasterLayoutComponent implements AfterViewInit {
         private toastr: ToastrService,
         private manager: MasterLayoutService,
         private authService: AuthCoreService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
     ) {
         // private destroyRef: DestroyRef
         this.manager.setChangeSubject(this.changeSubject);
@@ -170,18 +164,37 @@ export class MasterLayoutComponent implements AfterViewInit {
 
         this.route.paramMap.subscribe(params => {
             let noteId = params.get('id');
-            
+            if (!noteId) {
+                // This is for testing. In real scenario the id will come from note clicked in left menu
+                // or if creating a new note, maybe in resolver get new id from backend
+                // and set it here on load.
+                // should have a getTag here to verify that it exists, error will tell us if not
+                // should we redirect to main route with id if we get it
+                // in resolver, create the note/tag and redirect to route with id
+                // so empty main route will have a gaurd or resolver that creates a new note/tag id and redirects
+                this.tagApi.autoCompleteTags('my-note-test', 1, 10).subscribe(x => {
+                    const found = x.data.find((y: any) => y.name === 'my-note-test');
+                    console.log('found', found);
+                    if (!found) {
+                        this.tagApi.createTag('my-note-test').subscribe(response => {
+                            this.noteId = response.data.id;
+                            console.log('noteId created', this.noteId);
+                            const tagUpdate = { id: response.data.order, name: response.data.name };
+                            this.updateAddName = tagUpdate;
+                            this.getNotes();
+                        });
+                    } else {
+                        this.noteId = found.id;
+                        console.log('noteId found', this.noteId);
+                        this.getNotes();
+                    }
+                });
+            }
+
             // Set to a random guid for now
             // this.noteId = noteId ? noteId : 'a0c1b2d3-e4f5-6789-abcd-ef0123456789';
-            this.noteId = noteId ? noteId : 'a0c1b2d3-e4f5-6789-abcd-ef0123456789';
-            console.log('noteId', this.noteId);
-            this.notesApi
-                .getNoteElements(this.noteId).subscribe({
-                    next: x => {
-                        // this.paragraphs = x;
-                        // this.manager.initParagraphs(this.paragraphs);
-                        // this.manager.setParagraphs(this.paragraphs);
-                    }});
+            // this.noteId = noteId ? noteId : 'a0c1b2d3-e4f5-6789-abcd-ef0123456789';
+
             //     .pipe(tap(x => this.tagColorService.initTagColors(x)))
             //     .subscribe(x => {
             //         this.paragraphs = x;
@@ -194,7 +207,18 @@ export class MasterLayoutComponent implements AfterViewInit {
             //         this.manager.setParagraphNote({
             //             paragraphs: this.paragraphs,
             // noteId =
-          })
+        });
+    }
+
+    getNotes() {
+        
+        this.notesApi.getNoteElements(this.noteId).subscribe({
+            next: x => {
+                // this.paragraphs = x;
+                // this.manager.initParagraphs(this.paragraphs);
+                // this.manager.setParagraphs(this.paragraphs);
+            },
+        });
     }
 
     ngAfterViewInit() {
@@ -227,11 +251,11 @@ export class MasterLayoutComponent implements AfterViewInit {
             this.tagApi.createTag(tag.name!).subscribe(response => {
                 this.tagColorService.addTag(response.data);
                 console.log('add tag response', response);
-                const tagUpdate = { id: response.data.order, name: response.data.name};
+                const tagUpdate = { id: response.data.order, name: response.data.name };
                 this.updateAddName = tagUpdate;
             });
         } else {
-            const tagUpdate = { order: tag.tag!.order, name: tag.tag!.name, id: '' , parent_id:'', created_at: ''};
+            const tagUpdate = { order: tag.tag!.order, name: tag.tag!.name, id: '', parent_id: '', created_at: '' };
             this.tagColorService.addTag(tagUpdate);
         }
     }
@@ -294,7 +318,7 @@ export class MasterLayoutComponent implements AfterViewInit {
     onTabKey(event: KeyboardEvent): void {
         this.manager.onTabKey(this.paragraphs, event);
     }
-    
+
     onEditorClick(event: MouseEvent): void {
         this.manager.onEditorClick(this.paragraphs, event);
     }
@@ -302,7 +326,7 @@ export class MasterLayoutComponent implements AfterViewInit {
     public handlePaste(event: ClipboardEvent) {
         this.manager.handlePaste(event, this.paragraphs);
     }
-    
+
     public saveNoteElements(): void {
         // this.tagApi.getTags('test').subscribe(x => console.log('token', x));
         if (!this.isSaving && !this.error) {
@@ -321,6 +345,5 @@ export class MasterLayoutComponent implements AfterViewInit {
                 },
             });
         }
-
     }
 }

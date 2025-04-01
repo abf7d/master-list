@@ -10,8 +10,8 @@ import { Observable } from "rxjs";
 })
 export class NotesApiService {
     constructor(private http: HttpClient) {}
-    public saveNoteElements(items: Paragraph[], parentNoteId: string ): Observable<NoteSaveResult> {
-        const body = JSON.stringify({parentNoteId, items});
+    public saveNoteElements(items: Paragraph[], parent_tag_id: string ): Observable<NoteSaveResult> {
+        const body = JSON.stringify({parent_tag_id, items});
         const headers = new HttpHeaders().set('Content-Type', 'application/json');
         return this.http.post<NoteSaveResult>(urlJoin(environment.masterListApi, 'note-items'),  body, { headers });
     }
