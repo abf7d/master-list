@@ -111,16 +111,20 @@ class NoteService:
             raise NoResultFound(f"Tag with id {note_group.parent_tag_id} by {user_id} not found")
         
         # delete all of the notes with the parent_tag_id
+        self.db.query(NoteTag).filter(NoteTag.tag_id == note_group.parent_tag_id).delete()
+        self.db.commit()
+        # Have to delete the noteTags that were set on this page but are not the parent note, need to add a field to the note tag origin_tag_id
+        # Need the field for easy deleting
         self.db.query(Note).filter(Note.creation_tag_id == note_group.parent_tag_id, Note.created_by == user_id).delete()
         self.db.commit()
         
         # Create notes
         notes = []
         for i, item in enumerate(note_group.items):
+            
             # Note table has user_id as foreign key
             # but we need oauth_id because that is what
             # we are using for the user_id here
-            
             note = Note(
                 id=item.id,
                 content=item.content,
@@ -146,12 +150,14 @@ class NoteService:
             self.db.add(note_tag)
             
             # assign tags to the note, need to not duplicate tags
+            print(f"item.id: {item.id}")
+            print(f"item.tags: {item.tags}")
             for tag in item.tags:
                 
                 #get the tag id first
-                tag_obj = self.db.query(Tag).filter(Tag.name == tag.name, Tag.created_by == user_id).first()
+                tag_obj = self.db.query(Tag).filter(Tag.name == tag, Tag.created_by == user_id).first()
                 if not tag_obj:
-                    raise NoResultFound(f"Tag with name {tag.name} by {user_id} not found")
+                    raise NoResultFound(f"Tag with name {tag} by {user_id} not found")
                 
                 # create NoteTag if it doesn't exist
                 existing_note_tag = self.db.query(NoteTag).filter(

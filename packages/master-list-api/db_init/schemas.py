@@ -44,7 +44,7 @@ class Note(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    created_by = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False, index=True)  # Owner of the note
+    created_by = Column(UUID(as_uuid=True), ForeignKey('users.oauth_id'), nullable=False, index=True)  # Owner of the note
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     creation_tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=False)
     sequence_number = Column(Integer)

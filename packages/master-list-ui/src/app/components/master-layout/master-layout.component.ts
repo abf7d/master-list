@@ -270,6 +270,7 @@ export class MasterLayoutComponent implements AfterViewInit {
 
     public removeTag() {}
 
+    
     public assignTagToRows(tagName: string) {
         this.manager.assignTagToRows(tagName, this.paragraphs);
     }
@@ -334,9 +335,9 @@ export class MasterLayoutComponent implements AfterViewInit {
             this.updateParagraphPositions();
             this.notesApi.saveNoteElements(this.paragraphs, this.noteId).subscribe({
                 next: result => {
-                    if (result.message === 'success') {
+                    // if (result.message === 'success') {
                         this.isSaving = false;
-                    }
+                    // }
                 },
                 error: result => {
                     this.error = true;
