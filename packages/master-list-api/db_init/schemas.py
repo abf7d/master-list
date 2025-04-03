@@ -37,6 +37,15 @@ class Tag(Base):
     notes = relationship("Note", secondary="note_tags", back_populates="tags")
     created_notes = relationship("Note", back_populates="creation_tag")
     created_by_user = relationship("User")  # Track the owner
+    
+    # Specify that only tag_id is used to join with Note via the note_tags table
+    notes = relationship(
+        "Note",
+        secondary=lambda: NoteTag.__table__,
+        primaryjoin=lambda: Tag.id == NoteTag.__table__.c.tag_id,
+        secondaryjoin=lambda: Note.id == NoteTag.__table__.c.note_id,
+        back_populates="tags"
+    )
 
 class Note(Base):
     __tablename__ = "notes"
@@ -53,12 +62,25 @@ class Note(Base):
     tags = relationship("Tag", secondary="note_tags", back_populates="notes")
     creation_tag = relationship("Tag", back_populates="created_notes")
     created_by_user = relationship("User") 
+    
+    tags = relationship(
+        "Tag",
+        secondary=lambda: NoteTag.__table__,
+        primaryjoin=lambda: Note.id == NoteTag.__table__.c.note_id,
+        secondaryjoin=lambda: Tag.id == NoteTag.__table__.c.tag_id,
+        back_populates="notes"
+    )
 
 class NoteTag(Base):
     __tablename__ = "note_tags"
     
     note_id = Column(UUID(as_uuid=True), ForeignKey('notes.id'), primary_key=True)
     tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), primary_key=True)
+    origin_tag_id = Column(UUID(as_uuid=True), ForeignKey('tags.id'), nullable=True)
+    # origin_tag_id = Column(UUID(as_uuid=True), unique=False, nullable=False)  
+    
+    tag = relationship("Tag", foreign_keys=[tag_id])
+    origin_tag = relationship("Tag", foreign_keys=[origin_tag_id])
 
 # from sqlalchemy import Column, String, Text, DateTime, ForeignKey, UniqueConstraint
 # from sqlalchemy.orm import relationship

@@ -214,6 +214,7 @@ export class MasterLayoutComponent implements AfterViewInit {
         
         this.notesApi.getNoteElements(this.noteId).subscribe({
             next: x => {
+                console.log('getNotes', x);
                 // this.paragraphs = x;
                 // this.manager.initParagraphs(this.paragraphs);
                 // this.manager.setParagraphs(this.paragraphs);

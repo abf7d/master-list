@@ -55,13 +55,13 @@ async def get_tags(
     response = ResponseData(message='Success', error=None, data=data )
     print('data', data)
     return response
-@router.get("/tags/{parent_tag_id}/children", response_model=List[TagResponse])
-async def get_child_tags(
-    parent_tag_id: UUID,
-    note_service: NoteService = Depends(get_note_service)
-):
-    """Get child tags for a specific parent tag"""
-    return note_service.get_tags(parent_tag_id=parent_tag_id)
+# @router.get("/tags/{parent_tag_id}/children", response_model=List[TagResponse])
+# async def get_child_tags(
+#     parent_tag_id: UUID,
+#     note_service: NoteService = Depends(get_note_service)
+# ):
+#     """Get child tags for a specific parent tag"""
+#     return note_service.get_tags(parent_tag_id=parent_tag_id)
 
 
 
@@ -158,6 +158,30 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
     print('NOTE GROUP', note_group)
     
     note_service.update_note_items(note_group, request.state.user_id)
+    
+    
+    # db_note = Note(
+    #     title=note.title,
+    #     content=note.content,
+    #     tags=",".join(note.tags) if note.tags else ""
+    # )
+    # db.add(db_note)
+    # db.commit()
+    # db.refresh(db_note)
+    
+    # Convert db_note to NoteResponse format
+    return NoteItemsResponse(
+        message="Success",
+        error=None,
+        data='test1234'
+    )
+
+
+@router.get("/note-items/{parent_tag_id}", response_model=NoteItemsResponse)
+@authenticate
+async def get_note_items(request: Request, parent_tag_id: str, 
+        note_service: NoteService = Depends(get_note_service),):
+    return note_service.get_note_items(parent_tag_id, request.state.user_id)
     
     
     # db_note = Note(
