@@ -39,7 +39,7 @@ class NoteResponse(BaseModel):
     updated_at: datetime
     creation_tag_id: UUID
     sequence_number: int
-    tags: List['TagResponse']
+    tags: List[str] #List['TagResponse']
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -25,7 +25,7 @@ export class MetaTagsComponent {
     readonly addTag = output<AddTag>();
     readonly removeTag = output<string>();
 
-    readonly completeAdd = input<TagUpdate>();
+    readonly completeAdd = input<TagUpdate | TagUpdate[]>();
     readonly completeDelete = input<TagDelete>();
 
     @Input() allowAdd = true;
@@ -75,7 +75,11 @@ export class MetaTagsComponent {
 
         effect(() => {
             const newTag = this.completeAdd();
-            if (newTag) {
+            if (Array.isArray(newTag)) {
+                newTag.forEach(tag => {
+                    this.handleAddTagComplete(tag);
+                });
+            } else if (newTag && typeof newTag === 'object') {
                 this.handleAddTagComplete(newTag);
             }
         });

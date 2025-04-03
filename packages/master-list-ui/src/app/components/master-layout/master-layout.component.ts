@@ -82,7 +82,7 @@ export class MasterLayoutComponent implements AfterViewInit {
     private noteId!: string;
     public popListOut = false;
     public updateDeleteName!: TagDelete;
-    public updateAddName!: TagUpdate;
+    public updateAddName!: TagUpdate | TagUpdate[];
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -215,9 +215,19 @@ export class MasterLayoutComponent implements AfterViewInit {
         this.notesApi.getNoteElements(this.noteId).subscribe({
             next: x => {
                 console.log('getNotes', x);
-                // this.paragraphs = x;
-                // this.manager.initParagraphs(this.paragraphs);
-                // this.manager.setParagraphs(this.paragraphs);
+                const noteElements = x.data.notes;
+                const tags = x.data.tags;
+                this.paragraphs = noteElements;
+
+                // Todo: check if it is adding multiple tags
+                const tagUpdates =tags.map(tag => {
+                    const tagUpdate = { id: tag.order, name: tag.name };
+                    // this.updateAddName = tagUpdate;
+                    this.tagColorService.addTag(tag);
+                    return tagUpdate;
+                });
+                this.updateAddName = tagUpdates;
+                this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
             },
         });
     }

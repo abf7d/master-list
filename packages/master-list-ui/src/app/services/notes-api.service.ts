@@ -4,6 +4,8 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "@master-list/environments";
 import urlJoin from "url-join";
 import { Observable } from "rxjs";
+import { TagUpdate } from "../types/tag/tag-update";
+import { TagProps } from "./tag-api";
 
 @Injectable({
     providedIn: 'root',
@@ -16,9 +18,9 @@ export class NotesApiService {
         return this.http.post<NoteSaveResult>(urlJoin(environment.masterListApi, 'note-items'),  body, { headers });
     }
     // API calls for notes
-    getNoteElements(noteId: string): Observable<NoteElement[]> {
+    getNoteElements(noteId: string): Observable<PageResult> {
         // Call the API to get elements for a note
-        return this.http.get<NoteElement[]>(urlJoin(environment.masterListApi, `/note-items/${noteId}`));
+        return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}`));
       
     }
     
@@ -37,4 +39,14 @@ export class NotesApiService {
 export interface NoteSaveResult {
     message:string;
     data:any;
+}
+
+export interface PageResult {
+    message: string;
+    error?: string;
+    data: NoteElementResponse;
+}
+export interface NoteElementResponse {
+    notes: Paragraph[];
+    tags: TagProps[];
 }

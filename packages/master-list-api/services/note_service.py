@@ -244,13 +244,20 @@ class NoteService:
             NoteTag.note_id.in_([note.id for note in notes]),
             NoteTag.tag_id != parent_tag_id
         ).all()
-
+        # print all of the note_tags and properties
+        
+        
+        
+        note_tag_ids = [note_tag.tag_id for note_tag in note_tags]
+        print(f"note_tags: {str(note_tag_ids)}")
+        
         # Get all tags for the notes
         tags = self.db.query(Tag).filter(
-            Tag.id.in_([note_tag.tag_id for note_tag in note_tags]),
-            Tag.parent_id != parent_tag_id
+            Tag.id.in_(note_tag_ids),
+            # Tag.parent_id != parent_tag_id
         ).all()
 
+        print(f"tags: {str(tags)}")
         # Create a mapping of tag_id to Tag object for quick lookup
         tag_map = {tag.id: tag for tag in tags}
 
@@ -258,16 +265,13 @@ class NoteService:
         note_responses = []
         for note in notes:
             # Get the tags for the note
-            assigned_tags = [
-                TagResponse(
-                    id=tag_map[note_tag.tag_id].id,
-                    name=tag_map[note_tag.tag_id].name,
-                    parent_id=tag_map[note_tag.tag_id].parent_id,
-                    created_at=tag_map[note_tag.tag_id].created_at
-                )
-                for note_tag in note_tags if note_tag.note_id == note.id and note_tag.tag_id in tag_map
-            ]
-
+            assigned_tags = []
+            
+            for note_tag in note_tags:
+                if note_tag.note_id == note.id and note_tag.tag_id in tag_map:
+                    tag = tag_map[note_tag.tag_id]
+                    assigned_tags.append(tag.name)
+            print(f"assigned_tags: {str(assigned_tags)}")
             note_responses.append(
                 NoteResponse(
                     id=note.id,
@@ -290,7 +294,7 @@ class NoteService:
             )
             for tag in tags
         ]
-
+        print(f"tag_responses: {str(tag_responses)}")
         return NoteItemsResponse(
             data={"notes": note_responses, "tags": tag_responses},
             message="Success",
