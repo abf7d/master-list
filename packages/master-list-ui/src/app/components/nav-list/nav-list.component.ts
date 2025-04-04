@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NavTileComponent } from '../nav-tile/nav-tile.component';
 import { CommonModule } from '@angular/common';
+import { TagApiService } from '../../services/tag-api';
 
 @Component({
   selector: 'ml-nav-list',
@@ -8,7 +9,13 @@ import { CommonModule } from '@angular/common';
   templateUrl: './nav-list.component.html',
   styleUrl: './nav-list.component.scss'
 })
-export class NavListComponent {
+export class NavListComponent implements OnInit {
+  constructor(private tagApi: TagApiService) {}
+  public ngOnInit() {
+    this.tagApi.getTags(10, 1).subscribe((res) => {
+      console.log(res);
+    });
+  }
   public noteItems: NavItem[] = [{
     title: 'Note 1',
     content: 'This is text for the first note. It has sample text to make it longer.',

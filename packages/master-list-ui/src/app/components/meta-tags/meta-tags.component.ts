@@ -18,7 +18,7 @@ export class MetaTagsComponent {
     // @Output() assignTag = new EventEmitter<string>();
     // @Output() unAssignTag = new EventEmitter<string>();
     // @Input() tags: TagButton[] = [];
-    readonly unAssignTag = output<string>();
+    readonly unassignTag = output<string[]>();
     readonly assignTag = output<string>();
     // readonly tags = input<TagButton[]>([])
     readonly tagGroups = input<TagSelectionGroup>({ name: 'Tag Group', tags: [] }); //({ name: 'Tag Group', tags: [] })
@@ -180,8 +180,8 @@ export class MetaTagsComponent {
         // this.dashboard.updateProject(this.project, true);
         // this.assignTag.emit(name);
     }
-    public unassignGroup(name: string) {
-        this.unAssignTag.emit(name);
+    public unassignGroup(names: string[]) {
+        this.unassignTag.emit(names);
     }
     public assignGroup(name: string[]) {
         this.assignTag.emit(name[0]);

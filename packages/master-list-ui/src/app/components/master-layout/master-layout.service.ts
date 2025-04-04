@@ -33,6 +33,28 @@ export class MasterLayoutService {
   }
 
   private changeSubject!: Subject<void>;
+
+  unassignTag(tags: string[], paragraphs: Paragraph[]) {
+    this.applyInlineStyle('', paragraphs); // updates the affected rows
+    const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));
+    if (this.affectedRows.length > 0) {
+      this.affectedRows.forEach((r) => {
+        r.tags = r.tags.filter((x) => !tags.includes(x));
+        const p = map.get(r.id);
+        if (p) {
+          p.tags = p.tags.filter((x) => !tags.includes(x));
+        }
+      });
+    } else if (this.selectedParagraphIds) {
+      this.selectedParagraphIds.forEach((x) => {
+        const item = map.get(x);
+        if (item) {
+          item.tags = item.tags.filter((x) => !tags.includes(x));
+        }
+      });
+    }
+    this.renderParagraphs(paragraphs);
+  }
   assignTagToRows(tagName: string, paragraphs: Paragraph[]) {
     this.applyInlineStyle('', paragraphs);
     const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));

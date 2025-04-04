@@ -18,23 +18,25 @@ export class NotesApiService {
         return this.http.post<NoteSaveResult>(urlJoin(environment.masterListApi, 'note-items'),  body, { headers });
     }
     // API calls for notes
-    getNoteElements(noteId: string): Observable<PageResult> {
+    public getNoteElements(noteId: string): Observable<PageResult> {
         // Call the API to get elements for a note
         return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}`));
       
     }
     
-    async updateNoteElements(noteId: string, elements: NoteElement[]): Promise<void> {
-        // Call the API to update elements for a note
-    }
+    // async updateNoteElements(noteId: string, elements: NoteElement[]): Promise<void> {
+    //     // Call the API to update elements for a note
+    // }
     
-    async createNoteElement(noteId: string, element: NoteElement): Promise<void> {
-        // Call the API to create a new element
-    }
+    // async createNoteElement(noteId: string, element: NoteElement): Promise<void> {
+    //     // Call the API to create a new element
+    // }
     
-    async deleteNoteElement(noteId: string, elementId: string): Promise<void> {
-        // Call the API to delete an element
-    }
+    // async deleteNoteElement(noteId: string, elementId: string): Promise<void> {
+    //     // Call the API to delete an element
+    // }
+
+
 }
 export interface NoteSaveResult {
     message:string;

@@ -33,10 +33,14 @@ export interface TagCreate extends Response<TagProps>{
 export class TagApiService {
     constructor(private http: HttpClient) {}
     // API calls for notes
-    getTags(noteId: string): Observable<any> {
-        // Call the API to get elements for a note
-        return this.http.get(urlJoin(environment.masterListApi, '/tags'));
-        // return this.http.get(urlJoin(environment.masterListApi, '/account/get-token?token_type=claims'));
+
+
+    public getTags(size: number, page: number, isList: boolean = false): Observable<any> {
+        let params = new HttpParams()
+            .set('size', size.toString())
+            .set('page', page.toString())
+            .set('islist', page.toString());
+        return this.http.get(urlJoin(environment.masterListApi, '/tags'), { params });
     }
 
     autoCompleteTags(searchTxt: string, page: number, pageSize: number): Observable<TagSerch>  {
@@ -102,3 +106,4 @@ export class TagApiService {
         // Call the API to delete an element
     }
 }
+

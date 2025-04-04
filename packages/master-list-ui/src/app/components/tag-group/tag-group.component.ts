@@ -24,7 +24,7 @@ export class TagGroupComponent implements OnInit {
 
     @Input() hideAssignLinks!: boolean;
     @Output() assignTags = new EventEmitter<string[]>();
-    @Output() unassignTags = new EventEmitter<string>();
+    @Output() unassignTags = new EventEmitter<string[]>();
     @Output() selectTag = new EventEmitter<string>();
     @Output() removeTag = new EventEmitter<RemoveTag>();
     @Output() addTag = new EventEmitter<AddTag>();
@@ -43,7 +43,11 @@ export class TagGroupComponent implements OnInit {
                 .filter(x => x.isSelected)
                 .map(x => x.name),
         );
-    public removeAll = () => this.unassignTags.emit();
+    public removeAll = () => this.unassignTags.emit(
+        this.tags()
+            .filter(x => x.isSelected)
+            .map(x => x.name),
+    );
     public select = (tag: TagSelection) => {
         this.selectTag.emit(tag.name);
         if (!this.multiselect) {
@@ -62,7 +66,10 @@ export class TagGroupComponent implements OnInit {
         this.addTag.emit({ name, tag, create });
         this.autoCompleteInput = '';
     }
-    public filterTags(): void {}
+    public filterTags = () => this.unassignTags.emit(
+        this.tags()
+            .map(x => x.name),
+    );
     public ngOnInit(): void {}
 
     public autoComplete(currentValue: string) {

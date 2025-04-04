@@ -245,6 +245,8 @@ export class MasterLayoutComponent implements AfterViewInit {
         this.changeSubject.next();
     }
 
+   
+
     public setHighlight(event: Event): void {
         const name = (event.target as any).value;
         this.manager.setHighlightName(this.paragraphs, name);
@@ -281,7 +283,10 @@ export class MasterLayoutComponent implements AfterViewInit {
 
     public removeTag() {}
 
-    
+    public unassignTags(tags: string[]): void {
+        this.manager.unassignTag(tags, this.paragraphs);
+    }
+
     public assignTagToRows(tagName: string) {
         this.manager.assignTagToRows(tagName, this.paragraphs);
     }
