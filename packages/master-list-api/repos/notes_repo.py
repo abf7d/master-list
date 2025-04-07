@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.postgresql import UUID
 from typing import List
-from db_init.schemas import Note, Tag
+from db_init.schemas import NoteItem, Tag
 from models.models import CreateNoteGroup, NoteGroupResponse, NoteResponse, TagResponse
 
 class NoteRepo:
@@ -22,7 +22,7 @@ class NoteRepo:
         notes = []
         
         for idx, paragraph in enumerate(paragraphs):
-            note = Note(
+            note = NoteItem(
                 content=paragraph,
                 creation_tag_id=tag.id,
                 sequence_number=idx,
@@ -38,11 +38,11 @@ class NoteRepo:
             notes=[NoteResponse.from_orm(note) for note in notes]
         )
     
-    def get_notes_by_creation_tag(self, tag_id: UUID) -> List[Note]:
+    def get_notes_by_creation_tag(self, tag_id: UUID) -> List[NoteItem]:
         """Get all notes originally created under a specific tag, in order"""
-        return self.db.query(Note)\
-            .filter(Note.creation_tag_id == tag_id)\
-            .order_by(Note.sequence_number)\
+        return self.db.query(NoteItem)\
+            .filter(NoteItem.creation_tag_id == tag_id)\
+            .order_by(NoteItem.sequence_number)\
             .all()
 
 # from sqlalchemy.orm import Session
