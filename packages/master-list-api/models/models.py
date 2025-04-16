@@ -18,11 +18,13 @@ class NoteItem(BaseModel): # Paragraph object in the frontend
     # level: Optional[int] = None # Tab level for indentation should be stored in conent rather than 
 # Pydantic Response Models
 
+# This needs to be updated on teh frontend because parewnt_list_type is new
 class CreateNoteGroup(BaseModel):
     """Request model for creating a group of notes"""
     parent_tag_id: Optional[UUID] = None  # Optional notebook to create under
     # content: List[str]  # Full text that will be split into paragraphs
-    items: List[NoteItem]  # List of note items to create  
+    items: List[NoteItem]  # List of note items to create 
+    parent_list_type: Optional[str] = 'note'  # Optional list type for the parent tag 
     
 class TagResponse(BaseModel):
     id: UUID

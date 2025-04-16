@@ -5,9 +5,9 @@ from fastapi import HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
-from db_init.schemas import Note, Tag, NoteItem, NoteItemTag
+from db_init.schemas import Note, Tag, NoteItem, NoteItemList
 from models.models import CreateNoteGroup, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
-from sqlalchemy import and_
+from sqlalchemy import and_, select, delete, tuple_
 from sqlalchemy import func, case
 
 
@@ -91,308 +91,349 @@ class NoteService:
     
         
     
+    
+    # Need to handle is_origin, need to persist when getting and need to update here when setting
     def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "tag") -> NoteGroupResponse:
         """
-        Create notes under an existing tag.
+        Update note items for a given parent (list_id).
+        Steps:
+        1. Delete existing associations between parent_id and note_items
+        2. Delete existing note_items
+        3. Create new note_items
+        4. Create new associations
         
         Args:
-            tag_id: UUID of the existing parent tag
-            content_list: List of text content for each note
+            db: Database session
+            note_group: CreateNoteGroup object containing note items and parent info
+            user_id: UUID of the user making the update
+            origin_type: Type of origin list ("tag" or "note"), default is "tag"
             
         Returns:
-            NoteGroupResponse with the tag and created notes
-            
-        Raises:
-            NoResultFound: If the tag_id doesn't exist
+            Dict containing created note_items and associations
         """
-        # Verify tag/list/note exists
-        origin_list = None
-        if (origin_type == "note"):
-            origin_list = self.db.query(Note).filter(Note.id == note_group.parent_tag_id, Tag.created_by == user_id).first()
+        parent_id = note_group.parent_tag_id
+        parent_list_type = note_group.parent_list_type
+        
+        if parent_id is None:
+            # If no parent_id, we're creating completely new items
+            # Skip deletion steps
+            pass
         else:
-            origin_list = self.db.query(Tag).filter(Tag.id == note_group.parent_tag_id, Tag.created_by == user_id).first()
-        if not origin_list:
-            raise NoResultFound(f"Tag with id {note_group.parent_tag_id} by {user_id} not found")
-        
-        # delete all of the notes with the parent_tag_id
-        # TODO: !!!!!!!!Need to add NoteItem.origin_type == 'notes'
-        # TODO: !!!!!!!!also need to add 'tag' or 'note' to origin_type when creating the note
-        # need to get all of the notes for the specified tag and then delete all of the NoteItemTags assocatiated with those notes
-        
-        # self.db.query(NoteItemTag).filter(NoteItemTag. == note_group.parent_tag_id).delete()
-        # self.db.commit()
-        
-        # Have to delete the noteTags that were set on this page but are not the parent note, need to add a field to the note tag origin_tag_id
-        
-        #Need to get the tag ids for all of the notes that have origin_id == note_group.parent_tag_id and delete the associated note_tags
-        note_items = self.db.query(NoteItem).filter(NoteItem.origin_id == note_group.parent_tag_id, NoteItemTag.origin_type == origin_type)
-        self.db.query(NoteItemTag).filter(NoteItemTag.note_item_id.in_([note.id for note in note_items])).delete()
-        
-        # Delete all of the NoteTag associations for the parent tag
-        # self.db.query(NoteItemTag).filter(NoteItemTag.tag_id == note_group.parent_tag_id, NoteItemTag.origin_type == origin_type, NoteItemTag.tag_id == note_group.parent_tag_id).delete() # NoteTag.note_id.in_([note.id for note in notes])).delete()
-        self.db.query(NoteItemTag).filter(NoteItemTag.tag_id == note_group.parent_tag_id).delete() # NoteTag.note_id.in_([note.id for note in notes])).delete()
-        
-        # Need to add NoteItem.origin_type == 'notes'
-        self.db.query(NoteItem).filter(NoteItem.origin_id == note_group.parent_tag_id, NoteItem.created_by == user_id).delete()
-        self.db.commit()
-        
-        # Create notes
-        notes = []
-        for i, item in enumerate(note_group.items):
-            
-            # Note table has user_id as foreign key
-            # but we need oauth_id because that is what
-            # we are using for the user_id here
-            note = NoteItem(
-                id=item.id,
-                content=item.content,
-                origin_id=note_group.parent_tag_id,
-                origin_type=origin_type,
-                sequence_number=item.position,
-                created_by=user_id
+            # Step 1: Find all note_item_ids associated with this parent_id
+            note_item_ids_query = select(NoteItemList.note_item_id).where(
+                and_(
+                    NoteItemList.list_id == parent_id,
+                    NoteItemList.list_type == parent_list_type
+                )
             )
-            self.db.add(note)
-            notes.append(note)
-        
-        self.db.flush()
-        
-        
-        
-        # Create note-tag associations
-        for note, item in zip(notes, note_group.items):
-            note_item_tag = NoteItemTag(
-                note_item_id=note.id,
-                tag_id=note_group.parent_tag_id,
-                origin_type=origin_type,
-                # origin_id=note_group.parent_tag_id
-            )
-            self.db.add(note_item_tag)
+            note_item_ids = [row[0] for row in self.db.execute(note_item_ids_query).fetchall()]
             
-            # assign tags to the note, need to not duplicate tags
-            print(f"item.id: {item.id}")
-            print(f"item.tags: {item.tags}")
-            for tag_name in item.tags:
+            # TODO: Separate into function delete_note_items
+            # TODO: This won't work because if you are on a tag and there is a note_item with an association to a note
+            # TODO: the association with the origin will not be persisted to the frontend and when you delete the origin it will be done
+            # So does that mean when you create a new note_item you will need to create an id in the frontend or do you just
+            # tag it as new with a guid and when you save you need ot update the note_item with the new id.
+            # It might be better to store the origin id on the note_item, but no becuase you would stil lhave the same 
+            # problem pessisting the association
+            # I thikn you have to mark the note_item as new and then when you save it you need to update the note_item with the new id 
+            if note_item_ids:
                 
-                #get the tag id first
-                tag_obj = self.db.query(Tag).filter(Tag.name == tag_name, Tag.created_by == user_id).first()
-                if not tag_obj:
-                    raise NoResultFound(f"Tag with name {tag_name} by {user_id} not found")
-                
-                # create NoteTag if it doesn't exist
-                existing_note_tag = self.db.query(NoteItemTag).filter(
-                    NoteItemTag.note_item_id == note.id,
-                    NoteItemTag.tag_id == tag_obj.id,
-                    NoteItemTag.origin_type == 'tag',
-                ).first()
-                if not existing_note_tag:
-                    # Create a new NoteTag association
-                    note_item_tag = NoteItemTag(
-                        note_item_id=note.id,
-                        tag_id=tag_obj.id,
-                        origin_type='tag',
+                tag_associations_query = select(
+                    NoteItemList.list_id,
+                    NoteItemList.note_item_id
+                ).where(
+                    and_(
+                        NoteItemList.note_item_id.in_(note_item_ids),
+                        # NoteItemList.list_type == 'tag'
                     )
-                    self.db.add(note_item_tag)
+                )
                 
-               
+                list_note_ids = [row for row in self.db.execute(tag_associations_query).fetchall()]
+                # tag_ids = [row[0] for row in tag_note_ids]
+                
+                
+                # Step 2: Delete all associations for these note_item_ids
+                # Create a list of tuples from tag_note_ids
+                tuple_pairs = [(list_id, note_item_id) for list_id, note_item_id in list_note_ids]
+
+                # Use tuple_ to match against multiple columns at once
+                delete_associations_stmt = delete(NoteItemList).where(
+                    tuple_(NoteItemList.list_id, NoteItemList.note_item_id).in_(tuple_pairs)
+                )
+
+                # Execute the delete statement
+                self.db.execute(delete_associations_stmt)
+                
+                
+                # Step 3: Delete all note_items
+                delete_note_items_stmt = delete(NoteItem).where(
+                    NoteItem.id.in_(note_item_ids)
+                )
+                self.db.execute(delete_note_items_stmt)
+        
+        # Separate into function create_note_items
+        # Step 4: Create new note_items and associations
+        created_note_items = []
+        associations = []
+        
+        for i, item in enumerate(note_group.items):
+            # Create new note item
+            position = item.position if item.position is not None else i
+            
+            # Use existing ID if provided, otherwise create new
+            note_item_id = item.id if item.id else uuid.uuid4()
+            
+            # TODO: Use db to create a new id and then use that id later when creating associations
+            # to first create the isOrigin and then the other assocaitions, need to persist origin
+            new_note_item = NoteItem(
+                id=note_item_id,
+                content=item.content,
+                created_by=user_id,
+                sequence_number=position
+            )
+            self.db.add(new_note_item)
+            created_note_items.append(new_note_item)
+            
+            # Create parent association
+            if parent_id:
+                parent_association = NoteItemList(
+                    note_item_id=note_item_id,
+                    list_id=parent_id,
+                    list_type=parent_list_type,
+                    is_origin=(origin_type == parent_list_type)
+                )
+                self.db.add(parent_association)
+                associations.append(parent_association)
+            
+            # Create tag associations
+            for tag_id in item.tags:
+                tag_association = NoteItemList(
+                    note_item_id=note_item_id,
+                    list_id=UUID(tag_id),  # Convert string to UUID
+                    list_type='tag',
+                    is_origin=(origin_type == 'tag')
+                )
+                self.db.add(tag_association)
+                associations.append(tag_association)
         
         # Commit changes
         self.db.commit()
         
-        # Refresh objects from DB to get all fields
-        for note in notes:
-            self.db.refresh(note)
+        # Refresh objects to ensure they have DB-generated values
+        for note_item in created_note_items:
+            self.db.refresh(note_item)
         
-        # Construct response
-        # tag_response = TagResponse(
-        #     id=tag.id,
-        #     name=tag.name,
-        #     parent_id=tag.parent_id,
-        #     created_at=tag.created_at
-        # )
-        
-        # note_responses = []
-        # for note in notes:
-        #     note_responses.append(
-        #         NoteResponse(
-        #             id=note.id,
-        #             content=note.content,
-        #             created_at=note.created_at,
-        #             updated_at=note.updated_at,
-        #             creation_tag_id=note.creation_tag_id,
-        #             sequence_number=note.sequence_number,
-        #             tags=[tag_response]  # Each note has the parent tag
-        #         )
-        #     )
-        
-        # return NoteGroupResponse(
-        #     tag=tag_response,
-        #     notes=note_responses
-        # )
-        
-        return NoteItemsResponse(
-            message="Success",
-            error=None,
-            data='test1234'
-        )
+        return {
+            "created_note_items": created_note_items,
+            "associations": associations
+        }
     
-    def get_note_items(self, parent_tag_id: UUID, user_id: UUID, origin_type: str = "tag") -> NoteItemsResponse:
-        """
-        Get notes under an existing tag.
-        
-        Args:
-            tag_id: UUID of the existing parent tag
-            
-        Returns:
-            NoteGroupResponse with the tag and created notes
-            
-        Raises:
-            NoResultFound: If the tag_id doesn't exist
-        """
-        # TODO: verity note exists
-        # Verify tag exists
-        tag = self.db.query(Tag).filter(Tag.id == parent_tag_id, Tag.created_by == user_id).first()
-        if not tag:
-            raise NoResultFound(f"Tag with id {parent_tag_id} by {user_id} not found")
-        
-        # TODO: use origin type to get the notes
-        # Get notes
-        note_items = self.db.query(NoteItem).filter(NoteItem.origin_id == parent_tag_id, NoteItem.origin_type == origin_type, NoteItem.created_by == user_id).order_by(NoteItem.sequence_number).all()
-        
-        # Get all note_tags for the notes where tag_id is not the parent tag
-        note_item_tags = self.db.query(NoteItemTag).filter(
-            NoteItemTag.note_item_id.in_([note_item.id for note_item in note_items]),
-            NoteItemTag.tag_id != parent_tag_id
-        ).all()
-        
-        note_item_tag_ids = [note_item_tag.tag_id for note_item_tag in note_item_tags]
-        # print all of the note_tags and properties
-        # print(f"note_tags: {str(note_item_tag_ids)}")
-        
-        # Get all tags for the notes
-        tags = self.db.query(Tag).filter(
-            Tag.id.in_(note_item_tag_ids),
-            # Tag.parent_id != parent_tag_id
-        ).all()
-
-        print(f"tags: {str(tags)}")
-        # Create a mapping of tag_id to Tag object for quick lookup
-        tag_map = {tag.id: tag for tag in tags}
-
-        # Construct response
-        note_responses = []
-        for note_item in note_items:
-            # Get the tags for the note
-            assigned_tags = []
-            
-            for note_tag in note_item_tags:
-                if note_tag.note_item_id == note_item.id and note_tag.tag_id in tag_map:
-                    tag = tag_map[note_tag.tag_id]
-                    assigned_tags.append(tag.name)
-            print(f"assigned_tags: {str(assigned_tags)}")
-            note_responses.append(
-                NoteResponse(
-                    id=note_item.id,
-                    content=note_item.content,
-                    created_at=note_item.created_at,
-                    updated_at=note_item.updated_at,
-                    creation_tag_id=note_item.origin_id,
-                    sequence_number=note_item.sequence_number,
-                    tags=assigned_tags
-                )
-            )
-        
-        tag_responses = [
-            TagEntry(
-                id=tag.id,
-                name=tag.name,
-                parent_id=tag.parent_id,
-                created_at=tag.created_at,
-                order=tag.creation_order
-            )
-            for tag in tags
-        ]
-        print(f"tag_responses: {str(tag_responses)}")
-        return NoteItemsResponse(
-            data={"notes": note_responses, "tags": tag_responses},
-            message="Success",
-            error=None
-        )
-        
-    # def get_note_itemsJOINS(self, parent_tag_id: UUID, user_id: UUID, origin_type: str = "tag") -> NoteItemsResponse:
+    
+    
+    
+    
+    
+    
+    
+    
+    # def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "tag") -> NoteGroupResponse:
     #     """
-    #     Get notes under an existing tag.
+    #     Create notes under an existing tag.
         
     #     Args:
-    #         parent_tag_id: UUID of the existing parent tag
-    #         user_id: UUID of the user
-    #         origin_type: Origin type ("tag" or "note")
+    #         tag_id: UUID of the existing parent tag
+    #         content_list: List of text content for each note
             
     #     Returns:
-    #         NoteItemsResponse with the tag and created notes
+    #         NoteGroupResponse with the tag and created notes
             
     #     Raises:
     #         NoResultFound: If the tag_id doesn't exist
     #     """
-    #     # Verify tag exists in a single query
-    #     tag = self.db.query(Tag).filter(Tag.id == parent_tag_id, Tag.created_by == user_id).first()
-    #     if not tag:
-    #         raise NoResultFound(f"Tag with id {parent_tag_id} by {user_id} not found")
+    #     # Verify tag/list/note exists
+    #     origin_list = None
+    #     if (origin_type == "note"):
+    #         origin_list = self.db.query(Note).filter(Note.id == note_group.parent_tag_id, Tag.created_by == user_id).first()
+    #     else:
+    #         origin_list = self.db.query(Tag).filter(Tag.id == note_group.parent_tag_id, Tag.created_by == user_id).first()
+    #     if not origin_list:
+    #         raise NoResultFound(f"Tag with id {note_group.parent_tag_id} by {user_id} not found")
         
-    #     # Use a join to get note items and their tags in a single query
-    #     query = (
-    #         self.db.query(
-    #             NoteItem,
-    #             Tag
+    #     # delete all of the notes with the parent_tag_id
+    #     # TODO: !!!!!!!!Need to add NoteItem.origin_type == 'notes'
+    #     # TODO: !!!!!!!!also need to add 'tag' or 'note' to origin_type when creating the note
+    #     # need to get all of the notes for the specified tag and then delete all of the NoteItemTags assocatiated with those notes
+        
+    #     # self.db.query(NoteItemTag).filter(NoteItemTag. == note_group.parent_tag_id).delete()
+    #     # self.db.commit()
+        
+    #     # Have to delete the noteTags that were set on this page but are not the parent note, need to add a field to the note tag origin_tag_id
+        
+    #     #Need to get the tag ids for all of the notes that have origin_id == note_group.parent_tag_id and delete the associated note_tags
+    #     note_items = self.db.query(NoteItem).filter(NoteItem.origin_id == note_group.parent_tag_id, NoteItemTag.list_type == origin_type)
+    #     self.db.query(NoteItemTag).filter(NoteItemTag.note_item_id.in_([note.id for note in note_items])).delete()
+        
+    #     # Delete all of the NoteTag associations for the parent tag
+    #     # self.db.query(NoteItemTag).filter(NoteItemTag.tag_id == note_group.parent_tag_id, NoteItemTag.origin_type == origin_type, NoteItemTag.tag_id == note_group.parent_tag_id).delete() # NoteTag.note_id.in_([note.id for note in notes])).delete()
+    #     self.db.query(NoteItemTag).filter(NoteItemTag.tag_id == note_group.parent_tag_id).delete() # NoteTag.note_id.in_([note.id for note in notes])).delete()
+        
+    #     # Need to add NoteItem.origin_type == 'notes'
+    #     self.db.query(NoteItem).filter(NoteItem.origin_id == note_group.parent_tag_id, NoteItem.created_by == user_id).delete()
+    #     self.db.commit()
+        
+    #     # Create notes
+    #     notes = []
+    #     for i, item in enumerate(note_group.items):
+            
+    #         # Note table has user_id as foreign key
+    #         # but we need oauth_id because that is what
+    #         # we are using for the user_id here
+    #         note = NoteItem(
+    #             id=item.id,
+    #             content=item.content,
+    #             origin_id=note_group.parent_tag_id,
+    #             origin_type=origin_type,
+    #             sequence_number=item.position,
+    #             created_by=user_id
     #         )
-    #         .outerjoin(
-    #             NoteItemTag, 
-    #             and_(
-    #                 NoteItemTag.note_item_id == NoteItem.id,
-    #                 NoteItemTag.tag_id != parent_tag_id
-    #             )
+    #         self.db.add(note)
+    #         notes.append(note)
+        
+    #     self.db.flush()
+        
+        
+        
+    #     # Create note-tag associations
+    #     for note, item in zip(notes, note_group.items):
+    #         note_item_tag = NoteItemTag(
+    #             note_item_id=note.id,
+    #             tag_id=note_group.parent_tag_id,
+    #             origin_type=origin_type,
+    #             # origin_id=note_group.parent_tag_id
     #         )
-    #         .outerjoin(
-    #             Tag, 
-    #             Tag.id == NoteItemTag.tag_id
-    #         )
-    #         .filter(
-    #             NoteItem.origin_id == parent_tag_id,
-    #             NoteItem.origin_type == origin_type,
-    #             NoteItem.created_by == user_id
-    #         )
-    #         .order_by(NoteItem.sequence_number)
+    #         self.db.add(note_item_tag)
+            
+    #         # assign tags to the note, need to not duplicate tags
+    #         print(f"item.id: {item.id}")
+    #         print(f"item.tags: {item.tags}")
+    #         for tag_name in item.tags:
+                
+    #             #get the tag id first
+    #             tag_obj = self.db.query(Tag).filter(Tag.name == tag_name, Tag.created_by == user_id).first()
+    #             if not tag_obj:
+    #                 raise NoResultFound(f"Tag with name {tag_name} by {user_id} not found")
+                
+    #             # create NoteTag if it doesn't exist
+    #             existing_note_tag = self.db.query(NoteItemTag).filter(
+    #                 NoteItemTag.note_item_id == note.id,
+    #                 NoteItemTag.tag_id == tag_obj.id,
+    #                 NoteItemTag.list_type == 'tag',
+    #             ).first()
+    #             if not existing_note_tag:
+    #                 # Create a new NoteTag association
+    #                 note_item_tag = NoteItemTag(
+    #                     note_item_id=note.id,
+    #                     tag_id=tag_obj.id,
+    #                     origin_type='tag',
+    #                 )
+    #                 self.db.add(note_item_tag)
+                
+               
+        
+    #     # Commit changes
+    #     self.db.commit()
+        
+    #     # Refresh objects from DB to get all fields
+    #     for note in notes:
+    #         self.db.refresh(note)
+        
+    #     return NoteItemsResponse(
+    #         message="Success",
+    #         error=None,
+    #         data='test1234'
     #     )
         
-    #     # Process the results
-    #     note_items_dict = {}
-    #     tags_dict = {}
         
-    #     for note_item, tag in query:
-    #         # Initialize note item entry if not already present
-    #         if note_item.id not in note_items_dict:
-    #             note_items_dict[note_item.id] = {
-    #                 "note_item": note_item,
-    #                 "tags": []
-    #             }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    # def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str = "tag") -> NoteItemsResponse:
+    #     """
+    #     Get notes under an existing tag.
+        
+    #     Args:
+    #         tag_id: UUID of the existing parent tag
             
-    #         # Add tag to note item if it exists
-    #         if tag and tag.id not in [t.id for t in note_items_dict[note_item.id]["tags"]]:
-    #             note_items_dict[note_item.id]["tags"].append(tag)
-    #             tags_dict[tag.id] = tag
+    #     Returns:
+    #         NoteGroupResponse with the tag and created notes
+            
+    #     Raises:
+    #         NoResultFound: If the tag_id doesn't exist
+    #     """
+    #     # TODO: verity note exists
+    #     # Verify tag exists
         
+        
+    #     if list_type == "tag":
+    #         tag = self.db.query(Tag).filter(Tag.id == list_id, Tag.created_by == user_id).first()
+    #     elif list_type == "note":
+    #         tag = self.db.query(Note).filter(Note.id == list_id, Note.created_by == user_id).first()
+        
+    #     if not tag:
+    #         raise NoResultFound(f"List with id {list_id} and type {list_type} by {user_id} not found")
+        
+    #     # TODO: use origin type to get the notes
+    #     # Get notes
+    #     note_items = self.db.query(NoteItem).filter(NoteItem.origin_id == list_id, NoteItem.origin_type == origin_type, NoteItem.created_by == user_id).order_by(NoteItem.sequence_number).all()
+        
+    #     # Get all note_tags for the notes where tag_id is not the parent tag
+    #     note_item_tags = self.db.query(NoteItemTag).filter(
+    #         NoteItemTag.note_item_id.in_([note_item.id for note_item in note_items]),
+    #         NoteItemTag.tag_id != list_id
+    #     ).all()
+        
+    #     note_item_tag_ids = [note_item_tag.tag_id for note_item_tag in note_item_tags]
+    #     # print all of the note_tags and properties
+    #     # print(f"note_tags: {str(note_item_tag_ids)}")
+        
+    #     # Get all tags for the notes
+    #     tags = self.db.query(Tag).filter(
+    #         Tag.id.in_(note_item_tag_ids),
+    #         # Tag.parent_id != list_id
+    #     ).all()
+
+    #     print(f"tags: {str(tags)}")
+    #     # Create a mapping of tag_id to Tag object for quick lookup
+    #     tag_map = {tag.id: tag for tag in tags}
+
     #     # Construct response
     #     note_responses = []
-    #     for note_data in note_items_dict.values():
-    #         note_item = note_data["note_item"]
-    #         assigned_tags = [tag.name for tag in note_data["tags"] if tag]
+    #     for note_item in note_items:
+    #         # Get the tags for the note
+    #         assigned_tags = []
             
+    #         for note_tag in note_item_tags:
+    #             if note_tag.note_item_id == note_item.id and note_tag.tag_id in tag_map:
+    #                 tag = tag_map[note_tag.tag_id]
+    #                 assigned_tags.append(tag.name)
+    #         print(f"assigned_tags: {str(assigned_tags)}")
     #         note_responses.append(
     #             NoteResponse(
     #                 id=note_item.id,
     #                 content=note_item.content,
     #                 created_at=note_item.created_at,
     #                 updated_at=note_item.updated_at,
-    #                 creation_tag_id=note_item.origin_id,
+    #                 #creation_tag_id=note_item.origin_id,
     #                 sequence_number=note_item.sequence_number,
     #                 tags=assigned_tags
     #             )
@@ -406,14 +447,86 @@ class NoteService:
     #             created_at=tag.created_at,
     #             order=tag.creation_order
     #         )
-    #         for tag in tags_dict.values()
+    #         for tag in tags
     #     ]
-        
+    #     print(f"tag_responses: {str(tag_responses)}")
     #     return NoteItemsResponse(
     #         data={"notes": note_responses, "tags": tag_responses},
     #         message="Success",
     #         error=None
     #     )
+    
+    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str = "tag") -> NoteItemsResponse:#db: Session, list_id: UUID, list_type: str) -> Dict[str, Any]:
+        """
+        Given a list_id and list_type, retrieve all NoteItems in that list and all Tags associated with those NoteItems.
+        
+        Args:
+            db: Database session
+            list_id: UUID of the list (Note or Tag)
+            list_type: Type of the list ('note' or 'tag')
+            
+        Returns:
+            Dict containing note_items and tags
+        """
+        # Step 1: Get all note_item_ids for the given list_id and list_type
+        note_item_ids_query = select(NoteItemList.note_item_id).where(
+            and_(
+                NoteItemList.list_id == list_id,
+                NoteItemList.list_type == list_type
+            )
+        )
+        note_item_ids = [row[0] for row in self.db.execute(note_item_ids_query).fetchall()]
+        
+        # Step 2: Get all note_items for these IDs
+        note_items_query = select(NoteItem).where(
+            NoteItem.id.in_(note_item_ids),
+            NoteItem.created_by == user_id
+        )
+        note_items = self.db.execute(note_items_query).scalars().all()
+        
+        # Step 3: Get all tag associations (list_id and note_item_id pairs where list_type is 'tag')
+        tag_associations_query = select(
+            NoteItemList.list_id, 
+            NoteItemList.note_item_id
+        ).where(
+            and_(
+                NoteItemList.note_item_id.in_(note_item_ids),
+                NoteItemList.list_type == 'tag'
+            )
+        )
+        tag_associations = self.db.execute(tag_associations_query).fetchall()
+        
+        # Extract unique tag_ids from associations
+        tag_ids = list(set([association[0] for association in tag_associations]))
+        
+        # Step 4: Get all tags for these tag_ids
+        tags_query = select(Tag).where(
+            Tag.id.in_(tag_ids)
+        )
+        tags = self.db.execute(tags_query).scalars().all()
+        
+        # Create a mapping of note_item_id to list of tag_ids for easier consumption
+        note_item_tag_mapping = {}
+        for tag_id, note_item_id in tag_associations:
+            if note_item_id not in note_item_tag_mapping:
+                note_item_tag_mapping[note_item_id] = []
+            note_item_tag_mapping[note_item_id].append(tag_id)
+        
+        # TODO: construct noteResponse and tagResponse objects
+        test = {
+            "note_items": note_items,
+            "tags": tags,
+            "note_item_tag_mapping": note_item_tag_mapping
+        }
+        print(test)
+        note_responses = []
+        tag_responses = []
+        return NoteItemsResponse(
+            data={"notes": note_responses, "tags": tag_responses},
+            message="Success",
+            error=None
+        )
+   
 
     # TODO: Move to tag repo, then call from here
     def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> TagEntry:

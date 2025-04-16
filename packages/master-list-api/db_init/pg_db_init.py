@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from schemas import Base, User, Tag, NoteItem, NoteItemTag  # Note: added User import
+from schemas import Base, User, Tag  # Note: added User import
 import uuid  # Added for UUID generation
 import sys
 
