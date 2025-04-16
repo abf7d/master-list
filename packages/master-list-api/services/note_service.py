@@ -93,7 +93,7 @@ class NoteService:
     
     
     # Need to handle is_origin, need to persist when getting and need to update here when setting
-    def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "tag") -> NoteGroupResponse:
+    def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
         """
         Update note items for a given parent (list_id).
         Steps:
@@ -112,7 +112,7 @@ class NoteService:
             Dict containing created note_items and associations
         """
         parent_id = note_group.parent_tag_id
-        parent_list_type = note_group.parent_list_type
+        parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
         
         if parent_id is None:
             # If no parent_id, we're creating completely new items
@@ -140,7 +140,8 @@ class NoteService:
                 
                 tag_associations_query = select(
                     NoteItemList.list_id,
-                    NoteItemList.note_item_id
+                    NoteItemList.note_item_id,
+                    NoteItemList.list_type
                 ).where(
                     and_(
                         NoteItemList.note_item_id.in_(note_item_ids),
@@ -154,11 +155,11 @@ class NoteService:
                 
                 # Step 2: Delete all associations for these note_item_ids
                 # Create a list of tuples from tag_note_ids
-                tuple_pairs = [(list_id, note_item_id) for list_id, note_item_id in list_note_ids]
+                tuple_pairs = [(list_id, note_item_id, list_type) for list_id, note_item_id, list_type in list_note_ids]
 
                 # Use tuple_ to match against multiple columns at once
                 delete_associations_stmt = delete(NoteItemList).where(
-                    tuple_(NoteItemList.list_id, NoteItemList.note_item_id).in_(tuple_pairs)
+                    tuple_(NoteItemList.list_id, NoteItemList.note_item_id, NoteItemList.list_type).in_(tuple_pairs)
                 )
 
                 # Execute the delete statement
@@ -171,57 +172,138 @@ class NoteService:
                 )
                 self.db.execute(delete_note_items_stmt)
         
+        # Pre-fetch all tag names to IDs to avoid multiple queries
+        # First collect all unique tag names from all items
+        all_tag_names = set()
+        for item in note_group.items:
+            all_tag_names.update(item.tags)
+        
+        # Then query the database once to get all tag IDs
+        tag_ids_by_name = {}
+        if all_tag_names:
+            tags_query = select(Tag.id, Tag.name).where(
+                Tag.name.in_(list(all_tag_names))
+            )
+            tag_results = self.db.execute(tags_query).fetchall()
+            tag_ids_by_name = {tag_name: tag_id for tag_id, tag_name in tag_results}
+
+        
+        
         # Separate into function create_note_items
         # Step 4: Create new note_items and associations
         created_note_items = []
-        associations = []
         
+        # First, create all note items and collect them
         for i, item in enumerate(note_group.items):
-            # Create new note item
             position = item.position if item.position is not None else i
             
-            # Use existing ID if provided, otherwise create new
-            note_item_id = item.id if item.id else uuid.uuid4()
+            if item.id:
+                # Use provided ID
+                new_note_item = NoteItem(
+                    id=item.id,
+                    content=item.content,
+                    created_by=user_id,
+                    sequence_number=position
+                )
+            else:
+                # Let the database generate the ID
+                new_note_item = NoteItem(
+                    content=item.content,
+                    created_by=user_id,
+                    sequence_number=position
+                )
             
-            # TODO: Use db to create a new id and then use that id later when creating associations
-            # to first create the isOrigin and then the other assocaitions, need to persist origin
-            new_note_item = NoteItem(
-                id=note_item_id,
-                content=item.content,
-                created_by=user_id,
-                sequence_number=position
-            )
             self.db.add(new_note_item)
             created_note_items.append(new_note_item)
-            
+        
+        # We need to flush to get the generated IDs
+        self.db.flush()
+        associations = []
+        
+        for item, note_item in zip(note_group.items, created_note_items):
             # Create parent association
             if parent_id:
                 parent_association = NoteItemList(
-                    note_item_id=note_item_id,
+                    note_item_id=note_item.id,
                     list_id=parent_id,
                     list_type=parent_list_type,
-                    is_origin=(origin_type == parent_list_type)
+                    is_origin=False #(origin_type == parent_list_type)
                 )
                 self.db.add(parent_association)
                 associations.append(parent_association)
             
             # Create tag associations
-            for tag_id in item.tags:
+            for tag_name in item.tags:
+                if tag_name not in tag_ids_by_name:
+                    continue
+                    
+                tag_id = tag_ids_by_name[tag_name]
                 tag_association = NoteItemList(
-                    note_item_id=note_item_id,
-                    list_id=UUID(tag_id),  # Convert string to UUID
+                    note_item_id=note_item.id,
+                    list_id=tag_id,
                     list_type='tag',
-                    is_origin=(origin_type == 'tag')
+                    is_origin=False #(origin_type == 'tag')
                 )
                 self.db.add(tag_association)
                 associations.append(tag_association)
+            
+        # for i, item in enumerate(note_group.items):
+        #     # Create new note item
+        #     position = item.position if item.position is not None else i
+            
+        #     # Use existing ID if provided, otherwise create new
+        #     note_item_id = item.id if item.id else uuid.uuid4()
+            
+        #     # TODO: Use db to create a new id and then use that id later when creating associations
+        #     # to first create the isOrigin and then the other assocaitions, need to persist origin
+        #     new_note_item = NoteItem(
+        #         id=note_item_id,
+        #         content=item.content,
+        #         created_by=user_id,
+        #         sequence_number=position
+        #     )
+        #     self.db.add(new_note_item)
+        #     created_note_items.append(new_note_item)
+            
+        #     # Create parent association
+        #     # TODO: Need to persist the if the association is the origin and save here
+        #     # Setting to False for now
+        #     if parent_id:
+        #         parent_association = NoteItemList(
+        #             note_item_id=note_item_id,
+        #             list_id=parent_id,
+        #             list_type=parent_list_type,
+        #             is_origin=False #(origin_type == parent_list_type)
+        #         )
+        #         self.db.add(parent_association)
+        #         associations.append(parent_association)
+            
+        #     # Create tag associations
+        #     # TODO: add the other tags which are not the parent tag
+        #     # The data passed in includes tag name. Need to get the tag id for the tag name and update the 
+        #     # associations.  
+        #     # Create tag associations using tag_ids_by_name mapping
+        #     for tag_name in item.tags:
+        #         # Skip if tag name doesn't exist in the database
+        #         if tag_name not in tag_ids_by_name:
+        #             continue
+                    
+        #         tag_id = tag_ids_by_name[tag_name]
+        #         tag_association = NoteItemList(
+        #             note_item_id=note_item_id,
+        #             list_id=tag_id,
+        #             list_type='tag',
+        #             is_origin=False #(origin_type == 'tag')
+        #         )
+        #         self.db.add(tag_association)
+        #         associations.append(tag_association)
         
         # Commit changes
         self.db.commit()
         
         # Refresh objects to ensure they have DB-generated values
-        for note_item in created_note_items:
-            self.db.refresh(note_item)
+        # for note_item in created_note_items:
+        #     self.db.refresh(note_item)
         
         return {
             "created_note_items": created_note_items,
@@ -456,7 +538,7 @@ class NoteService:
     #         error=None
     #     )
     
-    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str = "tag") -> NoteItemsResponse:#db: Session, list_id: UUID, list_type: str) -> Dict[str, Any]:
+    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str = "note") -> NoteItemsResponse:#db: Session, list_id: UUID, list_type: str) -> Dict[str, Any]:
         """
         Given a list_id and list_type, retrieve all NoteItems in that list and all Tags associated with those NoteItems.
         
