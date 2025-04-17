@@ -39,7 +39,7 @@ class NoteResponse(BaseModel):
     content: str
     created_at: datetime
     updated_at: datetime
-    creation_tag_id: UUID
+    creation_tag_id: Optional[UUID]
     sequence_number: int
     tags: List[str] #List['TagResponse']
 

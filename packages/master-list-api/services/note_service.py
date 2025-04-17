@@ -565,11 +565,12 @@ class NoteService:
             NoteItem.created_by == user_id
         )
         note_items = self.db.execute(note_items_query).scalars().all()
+        # note_items = [note_item in note_items_results]
         
         # Step 3: Get all tag associations (list_id and note_item_id pairs where list_type is 'tag')
         tag_associations_query = select(
             NoteItemList.list_id, 
-            NoteItemList.note_item_id
+            NoteItemList.note_item_id,
         ).where(
             and_(
                 NoteItemList.note_item_id.in_(note_item_ids),
@@ -588,26 +589,58 @@ class NoteService:
         tags = self.db.execute(tags_query).scalars().all()
         
         # Create a mapping of note_item_id to list of tag_ids for easier consumption
-        note_item_tag_mapping = {}
-        for tag_id, note_item_id in tag_associations:
-            if note_item_id not in note_item_tag_mapping:
-                note_item_tag_mapping[note_item_id] = []
-            note_item_tag_mapping[note_item_id].append(tag_id)
+        # note_item_tag_mapping = {}
+        # for tag_id, note_item_id in tag_associations:
+        #     if note_item_id not in note_item_tag_mapping:
+        #         note_item_tag_mapping[note_item_id] = []
+        #     note_item_tag_mapping[note_item_id].append(tag_id)
         
-        # TODO: construct noteResponse and tagResponse objects
-        test = {
-            "note_items": note_items,
-            "tags": tags,
-            "note_item_tag_mapping": note_item_tag_mapping
-        }
-        print(test)
+        tag_map = {tag.id: tag.name for tag in tags}  
+       
+            
+            
         note_responses = []
-        tag_responses = []
+        for note_item in note_items:
+            print("id", id, "content", note_item.content, "created_at", note_item.created_at, "updated_at", note_item.updated_at, "sequence_number", note_item.sequence_number)
+            # Get the tags for the note
+            assigned_tags = []
+            
+            for tag_id, note_item_id in tag_associations:
+                if note_item_id == note_item.id and tag_id in tag_map:
+                    name = tag_map[tag_id]
+                    assigned_tags.append(name)
+            print(f"assigned_tags: {str(assigned_tags)}")
+            note_responses.append(
+                NoteResponse(
+                    id=note_item.id,
+                    content=note_item.content,
+                    created_at=note_item.created_at,
+                    updated_at=note_item.updated_at,
+                    creation_tag_id=None,
+                    #creation_tag_id=note_item.origin_id,
+                    sequence_number=note_item.sequence_number,
+                    tags=assigned_tags
+                )
+            )
+        
+        tag_responses = [
+            TagEntry(
+                id=tag.id,
+                name=tag.name,
+                parent_id=tag.parent_id,
+                created_at=tag.created_at,
+                order=tag.creation_order
+            )
+            for tag in tags
+        ]
+        print(f"tag_responses: {str(tag_responses)}")
         return NoteItemsResponse(
             data={"notes": note_responses, "tags": tag_responses},
             message="Success",
             error=None
         )
+    
+
    
 
     # TODO: Move to tag repo, then call from here

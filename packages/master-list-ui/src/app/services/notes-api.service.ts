@@ -18,9 +18,9 @@ export class NotesApiService {
         return this.http.post<NoteSaveResult>(urlJoin(environment.masterListApi, 'note-items'),  body, { headers });
     }
     // API calls for notes
-    public getNoteElements(noteId: string): Observable<PageResult> {
+    public getNoteElements(noteId: string, listType: 'note' | 'tag'): Observable<PageResult> {
         // Call the API to get elements for a note
-        return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}`));
+        return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}/${listType}`));
       
     }
     

@@ -212,7 +212,7 @@ export class MasterLayoutComponent implements AfterViewInit {
 
     getNotes() {
         
-        this.notesApi.getNoteElements(this.noteId).subscribe({
+        this.notesApi.getNoteElements(this.noteId, 'note').subscribe({
             next: x => {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
