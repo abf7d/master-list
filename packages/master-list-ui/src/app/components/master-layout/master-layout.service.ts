@@ -338,6 +338,8 @@ export class MasterLayoutService {
         tags: existingParagraph?.tags || [],
         updatedAt: existingParagraph?.updatedAt || new Date(),
         createdAt: existingParagraph?.createdAt || new Date(),
+        creation_list_id: existingParagraph?.creation_list_id || null,
+        creation_type: existingParagraph?.creation_type || null,
       };
     });
     paragraphs.length = 0;
@@ -395,6 +397,8 @@ export class MasterLayoutService {
       tags: [],
       updatedAt: new Date(),
       createdAt: new Date(),
+      creation_list_id: null,
+      creation_type: null,
     };
 
     paragraphs.push(paragraph);
@@ -692,6 +696,8 @@ export class MasterLayoutService {
         tags: paragraphs[currentIndex].tags,
         updatedAt: new Date(),
         createdAt: new Date(),
+        creation_list_id: null,
+        creation_type: null,
       };
 
       // Insert new paragraph
@@ -872,6 +878,8 @@ export class MasterLayoutService {
         tags: [...(paragraphs[currentIndex].tags || [])],
         updatedAt: paragraphs[currentIndex].updatedAt,
         createdAt: paragraphs[currentIndex].createdAt,
+        creation_list_id: null,
+        creation_type: null,
       };
 
       // Insert the code paragraph
@@ -894,6 +902,8 @@ export class MasterLayoutService {
           tags: paragraphs[currentIndex].tags,
           updatedAt: new Date(),
           createdAt: new Date(),
+          creation_list_id: null,
+          creation_type: null,
         };
 
         // Insert new paragraph

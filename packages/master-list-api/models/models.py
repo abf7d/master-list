@@ -15,6 +15,8 @@ class NoteItem(BaseModel): # Paragraph object in the frontend
     tags: List[str] = []  # List of tag IDs associated with the note
     # styles: Optional[dict] = None  # These should be specified only on the frontend and should be encoded in the content
     position: Optional[int] = None
+    creation_list_id: Optional[UUID] = None  # Optional list ID to create under
+    creation_type: Optional[str] = None  # Optional type of creation (e.g., 'note', 'tag')
     # level: Optional[int] = None # Tab level for indentation should be stored in conent rather than 
 # Pydantic Response Models
 
@@ -39,7 +41,8 @@ class NoteResponse(BaseModel):
     content: str
     created_at: datetime
     updated_at: datetime
-    creation_tag_id: Optional[UUID]
+    creation_list_id: Optional[UUID]
+    creation_type: Optional[str]
     sequence_number: int
     tags: List[str] #List['TagResponse']
 

@@ -114,6 +114,12 @@ class NoteService:
         parent_id = note_group.parent_tag_id
         parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
         
+        # set creation id for all the new items
+        for item in note_group.items:
+            if item.creation_list_id == None:
+                item.creation_list_id = parent_id
+                item.creation_type = parent_list_type
+        
         if parent_id is None:
             # If no parent_id, we're creating completely new items
             # Skip deletion steps
@@ -223,16 +229,20 @@ class NoteService:
         for item, note_item in zip(note_group.items, created_note_items):
             # Create parent association
             if parent_id:
+                # For every note item on this list, save the association
+                # and if this list is the origin, set is_origin to True
                 parent_association = NoteItemList(
                     note_item_id=note_item.id,
                     list_id=parent_id,
                     list_type=parent_list_type,
-                    is_origin=False #(origin_type == parent_list_type)
+                    is_origin=item.creation_list_id == parent_id and item.creation_type == parent_list_type 
                 )
                 self.db.add(parent_association)
                 associations.append(parent_association)
             
             # Create tag associations
+            # If there is another note item that is not on this list we don't worry about it, just the note_items
+            # on this list and the tags
             for tag_name in item.tags:
                 if tag_name not in tag_ids_by_name:
                     continue
@@ -242,7 +252,7 @@ class NoteService:
                     note_item_id=note_item.id,
                     list_id=tag_id,
                     list_type='tag',
-                    is_origin=False #(origin_type == 'tag')
+                    is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag' #(origin_type == 'tag')
                 )
                 self.db.add(tag_association)
                 associations.append(tag_association)
@@ -571,16 +581,17 @@ class NoteService:
         tag_associations_query = select(
             NoteItemList.list_id, 
             NoteItemList.note_item_id,
+            NoteItemList.list_type,
+            NoteItemList.is_origin
         ).where(
             and_(
                 NoteItemList.note_item_id.in_(note_item_ids),
-                NoteItemList.list_type == 'tag'
             )
         )
         tag_associations = self.db.execute(tag_associations_query).fetchall()
         
         # Extract unique tag_ids from associations
-        tag_ids = list(set([association[0] for association in tag_associations]))
+        tag_ids = list(set([association[0] for association in tag_associations if association[2] == 'tag']))
         
         # Step 4: Get all tags for these tag_ids
         tags_query = select(Tag).where(
@@ -588,40 +599,41 @@ class NoteService:
         )
         tags = self.db.execute(tags_query).scalars().all()
         
-        # Create a mapping of note_item_id to list of tag_ids for easier consumption
-        # note_item_tag_mapping = {}
-        # for tag_id, note_item_id in tag_associations:
-        #     if note_item_id not in note_item_tag_mapping:
-        #         note_item_tag_mapping[note_item_id] = []
-        #     note_item_tag_mapping[note_item_id].append(tag_id)
-        
+        # Map tag id to name for easier conversion
         tag_map = {tag.id: tag.name for tag in tags}  
        
             
-            
+        # Step 5: Construct the response    
         note_responses = []
         for note_item in note_items:
-            print("id", id, "content", note_item.content, "created_at", note_item.created_at, "updated_at", note_item.updated_at, "sequence_number", note_item.sequence_number)
-            # Get the tags for the note
+            
             assigned_tags = []
             
-            for tag_id, note_item_id in tag_associations:
-                if note_item_id == note_item.id and tag_id in tag_map:
+            origin_id = None
+            origin_type = None
+            for tag_id, note_item_id, list_type, is_origin in tag_associations:
+                
+                # if association is a tag and its note id matches this item
+                if note_item_id == note_item.id and list_type == 'tag' and tag_id in tag_map:
                     name = tag_map[tag_id]
                     assigned_tags.append(name)
-            print(f"assigned_tags: {str(assigned_tags)}")
+                if is_origin:
+                    origin_id = tag_id
+                    origin_type = list_type
+            
             note_responses.append(
                 NoteResponse(
                     id=note_item.id,
                     content=note_item.content,
                     created_at=note_item.created_at,
                     updated_at=note_item.updated_at,
-                    creation_tag_id=None,
-                    #creation_tag_id=note_item.origin_id,
+                    creation_list_id=origin_id,
+                    creation_type=origin_type,
                     sequence_number=note_item.sequence_number,
                     tags=assigned_tags
                 )
             )
+        
         
         tag_responses = [
             TagEntry(
@@ -827,7 +839,7 @@ class NoteService:
                     content=note.content,
                     created_at=note.created_at,
                     updated_at=note.updated_at,
-                    creation_tag_id=note.creation_tag_id,
+                    creation_list_id=note.creation_tag_id,
                     sequence_number=note.sequence_number,
                     tags=[tag_response]
                 )

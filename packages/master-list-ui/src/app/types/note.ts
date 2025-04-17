@@ -26,6 +26,8 @@ export interface Paragraph {
   createdAt: Date;
   updatedAt: Date;
   position?: number;
+  creation_list_id: string | null;
+  creation_type: 'note' | 'tag' | null;
 }
 
 
