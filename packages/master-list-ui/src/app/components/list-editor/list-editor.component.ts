@@ -67,7 +67,7 @@ export class ListEditorComponent {
 
     ngOnInit() {
         this.tagApi
-            .getLists()
+            .getDefaultTags()
             .pipe(tap(x => this.tagColorService.initTagColors(x)))
             .subscribe(x => this.tagGroup$.next(x));
         this.tagGroup$.subscribe();
@@ -75,7 +75,7 @@ export class ListEditorComponent {
         this.route.paramMap.subscribe(params => {
             let noteId = params.get('id');
             if (!noteId) {
-                this.tagApi.autoCompleteTags('my-note-test', 1, 10).subscribe(x => {
+                this.tagApi.getTags('my-note-test', 1, 10).subscribe(x => {
                     const found = x.data.find((y: any) => y.name === 'my-note-test');
                     console.log('found', found);
                     if (!found) {

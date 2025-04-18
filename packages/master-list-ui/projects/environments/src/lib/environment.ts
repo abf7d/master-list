@@ -30,7 +30,7 @@ export const environment = {
 
     // MSAL Stuff
     clientID: '7515b8bc-44ba-4f60-9740-62b9ac197bf3',
-    redirectUri:  'https://localhost:4200/main', // 'https://localhost:4200/login-redirect',
+    redirectUri:  'https://localhost:4200/lists', // 'https://localhost:4200/login-redirect',
     postLogoutUrl: '/home', //'https://localhost:4200/home/',
     exposedApiScope: 'https://criticalplayground.onmicrosoft.com/api/read', // using this fixed the intraceptor
     msalConfig: {

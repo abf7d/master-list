@@ -1,7 +1,10 @@
 <div class="editor-container">
     <div class="content-area">
         <div class="nav-lists">
-            <ml-nav-list></ml-nav-list>
+            <ml-nav-list 
+            (createList)="createList($event)" 
+            (loadList)="navToList($event)"
+            (updateListType)="updateListType($event)"></ml-nav-list>
         </div>
         <div class="note-list-area">
             <router-outlet></router-outlet>

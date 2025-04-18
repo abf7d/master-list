@@ -202,7 +202,21 @@ async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
 
 
 
-
+@router.post("/note", response_model=ResponseData,)
+@authenticate
+async def create_note(request: Request,
+    graph_service: GraphService = Depends(get_graph_service),
+    note_service: NoteService = Depends(get_note_service),
+    token_service: TokenService = Depends(get_token_service)):
+   
+    note_info = note_service.create_note(request.state.user_id)
+    response = ResponseData(
+        message="Note created successfully",
+        error="",
+        data=note_info
+    )
+    # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
+    return response
 
 
 

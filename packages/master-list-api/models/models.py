@@ -79,6 +79,10 @@ class TagEntry(BaseModel):
     created_at: datetime
     order: int
     
+class NoteEntry(BaseModel):
+    id: UUID
+    created_at: datetime
+    
 class NoteItemsResponse(BaseModel):
     message: Optional[str]
     error: Optional[str]

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, output } from '@angular/core';
 import { NavTileComponent } from '../nav-tile/nav-tile.component';
 import { CommonModule } from '@angular/common';
 import { TagApiService } from '../../services/tag-api';
+import { LoadList } from '../list-nav-layout/list-nav-layout.component';
 
 @Component({
   selector: 'ml-nav-list',
@@ -10,11 +11,22 @@ import { TagApiService } from '../../services/tag-api';
   styleUrl: './nav-list.component.scss'
 })
 export class NavListComponent implements OnInit {
+
+  readonly createList = output<string>();
+  readonly loadList = output<LoadList>();
+  readonly updateListType = output<'note' | 'tag'>();
+
+  public activeTab: 'note' | 'tag' = 'note';
+
   constructor(private tagApi: TagApiService) {}
   public ngOnInit() {
-    this.tagApi.getTags(10, 1).subscribe((res) => {
-      console.log(res);
-    });
+   
+  }
+  public addClicked(type: 'note' | 'tag') {
+    this.createList.emit(type);
+  }
+  public listItemClicked(listType: 'note' | 'tag', id: string){
+    this.loadList.emit({listType, id});
   }
   public noteItems: NavItem[] = [{
     title: 'Note 1',
@@ -75,13 +87,13 @@ export class NavListComponent implements OnInit {
     order: 1
   }];
   items: NavItem[] = this.noteItems;
-  activeTab: 'notes' | 'lists' = 'notes';
-  selectTab(listType: 'notes' | 'lists') {
+ 
+  selectTab(listType: 'note' | 'tag') {
     this.activeTab = listType;
-    if(listType === 'notes') {
+    if(listType === 'note') {
       this.items = this.noteItems;
     }
-    if(listType === 'lists') {
+    if(listType === 'tag') {
       this.items = this.listItems;
     }
   }

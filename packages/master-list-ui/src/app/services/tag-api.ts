@@ -19,13 +19,18 @@ export interface TagProps {
     parent_id: string;
     created_at: string;
     order: number;
-
 }
-export interface TagSerch extends Response<TagProps[]>{
-
+export interface NoteProps {
+    id: string;
+    title: string;
+    description: string;
+    create_at: string;
+    updated_at: string;
+    order: number;
 }
-export interface TagCreate extends Response<TagProps>{
-}
+export interface TagSearch extends Response<TagProps[]> {}
+export interface TagCreate extends Response<TagProps> {}
+export interface NoteSerach extends Response<NoteProps[]>{}
 
 @Injectable({
     providedIn: 'root',
@@ -34,20 +39,19 @@ export class TagApiService {
     constructor(private http: HttpClient) {}
     // API calls for notes
 
-
-    public getTags(size: number, page: number, isList: boolean = false): Observable<any> {
-        let params = new HttpParams()
-            .set('size', size.toString())
-            .set('page', page.toString())
-            .set('islist', page.toString());
+    public getTagsOld(size: number, page: number, isList: boolean = false): Observable<any> {
+        let params = new HttpParams().set('size', size.toString()).set('page', page.toString()).set('islist', page.toString());
         return this.http.get(urlJoin(environment.masterListApi, '/tags'), { params });
     }
 
-    autoCompleteTags(searchTxt: string, page: number, pageSize: number): Observable<TagSerch>  {
-        let params = new HttpParams().set('query', searchTxt).set('page', page.toString()).set('pageSize', pageSize.toString());
-        return this.http.get<TagSerch>(urlJoin(environment.masterListApi, '/tags'), { params });
+    public getTags(searchTxt: string | null, page: number, pageSize: number): Observable<TagSearch> {
+        let params = new HttpParams().set('query', searchTxt ?? '').set('page', page.toString()).set('pageSize', pageSize.toString())
+        return this.http.get<TagSearch>(urlJoin(environment.masterListApi, '/tags'), { params });
     }
-
+    public getNotes(searchTxt: string | null, page: number, pageSize: number, listType: 'tag' | 'note' = 'tag'): Observable<NoteSerach> {
+        let params = new HttpParams().set('query', searchTxt ?? '').set('page', page.toString()).set('pageSize', pageSize.toString()).set('listType', listType);
+        return this.http.get<NoteSerach>(urlJoin(environment.masterListApi, '/notes'), { params });
+    }
     // public createTag(tag: TagButton): Observable<any>{
     //     const body = JSON.stringify(tag);
     //     const headers = new HttpHeaders().set('Content-Type', 'application/json');
@@ -68,7 +72,13 @@ export class TagApiService {
         return this.http.delete<Response<any>>(urlJoin(environment.masterListApi, '/tag', nameEncoded));
     }
 
-    public getLists(): Observable<TagSelectionGroup> {
+    public createNote(type: string): Observable<TagCreate> {
+        let params = new HttpParams().set('type', type)
+       return  this.http.post<TagCreate>(urlJoin(environment.masterListApi, '/note'), { params });
+
+    }
+
+    public getDefaultTags(): Observable<TagSelectionGroup> {
         return of({
             name: 'Tag Group',
             tags: [
@@ -106,4 +116,3 @@ export class TagApiService {
         // Call the API to delete an element
     }
 }
-

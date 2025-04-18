@@ -86,7 +86,7 @@ export class TagGroupComponent implements OnInit {
         if (currentValue.length > 0) {
             //2) {
             this.showDefaultMenu = false;
-            this.tagApi.autoCompleteTags(currentValue, 1, 10).subscribe(tags => {
+            this.tagApi.getTags(currentValue, 1, 10).subscribe(tags => {
                 console.log('matched tags', tags);
                 // this.matchedEntries = tags.data.map((y: any) => y.name);
 

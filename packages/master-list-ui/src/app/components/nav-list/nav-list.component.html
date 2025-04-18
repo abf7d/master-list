@@ -1,14 +1,14 @@
 <div class="nav-tabs">
-    <div (click)="selectTab('notes')" [ngClass]="{active: activeTab === 'notes'}">Notes</div>
-    <div (click)="selectTab('lists')" [ngClass]="{active: activeTab === 'lists'}">Tags</div>
+    <div (click)="selectTab('note')" [ngClass]="{active: activeTab === 'note'}">Notes</div>
+    <div (click)="selectTab('tag')" [ngClass]="{active: activeTab === 'tag'}">Tags</div>
 </div>
 <div class="search-container">
     <input type="text" placeholder="Type to Search">
-    <button>Add +</button>
+    <button (click)="addClicked(activeTab)">Add +</button>
 </div>
 <div class="nav-items">
   @for(item of items; track item.id) {
-    <div>
+    <div (click)="listItemClicked(activeTab, item.id)">
         <ml-nav-tile [itemInfo]="item"></ml-nav-tile>
     </div>
   }

@@ -5,7 +5,7 @@ import { AuthorizedUserGuard } from '../../projects/auth/src/lib/gaurd/authorize
 export const routes: Routes = [
     {
         path: '',
-        redirectTo: '/main',
+        redirectTo: '/lists',
         pathMatch: 'full',
     },
     {

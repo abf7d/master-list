@@ -157,7 +157,7 @@ export class MasterLayoutComponent implements AfterViewInit {
 
     ngOnInit() {
         this.tagApi
-            .getLists()
+            .getDefaultTags()
             .pipe(tap(x => this.tagColorService.initTagColors(x)))
             .subscribe(x => this.tagGroup$.next(x));
         this.tagGroup$.subscribe();
@@ -172,7 +172,7 @@ export class MasterLayoutComponent implements AfterViewInit {
                 // should we redirect to main route with id if we get it
                 // in resolver, create the note/tag and redirect to route with id
                 // so empty main route will have a gaurd or resolver that creates a new note/tag id and redirects
-                this.tagApi.autoCompleteTags('my-note-test', 1, 10).subscribe(x => {
+                this.tagApi.getTags('my-note-test', 1, 10).subscribe(x => {
                     const found = x.data.find((y: any) => y.name === 'my-note-test');
                     console.log('found', found);
                     if (!found) {
