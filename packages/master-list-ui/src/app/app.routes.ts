@@ -6,20 +6,42 @@ export const routes: Routes = [
     {
         path: '',
         redirectTo: '/main',
-        pathMatch: 'full'
+        pathMatch: 'full',
     },
     {
         path: 'home',
-        loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent)
+        loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent),
     },
     {
         path: 'main',
         loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-        canActivate: [AuthorizedUserGuard]
+        canActivate: [AuthorizedUserGuard],
     },
     {
         path: 'main/:id',
         loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-        canActivate: [AuthorizedUserGuard]
+        canActivate: [AuthorizedUserGuard],
+    },
+    {
+        path: 'lists',
+        loadComponent: () => import('./components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
+        canActivate: [AuthorizedUserGuard],
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
+            },
+        ],
+    },
+    {
+        path: 'lists/:id',
+        loadComponent: () => import('./components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
+        canActivate: [AuthorizedUserGuard],
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
+            },
+        ]
     },
 ];
