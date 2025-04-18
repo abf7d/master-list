@@ -79,9 +79,16 @@ class TagEntry(BaseModel):
     created_at: datetime
     order: int
     
-class NoteEntry(BaseModel):
+class NoteCreation(BaseModel):
     id: UUID
     created_at: datetime
+class NoteEntry(BaseModel):
+    id: UUID
+    title: Optional[str]
+    description: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    order: Optional[int]
     
 class NoteItemsResponse(BaseModel):
     message: Optional[str]

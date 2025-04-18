@@ -218,7 +218,23 @@ async def create_note(request: Request,
     # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
     return response
 
-
+@router.get("/notes/", response_model=ResponseData)
+@authenticate
+async def get_tags(
+    request: Request,
+    query: str = Query(..., description="Search term"),
+    page: int = Query(1, ge=1, description="Page number"),
+    pageSize: int = Query(10, alias="pageSize", ge=1, le=100, description="Number of tags per page"),
+    graph_service: GraphService = Depends(get_graph_service),
+    note_service: NoteService = Depends(get_note_service),
+):
+    """Get a list of Notes"""
+   
+    # data = note_service.get_tags(request.state.user_id, query, page, pageSize, parent_tag_id=None, )
+    data = note_service.get_notes(request.state.user_id, query, page, pageSize, parent_tag_id=None, )
+    response = ResponseData(message='Success', error=None, data=data )
+    print('data', data)
+    return response
 
 
 

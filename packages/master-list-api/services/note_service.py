@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Note, Tag, NoteItem, NoteItemList
-from models.models import CreateNoteGroup, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
+from models.models import CreateNoteGroup, NoteCreation, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
 from sqlalchemy import and_, select, delete, tuple_
 from sqlalchemy import func, case
 
@@ -508,7 +508,7 @@ class NoteService:
         self.db.commit()
         self.db.refresh(note)
         
-        return NoteEntry( # TODO: Change to NoteEntry
+        return NoteCreation( # TODO: Change to NoteEntry
             id=note.id,
             created_at=note.created_at,
         )
@@ -608,6 +608,69 @@ class NoteService:
             )
         
         return tag_responses
+    
+    
+    def get_notes(
+        self,
+        user_id: str,
+        query: Optional[str] = None,
+        page: int = 1,
+        pageSize: int = 10,
+        parent_tag_id: Optional[UUID] = None
+    ) -> Optional[List[TagEntry]]:
+        """
+        Get notes by user with optional filtering and pagination.
+
+        Args:
+            user_id: ID of the user
+            query: Optional string to search tag names
+            page: Page number (1-indexed)
+            pageSize: Number of tags per page
+            parent_tag_id: Optional UUID of parent tag
+
+        Returns:
+            A list of TagResponse models
+        """
+
+        # Base filters
+        filters = [Note.created_by == user_id]
+        # if parent_tag_id is not None:
+            # filters.append(Tag.parent_id == parent_tag_id)
+
+        # Optional search query (e.g., for autocomplete)
+        if query:
+            filters.append(Note.title.ilike(f"{query}%"))  # Starts with; for partial match use `%{query}%`
+
+        # Query with filters and pagination
+        notes_query: Query = self.db.query(Note).filter(and_(*filters))
+        
+        # Need to track usage statistics: https://claude.ai/chat/5f7f1716-0dca-4db7-9d21-fcf1de0c92a6
+        notes_query = notes_query.order_by(
+            case((Note.title == query, 1), else_=0).desc(),
+            func.length(Note.title),
+            Note.created_at.desc()
+        )  # Optional ordering
+        notes_query = notes_query.offset((page - 1) * pageSize).limit(pageSize)
+
+        notes = notes_query.all()
+
+        note_responses = []
+        for i, note in enumerate(notes):
+            print('note', note)
+            note_responses.append(
+                NoteEntry  (
+                    id=note.id,
+                    title=note.title,
+                    description=note.description,
+                    created_at=note.created_at,
+                    updated_at=note.updated_at,
+                    order=i
+                )
+            )
+        
+        return note_responses
+    
+    
 
     def get_note_group_by_tag_id(self, tag_id: UUID) -> Optional[NoteGroupResponse]:
         """

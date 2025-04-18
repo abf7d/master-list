@@ -20,16 +20,20 @@ export class ListNavLayoutComponent {
     ) {}
 
     ngOnInit() {
-        // if (this.activeListTab === 'note') {
-        //     this.listApi.getNotes(null, 0, 10).subscribe({ next: lists => {} });
-        // } else {
-            this.listApi.getTags(null, 0, 10).subscribe({
-                next: lists => {},
-            });
-        // }
+        this.getListItems();
     }
     public updateListType(type: 'note' | 'tag') {
         this.activeListTab = type;
+        this.getListItems();
+    }
+    public getListItems() {
+      if (this.activeListTab === 'note') {
+        this.listApi.getNotes(null, 1, 10).subscribe({ next: lists => {} });
+    } else {
+        this.listApi.getTags(null, 1, 10).subscribe({
+            next: lists => {},
+        });
+    }
     }
     // Create an entry in the Note table (maybe tag add+ button is hidden or disabled), createNote rturns the id, navigate to the new note page
     public createList(type: string) {
