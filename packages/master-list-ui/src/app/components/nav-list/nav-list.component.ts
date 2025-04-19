@@ -3,7 +3,7 @@ import { NavTileComponent } from '../nav-tile/nav-tile.component';
 import { CommonModule } from '@angular/common';
 import { NoteProps, TagApiService, TagProps } from '../../services/tag-api';
 import { LoadList } from '../list-nav-layout/list-nav-layout.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'ml-nav-list',
@@ -18,11 +18,28 @@ export class NavListComponent implements OnInit {
     constructor(
         private listApi: TagApiService,
         private router: Router,
+        private route: ActivatedRoute
     ) {}
 
     ngOnInit() {
-        this.getListItems('note');
+        
+        this.route.paramMap.subscribe(params => {
+          let listId = params.get('id');
+          let listType = params.get('listType');
+          if (listId && listType) {
+            const type = listType as 'note' | 'tag';
+            this.getListItems(type);
+            this.activeListTab = type;
+            this.activeItem = listId;
+          } else {
+            this.activeListTab = 'note';
+            this.activeItem = null;
+            this.getListItems(this.activeListTab);
+          }
+        });
     }
+
+   
 
     public changeListType(type: 'note' | 'tag') {
         this.getListItems(type);

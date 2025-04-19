@@ -49,8 +49,9 @@ export class TagApiService {
         params = (id !== null) ? params.set('id', id) : params;
         return this.http.get<TagSearch>(urlJoin(environment.masterListApi, '/tags'), { params });
     }
-    public getNotes(searchTxt: string | null, page: number, pageSize: number, listType: 'tag' | 'note' = 'tag'): Observable<NoteSerach> {
-        let params = new HttpParams().set('query', searchTxt ?? '').set('page', page.toString()).set('pageSize', pageSize.toString()).set('listType', listType);
+    public getNotes(searchTxt: string | null, page: number, pageSize: number, id: string | null = null): Observable<NoteSerach> {
+        let params = new HttpParams().set('query', searchTxt ?? '').set('page', page.toString()).set('pageSize', pageSize.toString());
+        params = (id !== null) ? params.set('id', id) : params;
         return this.http.get<NoteSerach>(urlJoin(environment.masterListApi, '/notes'), { params });
     }
     // public createTag(tag: TagButton): Observable<any>{

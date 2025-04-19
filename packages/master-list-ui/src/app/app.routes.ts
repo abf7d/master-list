@@ -12,16 +12,16 @@ export const routes: Routes = [
         path: 'home',
         loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent),
     },
-    {
-        path: 'main',
-        loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-        canActivate: [AuthorizedUserGuard],
-    },
-    {
-        path: 'main/:id',
-        loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-        canActivate: [AuthorizedUserGuard],
-    },
+    // {
+    //     path: 'main',
+    //     loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
+    //     canActivate: [AuthorizedUserGuard],
+    // },
+    // {
+    //     path: 'main/:id',
+    //     loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
+    //     canActivate: [AuthorizedUserGuard],
+    // },
     {
         path: 'lists',
         loadComponent: () => import('./components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),

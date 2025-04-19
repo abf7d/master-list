@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { NavListComponent } from '../nav-list/nav-list.component';
 import { CommonModule } from '@angular/common';
-import { Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 // import { NavListApiService } from '../../services/nav-list-api.service';
 import { TagApiService } from '../../services/tag-api';
 
@@ -12,6 +12,7 @@ import { TagApiService } from '../../services/tag-api';
     styleUrl: './list-nav-layout.component.scss',
 })
 export class ListNavLayoutComponent {
+  
     // public activeListTab: 'note' | 'tag' = 'note';
 
     // constructor(

@@ -189,6 +189,10 @@ export class MetaTagsComponent {
 
     private handleAddTagComplete(newUpdate: TagUpdate) {
         const name = newUpdate.name;
+        const found = this.tagGroups().tags.find(x => x.name === name);
+        if (found) {
+            return;
+        }
         const newTag = this.creatNewTag(newUpdate.name, newUpdate.id, 0);
         // const newTag = this.creatNewTag(newUpdate.name, this.tagGroups().tags.length, 0);
         this.tagGroups().tags.push(newTag);

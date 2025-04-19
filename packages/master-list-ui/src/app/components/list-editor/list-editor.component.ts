@@ -1,13 +1,7 @@
 import { CommonModule } from '@angular/common';
-import {
-    Component,
-    ElementRef,
-    HostListener,
-    ViewChild,
-    ViewEncapsulation,
-} from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Paragraph } from '../../types/note';
-import {  } from '../meta-tags/meta-tag.service';
+import {} from '../meta-tags/meta-tag.service';
 import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';
 import { TagCssGenerator } from '../../services/tag-css-generator';
@@ -15,21 +9,21 @@ import { BehaviorSubject, debounceTime, skip, Subject, tap } from 'rxjs';
 import { TagDelete, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { TagApiService } from '../../services/tag-api';
 import { ToastrService } from 'ngx-toastr';
-import { MasterLayoutService } from '../master-layout/master-layout.service';
+import { MasterLayoutService } from './master-layout.service';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
 import { AddTag } from '../tag-group/tag-group.component';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'app-list-editor',
-  imports: [CommonModule, MetaTagsComponent,],
-  templateUrl: './list-editor.component.html',
-  styleUrl: './list-editor.component.scss',
-  encapsulation: ViewEncapsulation.None,
+    selector: 'app-list-editor',
+    imports: [CommonModule, MetaTagsComponent],
+    templateUrl: './list-editor.component.html',
+    styleUrl: './list-editor.component.scss',
+    encapsulation: ViewEncapsulation.None,
 })
 export class ListEditorComponent {
- @ViewChild('editor') editorRef!: ElementRef;
+    @ViewChild('editor') editorRef!: ElementRef;
 
     tagGroup$: BehaviorSubject<TagSelectionGroup> = new BehaviorSubject<TagSelectionGroup>({ name: 'Lists', tags: [] });
     paragraphs: Paragraph[] = [];
@@ -37,7 +31,7 @@ export class ListEditorComponent {
     private changeSubject = new Subject<void>();
     private isSaving = false;
     public error = false;
-    private noteId!: string;
+    private listId!: string;
     public popListOut = false;
     public updateDeleteName!: TagDelete;
     public updateAddName!: TagUpdate | TagUpdate[];
@@ -67,66 +61,58 @@ export class ListEditorComponent {
     private componentVersion = 0;
 
     ngOnInit() {
-        this.tagApi
-            .getDefaultTags()
-            .pipe(tap(x => this.tagColorService.initTagColors(x)))
-            .subscribe(x => this.tagGroup$.next(x));
+        // this.tagApi
+        //     .getDefaultTags()
+        //     .pipe(tap(x => this.tagColorService.initTagColors(x)))
+        //     .subscribe(x => this.tagGroup$.next(x));
         this.tagGroup$.subscribe();
 
         this.route.paramMap.subscribe(params => {
             let listId = params.get('id');
             let listType = params.get('listType');
-            
-            if (!listId || !listType || listType === 'note') {
-                this.tagApi.getTags('my-note-test', 1, 10).subscribe(x => {
-                    const found = x.data.find((y: any) => y.name === 'my-note-test');
-                    console.log('found', found);
-                    if (!found) {
-                        this.tagApi.createTag('my-note-test').subscribe(response => {
-                            this.noteId = response.data.id;
-                            console.log('noteId created', this.noteId);
-                            const tagUpdate = { id: response.data.order, name: response.data.name };
-                            this.updateAddName = tagUpdate;
-                            this.getNotes();
-                        });
-                    } else {
-                        this.noteId = found.id;
-                        console.log('noteId found', this.noteId);
+            console.log('listId', listId, 'listType', listType)
+            this.listType = listType as 'tag' | 'note';
+            if (listType === 'note') {
+                this.tagApi.getNotes(null, 1, 10, listId).subscribe(x => {
+                    const found = x.data.find((y: any) => y.id === listId);
+                    if (found) {
+                        this.listId = found.id;
+                        console.log('noteId found', this.listId);
                         this.getNotes();
+                    } else {
+                        console.error(`List with id ${listId} note found`);
                     }
                 });
-            } else {
-              this.listType = (listType as 'tag' | 'note');
-              this.tagApi.getTags(null, 1, 10, listId).subscribe(x => {
-                const found = x.data.find((y: any) => y.id === listId);
-                console.log('found', found);
-                // if (!found) {
-                //     this.tagApi.createTag('my-note-test').subscribe(response => {
-                //         this.noteId = response.data.id;
-                //         console.log('noteId created', this.noteId);
-                //         const tagUpdate = { id: response.data.order, name: response.data.name };
-                //         this.updateAddName = tagUpdate;
-                //         this.getNotes();
-                //     });
-                // } else {
-                if(found) {
-                    this.noteId = found.id;
-                    console.log('noteId found', this.noteId);
-                    this.getNotes();
-                } else {
-                  console.error(`List with id ${listId} note found`);
-                }
+            } else if (listType === 'tag') {
+                
+                this.tagApi.getTags(null, 1, 10, listId).subscribe(x => {
+                    const found = x.data.find((y: any) => y.id === listId);
+                    console.log('found', found);
+                    // if (!found) {
+                    //     this.tagApi.createTag('my-note-test').subscribe(response => {
+                    //         this.noteId = response.data.id;
+                    //         console.log('noteId created', this.noteId);
+                    //         const tagUpdate = { id: response.data.order, name: response.data.name };
+                    //         this.updateAddName = tagUpdate;
+                    //         this.getNotes();
+                    //     });
+                    // } else {
+                    if (found) {
+                        this.listId = found.id;
+                        console.log('noteId found', this.listId);
+                        this.getNotes();
+                    } else {
+                        console.error(`List with id ${listId} note found`);
+                    }
 
-                // }
-            });
+                    // }
+                });
             }
-
         });
     }
 
     getNotes() {
-        
-        this.notesApi.getNoteElements(this.noteId, this.listType /*'note'*/).subscribe({
+        this.notesApi.getNoteElements(this.listId, this.listType /*'note'*/).subscribe({
             next: x => {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
@@ -134,7 +120,7 @@ export class ListEditorComponent {
                 this.paragraphs = noteElements;
 
                 // Todo: check if it is adding multiple tags
-                const tagUpdates =tags.map(tag => {
+                const tagUpdates = tags.map(tag => {
                     const tagUpdate = { id: tag.order, name: tag.name };
                     // this.updateAddName = tagUpdate;
                     this.tagColorService.addTag(tag);
@@ -158,8 +144,6 @@ export class ListEditorComponent {
         this.error = false;
         this.changeSubject.next();
     }
-
-   
 
     public setHighlight(event: Event): void {
         const name = (event.target as any).value;
@@ -258,13 +242,32 @@ export class ListEditorComponent {
         this.manager.handlePaste(event, this.paragraphs);
     }
 
+    public clearList(overrideError: boolean = false) {
+        if (!this.isSaving && (!this.error || overrideError)) {
+            this.isSaving = true;
+            this.updateParagraphPositions();
+            this.notesApi.saveNoteElements([], this.listId, this.listType).subscribe({
+                next: result => {
+                    this.paragraphs = [];
+                    this.isSaving = false;
+                    this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
+                },
+                error: result => {
+                    this.error = true;
+                    this.isSaving = false;
+                    this.toastr.error('Note not saved', 'Error');
+                },
+            });
+        }
+    }
+
     public saveNoteElements(overrideError: boolean = false): void {
         if (!this.isSaving && (!this.error || overrideError)) {
             this.isSaving = true;
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements(this.paragraphs, this.noteId, this.listType).subscribe({
+            this.notesApi.saveNoteElements(this.paragraphs, this.listId, this.listType).subscribe({
                 next: result => {
-                        this.isSaving = false;
+                    this.isSaving = false;
                 },
                 error: result => {
                     this.error = true;
