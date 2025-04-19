@@ -556,6 +556,7 @@ class NoteService:
         query: Optional[str] = None,
         page: int = 1,
         pageSize: int = 10,
+        id: Optional[str] = None,
         parent_tag_id: Optional[UUID] = None
     ) -> Optional[List[TagEntry]]:
         """
@@ -574,6 +575,11 @@ class NoteService:
 
         # Base filters
         filters = [Tag.created_by == user_id]
+
+        print('!!!! id: ', id)
+
+        if id is not None:
+            filters.append(Tag.id == id)
         if parent_tag_id is not None:
             filters.append(Tag.parent_id == parent_tag_id)
 

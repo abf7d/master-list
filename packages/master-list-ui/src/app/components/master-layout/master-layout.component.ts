@@ -346,21 +346,21 @@ export class MasterLayoutComponent implements AfterViewInit {
 
     public saveNoteElements(): void {
         // this.tagApi.getTags('test').subscribe(x => console.log('token', x));
-        if (!this.isSaving && !this.error) {
-            this.isSaving = true;
-            this.updateParagraphPositions();
-            this.notesApi.saveNoteElements(this.paragraphs, this.noteId).subscribe({
-                next: result => {
-                    // if (result.message === 'success') {
-                        this.isSaving = false;
-                    // }
-                },
-                error: result => {
-                    this.error = true;
-                    this.isSaving = false;
-                    this.toastr.error('Note not saved', 'Error');
-                },
-            });
-        }
+        // if (!this.isSaving && !this.error) {
+        //     this.isSaving = true;
+        //     this.updateParagraphPositions();
+        //     this.notesApi.saveNoteElements(this.paragraphs, this.noteId, 'note').subscribe({
+        //         next: result => {
+        //             // if (result.message === 'success') {
+        //                 this.isSaving = false;
+        //             // }
+        //         },
+        //         error: result => {
+        //             this.error = true;
+        //             this.isSaving = false;
+        //             this.toastr.error('Note not saved', 'Error');
+        //         },
+        //     });
+        // }
     }
 }

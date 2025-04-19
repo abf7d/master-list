@@ -41,6 +41,7 @@ export class ListEditorComponent {
     public popListOut = false;
     public updateDeleteName!: TagDelete;
     public updateAddName!: TagUpdate | TagUpdate[];
+    public listType: 'note' | 'tag' = 'note';
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -73,8 +74,10 @@ export class ListEditorComponent {
         this.tagGroup$.subscribe();
 
         this.route.paramMap.subscribe(params => {
-            let noteId = params.get('id');
-            if (!noteId) {
+            let listId = params.get('id');
+            let listType = params.get('listType');
+            
+            if (!listId || !listType || listType === 'note') {
                 this.tagApi.getTags('my-note-test', 1, 10).subscribe(x => {
                     const found = x.data.find((y: any) => y.name === 'my-note-test');
                     console.log('found', found);
@@ -92,13 +95,38 @@ export class ListEditorComponent {
                         this.getNotes();
                     }
                 });
+            } else {
+              this.listType = (listType as 'tag' | 'note');
+              this.tagApi.getTags(null, 1, 10, listId).subscribe(x => {
+                const found = x.data.find((y: any) => y.id === listId);
+                console.log('found', found);
+                // if (!found) {
+                //     this.tagApi.createTag('my-note-test').subscribe(response => {
+                //         this.noteId = response.data.id;
+                //         console.log('noteId created', this.noteId);
+                //         const tagUpdate = { id: response.data.order, name: response.data.name };
+                //         this.updateAddName = tagUpdate;
+                //         this.getNotes();
+                //     });
+                // } else {
+                if(found) {
+                    this.noteId = found.id;
+                    console.log('noteId found', this.noteId);
+                    this.getNotes();
+                } else {
+                  console.error(`List with id ${listId} note found`);
+                }
+
+                // }
+            });
             }
+
         });
     }
 
     getNotes() {
         
-        this.notesApi.getNoteElements(this.noteId, 'note').subscribe({
+        this.notesApi.getNoteElements(this.noteId, this.listType /*'note'*/).subscribe({
             next: x => {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
@@ -230,11 +258,11 @@ export class ListEditorComponent {
         this.manager.handlePaste(event, this.paragraphs);
     }
 
-    public saveNoteElements(): void {
-        if (!this.isSaving && !this.error) {
+    public saveNoteElements(overrideError: boolean = false): void {
+        if (!this.isSaving && (!this.error || overrideError)) {
             this.isSaving = true;
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements(this.paragraphs, this.noteId).subscribe({
+            this.notesApi.saveNoteElements(this.paragraphs, this.noteId, this.listType).subscribe({
                 next: result => {
                         this.isSaving = false;
                 },

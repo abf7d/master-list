@@ -1,108 +1,162 @@
 import { Component, OnInit, output } from '@angular/core';
 import { NavTileComponent } from '../nav-tile/nav-tile.component';
 import { CommonModule } from '@angular/common';
-import { TagApiService } from '../../services/tag-api';
+import { NoteProps, TagApiService, TagProps } from '../../services/tag-api';
 import { LoadList } from '../list-nav-layout/list-nav-layout.component';
+import { Router } from '@angular/router';
 
 @Component({
-  selector: 'ml-nav-list',
-  imports: [CommonModule, NavTileComponent],
-  templateUrl: './nav-list.component.html',
-  styleUrl: './nav-list.component.scss'
+    selector: 'ml-nav-list',
+    imports: [CommonModule],
+    templateUrl: './nav-list.component.html',
+    styleUrl: './nav-list.component.scss',
 })
 export class NavListComponent implements OnInit {
+    public activeListTab: 'note' | 'tag' = 'note';
+    public activeItem: string | null = null;
 
-  readonly createList = output<string>();
-  readonly loadList = output<LoadList>();
-  readonly updateListType = output<'note' | 'tag'>();
+    constructor(
+        private listApi: TagApiService,
+        private router: Router,
+    ) {}
 
-  public activeTab: 'note' | 'tag' = 'note';
-
-  constructor(private tagApi: TagApiService) {}
-  public ngOnInit() {
-   
-  }
-  public addClicked(type: 'note' | 'tag') {
-    this.createList.emit(type);
-  }
-  public listItemClicked(listType: 'note' | 'tag', id: string){
-    this.loadList.emit({listType, id});
-  }
-  public noteItems: NavItem[] = [{
-    title: 'Note 1',
-    content: 'This is text for the first note. It has sample text to make it longer.',
-    updatedAt: '5 hours ago',
-    created: '3/7/2025',
-    id: '1',
-    order: 1
-  }, {
-    title: 'Note 1',
-    content: 'This is text for the first note. It has sample text to make it longer.',
-    updatedAt: '5 hours ago',
-    created: '3/7/2025',
-    id: '2',
-    order: 1
-  }, {
-    title: 'Note 1',
-    content: 'This is text for the first note. It has sample text to make it longer.',
-    updatedAt: '5 hours ago',
-    created: '3/7/2025',
-    id: '3',
-    order: 1
-  }, {
-    title: 'Note 1',
-    content: 'This is text for the first note. It has sample text to make it longer.',
-    updatedAt: '5 hours ago',
-    created: '3/7/2025',
-    id: '4',
-    order: 1
-  }];
-  public listItems: NavItem[] = [{
-    title: 'List 1',
-    content: 'This is text for the first note. It has sample text to make it longer.',
-    updatedAt: '2 hours ago',
-    created: '3/7/2025',
-    id: '5',
-    order: 1
-  }, {
-    title: 'List 1',
-    content: 'Item 1, Itemd2, Item 3.',
-    updatedAt: '3 hours ago',
-    created: '3/7/2025',
-    id: '6',
-    order: 1
-  }, {
-    title: 'List 1',
-    content: 'Item 1, Itemd2, Item 3.',
-    updatedAt: '4 hours ago',
-    created: '3/7/2025',
-    id: '7',
-    order: 1
-  }, {
-    title: 'List 1',
-    content: 'Item 1, Itemd2, Item 3.',
-    updatedAt: '5 hours ago',
-    created: '3/7/2025',
-    id: '8',
-    order: 1
-  }];
-  items: NavItem[] = this.noteItems;
- 
-  selectTab(listType: 'note' | 'tag') {
-    this.activeTab = listType;
-    if(listType === 'note') {
-      this.items = this.noteItems;
+    ngOnInit() {
+        this.getListItems('note');
     }
-    if(listType === 'tag') {
-      this.items = this.listItems;
+
+    public changeListType(type: 'note' | 'tag') {
+        this.getListItems(type);
     }
-  }
+    public getListItems(type: 'note' | 'tag') {
+        if (type === 'note') {
+            this.listApi.getNotes(null, 1, 10).subscribe({
+                next: lists => {
+                    // this.items = this.noteItems;
+                    // const noteProps[] = lists.data;
+                    this.noteItems = lists.data;
+                    this.activeListTab = type;
+                    // this.items = lists;
+                },
+            });
+        } else {
+            this.listApi.getTags(null, 1, 10).subscribe({
+                next: lists => {
+                    // this.items = this.listItems;
+                    this.listItems = lists.data;
+                    this.activeListTab = type;
+                },
+            });
+        }
+    }
+    public loadListItem(id: string) {
+        this.activeItem = id;
+        this.router.navigate(['lists', this.activeListTab, id]);
+    }
+
+    public createList(type: 'note' | 'tag') {
+        this.listApi.createNote(type).subscribe({
+            next: createResult => {
+                this.router.navigate(['lists', this.activeListTab, createResult.data.id]);
+                // Need to add listType to route parameters in route
+                // navigate to page with neew id
+                // router.navigate(`list/${props.listType}/${props.id}`);
+
+                // need to update the left hand list with the new empty entry
+                // have the title for that entry update when the note info is altered
+                // need a place for the note name on the right hand side
+            },
+        });
+    }
+    public navToList(props: LoadList) {
+        // Need to add listType to route parameters in route
+        // navigate to teh lsit with the id
+        // this.router.navigate(`/list/${props.listType}/${props.d}`)
+    }
+
+    // public addClicked(type: 'note' | 'tag') {
+    //   this.createList.emit(type);
+    // }
+    // public loadListItem(listType: 'note' | 'tag', id: string) {
+    //     this.loadList.emit({ listType, id });
+    // }
+    public noteItems: NoteProps[] = [];
+    // = [
+    //     {
+    //         title: 'Note 1',
+    //         description: 'This is text for the first note. It has sample text to make it longer.',
+    //         updated_at: '5 hours ago',
+    //         create_at: '3/7/2025',
+    //         id: '1',
+    //         order: 1,
+    //     },
+    //     {
+    //         title: 'Note 1',
+    //         content: 'This is text for the first note. It has sample text to make it longer.',
+    //         updatedAt: '5 hours ago',
+    //         created: '3/7/2025',
+    //         id: '2',
+    //         order: 1,
+    //     },
+    //     {
+    //         title: 'Note 1',
+    //         content: 'This is text for the first note. It has sample text to make it longer.',
+    //         updatedAt: '5 hours ago',
+    //         created: '3/7/2025',
+    //         id: '3',
+    //         order: 1,
+    //     },
+    //     {
+    //         title: 'Note 1',
+    //         content: 'This is text for the first note. It has sample text to make it longer.',
+    //         updatedAt: '5 hours ago',
+    //         created: '3/7/2025',
+    //         id: '4',
+    //         order: 1,
+    //     },
+    // ];
+    public listItems: TagProps[] = [];
+    //     {
+    //         title: 'List 1',
+    //         content: 'This is text for the first note. It has sample text to make it longer.',
+    //         updatedAt: '2 hours ago',
+    //         created: '3/7/2025',
+    //         id: '5',
+    //         order: 1,
+    //     },
+    //     {
+    //         title: 'List 1',
+    //         content: 'Item 1, Itemd2, Item 3.',
+    //         updatedAt: '3 hours ago',
+    //         created: '3/7/2025',
+    //         id: '6',
+    //         order: 1,
+    //     },
+    //     {
+    //         title: 'List 1',
+    //         content: 'Item 1, Itemd2, Item 3.',
+    //         updatedAt: '4 hours ago',
+    //         created: '3/7/2025',
+    //         id: '7',
+    //         order: 1,
+    //     },
+    //     {
+    //         title: 'List 1',
+    //         content: 'Item 1, Itemd2, Item 3.',
+    //         updatedAt: '5 hours ago',
+    //         created: '3/7/2025',
+    //         id: '8',
+    //         order: 1,
+    //     },
+    // ];
+    // items: NavItem[] = this.noteItems;
+
+    // Create an entry in the Note table (maybe tag add+ button is hidden or disabled), createNote rturns the id, navigate to the new note page
 }
 export interface NavItem {
-  title: string;
-  content: string;
-  updatedAt: string;
-  created: string;
-  id: string;
-  order: number;
+    title: string;
+    content: string;
+    updatedAt: string;
+    created: string;
+    id: string;
+    order: number;
 }

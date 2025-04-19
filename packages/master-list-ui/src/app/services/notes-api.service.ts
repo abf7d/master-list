@@ -12,8 +12,8 @@ import { TagProps } from "./tag-api";
 })
 export class NotesApiService {
     constructor(private http: HttpClient) {}
-    public saveNoteElements(items: Paragraph[], parent_tag_id: string ): Observable<NoteSaveResult> {
-        const body = JSON.stringify({parent_tag_id, items});
+    public saveNoteElements(items: Paragraph[], parent_tag_id: string, listType: 'note' | 'tag' ): Observable<NoteSaveResult> {
+        const body = JSON.stringify({parent_tag_id, items, parent_list_type:listType});
         const headers = new HttpHeaders().set('Content-Type', 'application/json');
         return this.http.post<NoteSaveResult>(urlJoin(environment.masterListApi, 'note-items'),  body, { headers });
     }

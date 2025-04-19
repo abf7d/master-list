@@ -44,8 +44,9 @@ export class TagApiService {
         return this.http.get(urlJoin(environment.masterListApi, '/tags'), { params });
     }
 
-    public getTags(searchTxt: string | null, page: number, pageSize: number): Observable<TagSearch> {
+    public getTags(searchTxt: string | null, page: number, pageSize: number, id: string | null = null): Observable<TagSearch> {
         let params = new HttpParams().set('query', searchTxt ?? '').set('page', page.toString()).set('pageSize', pageSize.toString())
+        params = (id !== null) ? params.set('id', id) : params;
         return this.http.get<TagSearch>(urlJoin(environment.masterListApi, '/tags'), { params });
     }
     public getNotes(searchTxt: string | null, page: number, pageSize: number, listType: 'tag' | 'note' = 'tag'): Observable<NoteSerach> {

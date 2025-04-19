@@ -44,6 +44,7 @@ async def get_tags(
     query: str = Query(..., description="Search term"),
     page: int = Query(1, ge=1, description="Page number"),
     pageSize: int = Query(10, alias="pageSize", ge=1, le=100, description="Number of tags per page"),
+    id: Optional[str] = None,
     graph_service: GraphService = Depends(get_graph_service),
     note_service: NoteService = Depends(get_note_service),
 ):
@@ -51,7 +52,7 @@ async def get_tags(
     # print('USERID!!!!!!!!! ', request.state.user_id)
     # claims = await graph_service.get_claims(request.state.user_id)
     # print('CLAIMS!!!!!!!!! ', request.state.user_id, query, page, pageSize)
-    data = note_service.get_tags(request.state.user_id, query, page, pageSize, parent_tag_id=None, )
+    data = note_service.get_tags(request.state.user_id, query, page, pageSize, id, parent_tag_id=None, )
     response = ResponseData(message='Success', error=None, data=data )
     print('data', data)
     return response

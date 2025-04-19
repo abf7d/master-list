@@ -1,15 +1,50 @@
 <div class="nav-tabs">
-    <div (click)="selectTab('note')" [ngClass]="{active: activeTab === 'note'}">Notes</div>
-    <div (click)="selectTab('tag')" [ngClass]="{active: activeTab === 'tag'}">Tags</div>
+    <div (click)="changeListType('note')" [ngClass]="{active: activeListTab === 'note'}">Notes</div>
+    <div (click)="changeListType('tag')" [ngClass]="{active: activeListTab === 'tag'}">Tags</div>
 </div>
 <div class="search-container">
     <input type="text" placeholder="Type to Search">
-    <button (click)="addClicked(activeTab)">Add +</button>
+    <button (click)="createList(activeListTab)">Add +</button>
 </div>
+@if (activeListTab === 'note') {
 <div class="nav-items">
-  @for(item of items; track item.id) {
-    <div (click)="listItemClicked(activeTab, item.id)">
-        <ml-nav-tile [itemInfo]="item"></ml-nav-tile>
-    </div>
+  @for(item of noteItems; track item.id) {
+    <!-- TODO: Detete nav-tile -->
+    <div (click)="loadListItem(item.id)" [ngClass]="{'selected': activeListTab === 'note' && activeItem === item.id}">
+        <!-- <ml-nav-tile [itemInfo]="item"></ml-nav-tile> -->
+        <div>
+          <div class="note-item">
+            <div>
+              <div class="title">{{ item.title || '-- No Title --' }}</div>
+              <div>{{ 'rename to created_at instead of create_at' + item.description }}</div>
+            </div>
+            <div class="timestamp">{{ item.updated_at }}</div>
+          </div>
+        </div>
+        
+
+      </div>
   }
 </div>
+}
+@if (activeListTab === 'tag') {
+  <div class="nav-items">
+    @for(item of listItems; track item.id) {
+      <!-- TODO: Detete nav-tile -->
+      <div (click)="loadListItem(item.id)" [ngClass]="{'selected': activeListTab === 'tag' && activeItem === item.id}">
+          <!-- <ml-nav-tile [itemInfo]="item"></ml-nav-tile> -->
+
+          <div>
+            <div class="note-item">
+              <div>
+                <div class="title">{{ item.name }}</div>
+                <div>{{ 'TODO: Get List Item Descripton, Use updated_at instead of created_at' }}</div>
+              </div>
+              <div class="timestamp">{{ item.created_at }}</div>
+            </div>
+          </div>
+          
+      </div>
+    }
+  </div>
+  }
