@@ -37,17 +37,25 @@ export class TagGroupComponent implements OnInit {
     public autoCloseMenuToggle = false;
     public showDefaultMenu = false;
     constructor(private tagApi: TagApiService) {}
-    public assign = () =>
-        this.assignTags.emit(
-            this.tags()
-                .filter(x => x.isSelected)
-                .map(x => x.name),
-        );
-    public removeAll = () => this.unassignTags.emit(
-        this.tags()
+    public assign = () => {
+        const validNames = this.tags()
             .filter(x => x.isSelected)
-            .map(x => x.name),
-    );
+            .map(x => x.name)
+            .filter(x => x);
+        if (validNames.length > 0) {
+            this.assignTags.emit(validNames);
+        }
+    };
+    public removeAll = () => {
+        const validNames = this.tags()
+            .filter(x => x.isSelected)
+            .map(x => x.name)
+            .filter(x => x);
+
+        if (validNames.length > 0) {
+            this.unassignTags.emit(validNames);
+        }
+    };
     public select = (tag: TagSelection) => {
         this.selectTag.emit(tag.name);
         if (!this.multiselect) {
@@ -66,10 +74,7 @@ export class TagGroupComponent implements OnInit {
         this.addTag.emit({ name, tag, create });
         this.autoCompleteInput = '';
     }
-    public filterTags = () => this.unassignTags.emit(
-        this.tags()
-            .map(x => x.name),
-    );
+    public filterTags = () => this.unassignTags.emit(this.tags().map(x => x.name));
     public ngOnInit(): void {}
 
     public autoComplete(currentValue: string) {

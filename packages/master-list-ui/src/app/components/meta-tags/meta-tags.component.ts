@@ -1,4 +1,4 @@
-import { Component, effect, EventEmitter, input, Input, output, Output } from '@angular/core';
+import { Component, effect, EventEmitter, input, Input, model, output, Output } from '@angular/core';
 import { TagButton, TagDelete, TagGroupOption, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { TagManagerService } from '../../services/tag-manager.service';
@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { AddTag, RemoveTag, TagGroupComponent } from '../tag-group/tag-group.component';
 import { TagCssGenerator } from '../../services/tag-css-generator';
 import { TagUpdate } from '../../types/tag/tag-update';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'app-meta-tags',
@@ -21,7 +22,9 @@ export class MetaTagsComponent {
     readonly unassignTag = output<string[]>();
     readonly assignTag = output<string>();
     // readonly tags = input<TagButton[]>([])
-    readonly tagGroups = input<TagSelectionGroup>({ name: 'Tag Group', tags: [] }); //({ name: 'Tag Group', tags: [] })
+    // model signal is like an input, but you can change it
+    // https://www.angulararchitects.io/en/blog/component-communication-with-signals-inputs-two-way-bindings-and-content-view-queries/
+    readonly tagGroups = model<TagSelectionGroup>({ name: 'Tag Group', tags: [] }); //input<TagSelectionGroup>({ name: 'Tag Group', tags: [] }); //({ name: 'Tag Group', tags: [] })
     readonly addTag = output<AddTag>();
     readonly removeTag = output<string>();
 
@@ -42,6 +45,7 @@ export class MetaTagsComponent {
         private colorFactory: ColorFactoryService,
         private metaTagService: TagManagerService,
         private tagNameColor: TagCssGenerator,
+        private route: ActivatedRoute
     ) {
         // this.id = +route.snapshot.params['id'];
         // this.project$ = this.dashboard.activeProject$;
@@ -93,6 +97,12 @@ export class MetaTagsComponent {
         });
     }
     public ngOnInit(): void {
+        this.route.paramMap.subscribe(params => {
+            const group = this.tagGroups();
+            group.tags = [];
+            this.tagGroups.set(group);
+        });
+    
         // this.subscription = this.project$.pipe(filter(x => !!x)).subscribe(project => {
         //     if (project !== this.project) {
         //         const tagInfo: TagLoad = { tags: [], groups: [], activeGroup: null };

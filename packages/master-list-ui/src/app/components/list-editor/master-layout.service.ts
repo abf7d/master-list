@@ -413,12 +413,15 @@ export class MasterLayoutService {
   private renderParagraphs(paragraphs: Paragraph[]): void {
     this.onDocumentChange();
 
-    const allTags = paragraphs.reduce((tags: string[], paragraph) => {
+    let allTags = paragraphs.reduce((tags: string[], paragraph) => {
       if (paragraph.tags && Array.isArray(paragraph.tags)) {
         return [...tags, ...paragraph.tags];
       }
       return tags;
     }, []);
+
+    // undefined is showing up in tags
+    allTags = allTags.filter(x => x);
 
     // Call the service to ensure we have styles for all tags
     this.tagColorService.ensureTagStyles(allTags);
