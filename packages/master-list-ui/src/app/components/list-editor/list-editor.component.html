@@ -24,7 +24,11 @@
         <a [routerLink]="['/lists', (loadOriginParagraph | async)!.creation_type, (loadOriginParagraph | async)!.creation_list_id]">Load origin of selected time</a>
         }
     </div>
-    <h3 class="title">{{listName || 'Untitled'}}</h3>
+    <h3 class="title">
+        @if(listColor !== null) {
+            <div class="tag-color-disc" [ngStyle]="{'background-color': listColor}"></div>
+        }
+        {{listName || 'Untitled'}}</h3>
     <div class="note-editor-pannel">
         <div
             #editor

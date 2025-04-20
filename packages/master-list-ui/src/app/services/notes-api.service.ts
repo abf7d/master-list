@@ -53,4 +53,5 @@ export interface NoteElementResponse {
     tags: TagProps[];
     list_name: string;
     list_type: string;
+    color_order: number | null;
 }

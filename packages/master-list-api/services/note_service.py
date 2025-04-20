@@ -335,6 +335,7 @@ class NoteService:
             Dict containing note_items and tags
         """
         list_name = None
+        color_order = None
         if list_type == "tag":
             # Check if tag exists
             tag_query = select(Tag).where(Tag.id == list_id)
@@ -346,6 +347,7 @@ class NoteService:
                     error="Tag not found"
                 )
             list_name = tag.name
+            color_order = tag.creation_order
         elif list_type == "note":
             # Check if note exists
             note_query = select(Note).where(Note.id == list_id)
@@ -449,7 +451,8 @@ class NoteService:
                 "notes": note_responses, 
                 "tags": tag_responses,
                 "list_name": list_name,
-                "list_type": list_type
+                "list_type": list_type,
+                "color_order": color_order
             },
             message="Success",
             error=None
@@ -644,8 +647,144 @@ class NoteService:
         
         return tag_responses
     
-    
     def get_notes(
+        self,
+        user_id: str,
+        query: Optional[str] = None,
+        page: int = 1,
+        pageSize: int = 10,
+        id: Optional[str] = None,
+        parent_tag_id: Optional[UUID] = None
+    ) -> Optional[List[TagEntry]]:
+            """
+            Get notes by user with optional filtering and pagination.
+
+            Args:
+                user_id: ID of the user
+                query: Optional string to search tag names
+                page: Page number (1-indexed)
+                pageSize: Number of tags per page
+                parent_tag_id: Optional UUID of parent tag
+
+            Returns:
+                A list of TagResponse models
+            """
+
+            # Base filters
+            filters = [Note.created_by == user_id]
+            
+            if id:
+                filters.append(Note.id == id)
+
+            # Optional search query (e.g., for autocomplete)
+            if query:
+                filters.append(Note.title.ilike(f"{query}%"))  # Starts with; for partial match use `%{query}%`
+
+            # Query with filters and pagination
+            notes_query: Query = self.db.query(Note).filter(and_(*filters))
+            
+            # Sort based on query presence
+            if query:
+                notes_query = notes_query.order_by(
+                    case((Note.title == query, 1), else_=0).desc(),
+                    func.length(Note.title),
+                    Note.created_at.desc(),
+                )
+            else:
+                notes_query = notes_query.order_by(Note.updated_at.desc())
+            notes_query = notes_query.offset((page - 1) * pageSize).limit(pageSize)
+
+            notes = notes_query.all()
+
+            # Get all note IDs
+            note_ids = [note.id for note in notes]
+            
+            # Using a window function to limit to top 2 NoteItems per note
+            # This requires using raw SQL with the func module
+            from sqlalchemy import func, text
+            from sqlalchemy.orm import aliased
+
+            # First, create a subquery that ranks NoteItems for each note
+            ranked_items = text("""
+                SELECT 
+                    list_id, 
+                    note_item_id, 
+                    content,
+                    ROW_NUMBER() OVER (PARTITION BY list_id ORDER BY sequence_number) as row_num
+                FROM note_item_lists
+                JOIN note_items ON note_item_lists.note_item_id = note_items.id
+                WHERE 
+                    list_id IN :note_ids AND
+                    list_type = 'note' AND
+                    note_items.created_by = :user_id
+            """)
+            
+            # Then, select only rows where row_num <= 2
+            top_items_query = text("""
+                SELECT list_id, content
+                FROM (
+                    SELECT 
+                        list_id, 
+                        note_item_id, 
+                        content,
+                        ROW_NUMBER() OVER (PARTITION BY list_id ORDER BY sequence_number) as row_num
+                    FROM note_item_lists
+                    JOIN note_items ON note_item_lists.note_item_id = note_items.id
+                    WHERE 
+                        list_id IN :note_ids AND
+                        list_type = 'note' AND
+                        note_items.created_by = :user_id
+                ) as ranked
+                WHERE row_num <= 2
+                ORDER BY list_id, row_num
+            """)
+            
+            # Execute the query with parameters
+            note_items_result = self.db.execute(
+                top_items_query, 
+                {"note_ids": tuple(note_ids) if note_ids else ('00000000-0000-0000-0000-000000000000',), 
+                "user_id": user_id}
+            ).fetchall()
+            
+            # Group NoteItems by note_id
+            note_items_map = {}
+            for list_id, content in note_items_result:
+                if list_id not in note_items_map:
+                    note_items_map[list_id] = []
+                note_items_map[list_id].append(content)
+            
+            note_responses = []
+            for i, note in enumerate(notes):
+                # Get first 2 NoteItems for description
+                description = note.description
+                if not description and note.id in note_items_map:
+                    # Items are already limited to 2 by the query
+                    items = note_items_map[note.id]
+                     # Check if there are any items
+                    if len(items) > 0 and (len(items) == 1 and not items[0]) == False:
+                        # Truncate each item if it's too long
+                        truncated_items = [item[:100] + "..." if len(item) > 100 else item for item in items]
+                        
+                        # Format as HTML unordered list
+                        list_items = "".join([f"<li>{item}</li>" for item in truncated_items])
+                        description = f"<ul>{list_items}</ul>"
+                    else:
+                        # No items found, set description to None/null
+                        description = None
+                print('description', description)
+                note_responses.append(
+                    NoteEntry(
+                        id=note.id,
+                        title=note.title,
+                        description=description,
+                        created_at=note.created_at,
+                        updated_at=note.updated_at,
+                        order=i
+                    )
+                )
+            
+            return note_responses
+    def get_notesOLD(
         self,
         user_id: str,
         query: Optional[str] = None,

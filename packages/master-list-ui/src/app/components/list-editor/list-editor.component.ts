@@ -14,6 +14,7 @@ import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
 import { AddTag } from '../tag-group/tag-group.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ColorFactoryService } from '../../services/color-factory.service';
 
 @Component({
     selector: 'app-list-editor',
@@ -38,6 +39,7 @@ export class ListEditorComponent {
     public listType: 'note' | 'tag' = 'note';
     public loadOriginParagraph!: BehaviorSubject<Paragraph | null>;
     public listName!: string;
+    public listColor: string | null = null;
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -48,6 +50,7 @@ export class ListEditorComponent {
         private manager: MasterLayoutService,
         private authService: AuthCoreService,
         private route: ActivatedRoute,
+        private colorFactory: ColorFactoryService
     ) {
         this.loadOriginParagraph = this.manager.loadOriginParagraph;
         this.manager.setChangeSubject(this.changeSubject);
@@ -132,6 +135,12 @@ export class ListEditorComponent {
                 this.updateAddName = tagUpdates;
                 this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
                 this.listName = x.data.list_name;
+                if(x.data.list_type === 'tag' && x.data.color_order !== null) {
+                    const color = this.colorFactory.getColor(x.data.color_order);
+                    this.listColor = color.backgroundcolor;
+                } else {
+                    this.listColor = null;
+                }
             },
         });
     }

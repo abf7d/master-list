@@ -63,7 +63,7 @@ app-list-editor {
   height: 24px;
   padding: 8px 10px;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   cursor: pointer;
   color: #666;
   user-select: none;
@@ -494,4 +494,13 @@ ml-nav-list {
 }
 .title {
   padding-left: 20px;
+  display: flex;
+  align-items: baseline;
+}
+
+.tag-color-disc {
+  margin-right: 7px;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
 }

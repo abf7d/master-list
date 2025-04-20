@@ -16,7 +16,8 @@
           <div class="note-item">
             <div>
               <div class="title">{{ item.title || '-- No Title --' }}</div>
-              <div>{{ 'rename to created_at instead of create_at' + item.description }}</div>
+              <div [innerHTML]="item.description"></div>
+              <!-- {{ 'rename to created_at instead of create_at' + item.description }} -->
             </div>
             <div class="timestamp">{{ item.updated_at }}</div>
           </div>
