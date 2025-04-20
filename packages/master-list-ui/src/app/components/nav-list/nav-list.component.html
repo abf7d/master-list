@@ -37,7 +37,7 @@
           <div>
             <div class="note-item">
               <div>
-                <div class="title">{{ item.name }}</div>
+                <div class="title"> <div class="tag-color" [ngStyle]="{'background-color': item.color}"></div>{{ item.name }}</div>
                 <div>{{ 'TODO: Get List Item Descripton, Use updated_at instead of created_at' }}</div>
               </div>
               <div class="timestamp">{{ item.created_at }}</div>

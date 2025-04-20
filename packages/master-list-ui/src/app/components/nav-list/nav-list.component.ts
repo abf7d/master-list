@@ -1,9 +1,9 @@
 import { Component, OnInit, output } from '@angular/core';
-import { NavTileComponent } from '../nav-tile/nav-tile.component';
 import { CommonModule } from '@angular/common';
-import { NoteProps, TagApiService, TagProps } from '../../services/tag-api';
+import { NoteProps, TagApiService, TagProps, TagSearch } from '../../services/tag-api';
 import { LoadList } from '../list-nav-layout/list-nav-layout.component';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ColorFactoryService } from '../../services/color-factory.service';
 
 @Component({
     selector: 'ml-nav-list',
@@ -18,7 +18,8 @@ export class NavListComponent implements OnInit {
     constructor(
         private listApi: TagApiService,
         private router: Router,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private colorFactory: ColorFactoryService
     ) {}
 
     ngOnInit() {
@@ -46,7 +47,7 @@ export class NavListComponent implements OnInit {
     }
     public getListItems(type: 'note' | 'tag') {
         if (type === 'note') {
-            this.listApi.getNotes(null, 1, 10).subscribe({
+            this.listApi.getNotes(null, 1, 100).subscribe({
                 next: lists => {
                     // this.items = this.noteItems;
                     // const noteProps[] = lists.data;
@@ -56,10 +57,11 @@ export class NavListComponent implements OnInit {
                 },
             });
         } else {
-            this.listApi.getTags(null, 1, 10).subscribe({
+            this.listApi.getTags(null, 1, 100).subscribe({
                 next: lists => {
                     // this.items = this.listItems;
-                    this.listItems = lists.data;
+                    const listItems = lists.data.map(x => ({...x, color: this.colorFactory.getColor(x.order).backgroundcolor}))
+                    this.listItems = listItems;
                     this.activeListTab = type;
                 },
             });
@@ -131,7 +133,7 @@ export class NavListComponent implements OnInit {
     //         order: 1,
     //     },
     // ];
-    public listItems: TagProps[] = [];
+    public listItems: NavTag[] = [];
     //     {
     //         title: 'List 1',
     //         content: 'This is text for the first note. It has sample text to make it longer.',
@@ -169,11 +171,7 @@ export class NavListComponent implements OnInit {
 
     // Create an entry in the Note table (maybe tag add+ button is hidden or disabled), createNote rturns the id, navigate to the new note page
 }
-export interface NavItem {
-    title: string;
-    content: string;
-    updatedAt: string;
-    created: string;
-    id: string;
-    order: number;
+
+export interface NavTag extends TagProps {
+  color: string;
 }

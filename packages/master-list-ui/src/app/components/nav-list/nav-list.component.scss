@@ -47,6 +47,9 @@
 
     .title {
         font-weight: bold;
+        display: flex;
+        align-items: baseline;
+        margin-left: -17px;
     }
     .timestamp {
         margin: 20px 0px;
@@ -55,4 +58,16 @@
 
 .selected {
     background-color: #ddd
+}
+.nav-items {
+    position: fixed;
+    height: calc(100vh - 170px);
+    overflow-y: auto;
+    width: 400px;
+}
+.tag-color {
+    width: 15px;
+    border-radius: 50%;
+    height: 15px;
+    margin-right: 7px;
 }
