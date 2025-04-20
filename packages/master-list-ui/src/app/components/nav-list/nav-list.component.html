@@ -4,7 +4,7 @@
 </div>
 <div class="search-container">
     <input type="text" placeholder="Type to Search">
-    <button (click)="createList(activeListTab)">Add +</button>
+    <button *ngIf="activeListTab === 'note'" (click)="createList(activeListTab)">Add +</button>
 </div>
 @if (activeListTab === 'note') {
 <div class="nav-items">
