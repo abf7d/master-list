@@ -51,4 +51,6 @@ export interface PageResult {
 export interface NoteElementResponse {
     notes: Paragraph[];
     tags: TagProps[];
+    list_name: string;
+    list_type: string;
 }

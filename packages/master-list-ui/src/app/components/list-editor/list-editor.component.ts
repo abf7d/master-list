@@ -37,6 +37,7 @@ export class ListEditorComponent {
     public updateAddName!: TagUpdate | TagUpdate[];
     public listType: 'note' | 'tag' = 'note';
     public loadOriginParagraph!: BehaviorSubject<Paragraph | null>;
+    public listName!: string;
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -80,7 +81,7 @@ export class ListEditorComponent {
                     if (found) {
                         this.listId = found.id;
                         console.log('noteId found', this.listId);
-                        this.getNotes();
+                        this.getPageNoteItems();
                     } else {
                         console.error(`List with id ${listId} note found`);
                     }
@@ -102,7 +103,7 @@ export class ListEditorComponent {
                     if (found) {
                         this.listId = found.id;
                         console.log('noteId found', this.listId);
-                        this.getNotes();
+                        this.getPageNoteItems();
                     } else {
                         console.error(`List with id ${listId} note found`);
                     }
@@ -113,7 +114,7 @@ export class ListEditorComponent {
         });
     }
 
-    getNotes() {
+    getPageNoteItems() {
         this.notesApi.getNoteElements(this.listId, this.listType /*'note'*/).subscribe({
             next: x => {
                 console.log('getNotes', x);
@@ -130,6 +131,7 @@ export class ListEditorComponent {
                 });
                 this.updateAddName = tagUpdates;
                 this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
+                this.listName = x.data.list_name;
             },
         });
     }

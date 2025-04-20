@@ -334,6 +334,30 @@ class NoteService:
         Returns:
             Dict containing note_items and tags
         """
+        list_name = None
+        if list_type == "tag":
+            # Check if tag exists
+            tag_query = select(Tag).where(Tag.id == list_id)
+            tag = self.db.execute(tag_query).scalars().first()
+            if not tag:
+                return NoteItemsResponse(
+                    data=None,
+                    message=f"Tag with ID {list_id} not found",
+                    error="Tag not found"
+                )
+            list_name = tag.name
+        elif list_type == "note":
+            # Check if note exists
+            note_query = select(Note).where(Note.id == list_id)
+            note = self.db.execute(note_query).scalars().first()
+            if not note:
+                return NoteItemsResponse(
+                    data=None,
+                    message=f"Note with ID {list_id} not found",
+                    error="Note not found"
+                )
+            list_name = note.title
+            
         # Step 1: Get all note_item_ids for the given list_id and list_type
         note_item_ids_query = select(NoteItemList.note_item_id).where(
             and_(
@@ -421,7 +445,12 @@ class NoteService:
         ]
         print(f"tag_responses: {str(tag_responses)}")
         return NoteItemsResponse(
-            data={"notes": note_responses, "tags": tag_responses},
+            data={
+                "notes": note_responses, 
+                "tags": tag_responses,
+                "list_name": list_name,
+                "list_type": list_type
+            },
             message="Success",
             error=None
         )
