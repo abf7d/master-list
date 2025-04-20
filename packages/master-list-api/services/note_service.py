@@ -655,11 +655,17 @@ class NoteService:
         notes_query: Query = self.db.query(Note).filter(and_(*filters))
         
         # Need to track usage statistics: https://claude.ai/chat/5f7f1716-0dca-4db7-9d21-fcf1de0c92a6
-        notes_query = notes_query.order_by(
-            case((Note.title == query, 1), else_=0).desc(),
-            func.length(Note.title),
-            Note.created_at.desc()
-        )  # Optional ordering
+        # if query order by alphabetic otherwise get teh most recent
+        if query:
+            # If there's a search query, prioritize exact match, then sort by title
+            notes_query = notes_query.order_by(
+                case((Note.title == query, 1), else_=0).desc(),
+                func.length(Note.title),
+                Note.created_at.desc(),
+            )
+        else:
+            # If no search query, show most recently updated first
+            notes_query = notes_query.order_by(Note.updated_at.desc())
         notes_query = notes_query.offset((page - 1) * pageSize).limit(pageSize)
 
         notes = notes_query.all()

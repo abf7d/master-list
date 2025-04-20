@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TagApiService, TagProps } from '../../services/tag-api';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
+import { ToastrService } from 'ngx-toastr';
 // import { TagSelection } from '@critical-pass/project/types';
 
 @Component({
@@ -36,7 +37,7 @@ export class TagGroupComponent implements OnInit {
     public selectedIndex = 0;
     public autoCloseMenuToggle = false;
     public showDefaultMenu = false;
-    constructor(private tagApi: TagApiService) {}
+    constructor(private tagApi: TagApiService, private toastr: ToastrService) {}
     public assign = () => {
         const validNames = this.tags()
             .filter(x => x.isSelected)
@@ -44,6 +45,8 @@ export class TagGroupComponent implements OnInit {
             .filter(x => x);
         if (validNames.length > 0) {
             this.assignTags.emit(validNames);
+        } else {
+            this.toastr.warning('No tags selected', 'Nothing tagged')
         }
     };
     public removeAll = () => {
@@ -51,9 +54,11 @@ export class TagGroupComponent implements OnInit {
             .filter(x => x.isSelected)
             .map(x => x.name)
             .filter(x => x);
-
+        console.log('validNames', validNames)
         if (validNames.length > 0) {
             this.unassignTags.emit(validNames);
+        } else {
+            this.toastr.warning('No tags selected', 'Nothing untagged')
         }
     };
     public select = (tag: TagSelection) => {

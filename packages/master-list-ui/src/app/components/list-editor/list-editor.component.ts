@@ -13,11 +13,11 @@ import { MasterLayoutService } from './master-layout.service';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
 import { AddTag } from '../tag-group/tag-group.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 
 @Component({
     selector: 'app-list-editor',
-    imports: [CommonModule, MetaTagsComponent],
+    imports: [CommonModule, MetaTagsComponent, RouterModule],
     templateUrl: './list-editor.component.html',
     styleUrl: './list-editor.component.scss',
     encapsulation: ViewEncapsulation.None,
@@ -36,6 +36,7 @@ export class ListEditorComponent {
     public updateDeleteName!: TagDelete;
     public updateAddName!: TagUpdate | TagUpdate[];
     public listType: 'note' | 'tag' = 'note';
+    public loadOriginParagraph!: BehaviorSubject<Paragraph | null>;
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -47,6 +48,7 @@ export class ListEditorComponent {
         private authService: AuthCoreService,
         private route: ActivatedRoute,
     ) {
+        this.loadOriginParagraph = this.manager.loadOriginParagraph;
         this.manager.setChangeSubject(this.changeSubject);
         this.changeSubject
             .pipe(

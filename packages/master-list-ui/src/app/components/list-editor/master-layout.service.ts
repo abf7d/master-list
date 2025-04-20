@@ -1,4 +1,4 @@
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { Paragraph } from '../../types/note';
 import { ElementRef, Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
@@ -14,6 +14,7 @@ export class MasterLayoutService {
   selectedParagraphIds: string[] = [];
   affectedRows: Paragraph[] = [];
   editorRef!: ElementRef;
+  loadOriginParagraph = new BehaviorSubject<Paragraph | null>(null);
 
   selectedHighlightTag: string | null = null
 
@@ -807,8 +808,16 @@ export class MasterLayoutService {
     }
   }
 
+  setLoadOriginLink(paragraphs: Paragraph[], id: string){
+    const p = paragraphs.find( x => x.id === id);
+    if (p) {
+      this.loadOriginParagraph.next(p);
+    }
+  }
+
   selectParagraph(paragraphs: Paragraph[], id: string): void {
     this.selectedParagraphId = id;
+    this.setLoadOriginLink(paragraphs, id);
     if (this.ctrlDown) {
       if (this.selectedParagraphIds?.includes(id)) {
         this.selectedParagraphIds = this.selectedParagraphIds?.filter(
