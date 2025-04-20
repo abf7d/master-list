@@ -5,13 +5,15 @@ import { FormsModule } from '@angular/forms';
 import { TagApiService, TagProps } from '../../services/tag-api';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 import { ToastrService } from 'ngx-toastr';
+import { TagStateService } from './tag.state';
+import { RouterModule } from '@angular/router';
 // import { TagSelection } from '@critical-pass/project/types';
 
 @Component({
     selector: 'app-tag-group',
     templateUrl: './tag-group.component.html',
     styleUrls: ['./tag-group.component.scss'],
-    imports: [CommonModule, FormsModule, ClickOutsideDirective],
+    imports: [CommonModule, FormsModule, ClickOutsideDirective, RouterModule],
     // standalone: false,
 })
 export class TagGroupComponent implements OnInit {
@@ -37,7 +39,8 @@ export class TagGroupComponent implements OnInit {
     public selectedIndex = 0;
     public autoCloseMenuToggle = false;
     public showDefaultMenu = false;
-    constructor(private tagApi: TagApiService, private toastr: ToastrService) {}
+    public selectedTag: TagSelection | null = null;
+    constructor(private tagApi: TagApiService, private toastr: ToastrService, private tagState: TagStateService) {}
     public assign = () => {
         const validNames = this.tags()
             .filter(x => x.isSelected)
@@ -69,6 +72,11 @@ export class TagGroupComponent implements OnInit {
             });
         }
         tag.isSelected = !tag.isSelected;
+        if (tag.isSelected) {
+            this.selectedTag = tag;
+        } else {
+            this.selectedTag = null;
+        }
     };
     public remove = (tag: TagSelection) => this.removeTag.emit({ tag, delete: true });
     public add(event: any, create = true, tag?: TagProps) {

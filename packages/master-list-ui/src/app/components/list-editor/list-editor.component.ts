@@ -123,7 +123,7 @@ export class ListEditorComponent {
 
                 // Todo: check if it is adding multiple tags
                 const tagUpdates = tags.map(tag => {
-                    const tagUpdate = { id: tag.order, name: tag.name };
+                    const tagUpdate = { id: tag.order, name: tag.name, navId: tag.id };
                     // this.updateAddName = tagUpdate;
                     this.tagColorService.addTag(tag);
                     return tagUpdate;
@@ -164,7 +164,7 @@ export class ListEditorComponent {
             this.tagApi.createTag(tag.name!).subscribe(response => {
                 this.tagColorService.addTag(response.data);
                 console.log('add tag response', response);
-                const tagUpdate = { id: response.data.order, name: response.data.name };
+                const tagUpdate = { id: response.data.order, name: response.data.name, navId: response.data.id };
                 this.updateAddName = tagUpdate;
             });
         } else {

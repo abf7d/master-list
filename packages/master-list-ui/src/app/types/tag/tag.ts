@@ -20,6 +20,7 @@ export interface TagLoad {
 export interface TagSelection extends TagButton {
     isSelected: boolean;
     showDelMenu?: boolean;
+    navId?: string;
 }
 export interface TagGroupOption {
     color: string;

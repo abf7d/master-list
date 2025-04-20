@@ -1,8 +1,13 @@
 <div class="tag-group-container">
     @if(!isSearching) {
     <div class="actions">
-        <span class="tag-title">{{ title }}</span>
-        <span class="search"><i class="fa-solid fa-magnifying-glass" (click)="isSearching = true"></i></span>
+        <div class="title-container">
+            <span class="tag-title">{{ title }}</span>
+            <span class="search" *ngIf="selectedTag">
+                <span><a [routerLink]="['/lists', 'tag', selectedTag.navId!]"><i class="fa-solid fa-link tag-link"></i>Go To {{selectedTag.name}}</a></span>
+                <!-- <i class="fa-solid fa-magnifying-glass" (click)="isSearching = true"></i> -->
+            </span>
+        </div>
         <div class="tag-description">{{ description }}</div>
         <span class="float-right assign-button" [hidden]="hideAssignLinks || !allowAdd">
             <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>

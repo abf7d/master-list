@@ -203,7 +203,7 @@ export class MetaTagsComponent {
         if (found) {
             return;
         }
-        const newTag = this.creatNewTag(newUpdate.name, newUpdate.id, 0);
+        const newTag = this.creatNewTag(newUpdate.name, newUpdate.id, 0, newUpdate.navId);
         // const newTag = this.creatNewTag(newUpdate.name, this.tagGroups().tags.length, 0);
         this.tagGroups().tags.push(newTag);
 
@@ -263,20 +263,21 @@ export class MetaTagsComponent {
     public addGroup(tag: AddTag) {
         const name = tag.name!;
         if (!tag.create) {
-            const tagUpdate: TagUpdate = { name: tag.tag!.name, id: tag.tag!.order };
+            const tagUpdate: TagUpdate = { name: tag.tag!.name, id: tag.tag!.order, navId: tag.tag!.id };
             this.handleAddTagComplete(tagUpdate);
         }
         this.addTag.emit(tag);
 
         // this.dashboard.updateProject(this.project, true);
     }
-    public creatNewTag(name: string, nameIndex: number, groupIndex: number): TagSelection {
+    public creatNewTag(name: string, nameIndex: number, groupIndex: number, navId?: string): TagSelection {
         const color = this.colorFactory.getColor(nameIndex);
         return {
             name,
             color: color.color,
             backgroundcolor: color.backgroundcolor,
             isSelected: false,
+            navId: navId
         };
     }
 }
