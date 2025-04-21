@@ -1,59 +1,156 @@
-# MasterList
+# Master List Application
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.0.6.
+A full-stack application with an Angular frontend and Python backend, designed to manage and display lists.
 
-## Development server
+## Project Structure
 
-To start a local development server, run:
+This is a mono-repo with the following structure:
 
-```bash
-ng serve
+```
+master-list/
+├── packages/
+│   ├── master-list-ui/    # Angular frontend
+│   └── master-list-api/   # Python backend
+│       └── docker/        # Docker setup for database
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Technologies Used
 
-## Code scaffolding
+### Frontend
+- Angular v19.0.0
+- Azure B2C Authentication (with Google/Facebook IDP support)
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Backend
+- Python 3.11.12
+- PostgreSQL Database (containerized)
 
-```bash
-ng generate component component-name
-```
+## Prerequisites
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- Node.js and npm
+- Python 3.11.12
+- Docker and Docker Compose
 
-```bash
-ng generate --help
-```
+## Getting Started
 
-## Building
+### Setting Up the Database
 
-To build the project run:
+1. Navigate to the Docker folder within the API directory:
+   ```bash
+   cd packages/master-list-api/docker
+   ```
 
-```bash
-ng build
-```
+2. Initialize the database:
+   ```bash
+   docker-compose --env-file ../.env --profile init build --no-cache
+   ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+3. Start the database container:
+   ```bash
+   docker-compose --env-file ../.env --profile init up
+   ```
 
-## Running unit tests
+Note: The database schema is located in the `db_init` folder along with the startup script `pg_db_init.py`.
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### Setting Up the Backend
 
-```bash
-ng test
-```
+1. Navigate to the backend directory:
+   ```bash
+   cd packages/master-list-api
+   ```
 
-## Running end-to-end tests
+2. Verify Python version:
+   ```bash
+   python --version  # Should be Python 3.11.x
+   ```
 
-For end-to-end (e2e) testing, run:
+3. If you don't have Python 3.11 installed, follow the instructions at [python.org](https://www.python.org/downloads/) to install it.
 
-```bash
-ng e2e
-```
+4. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+5. Activate the virtual environment:
+   - Windows:
+     ```bash
+     venv\Scripts\activate
+     ```
+   - macOS/Linux:
+     ```bash
+     source venv/bin/activate
+     ```
 
-## Additional Resources
+6. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+7. Create a `.env` file in the `master-list-api` directory with the following structure:
+   ```
+   POSTGRES_USER=notes_user
+   POSTGRES_PASSWORD=notes_password
+   POSTGRES_DB=notes_db
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   TENANT_ID="<azure info>"
+   AUDIENCE="<azure info>"
+   JWKS_URL="<azure info>"
+   AZURE_AD_CLIENT_ID="<azure info>"
+   AZURE_AD_CLIENT_SECRET="<azure info>"
+   ```
+   Contact the repository owners for the specific Azure values.
+
+8. Run the backend application:
+   ```bash
+   python api.py
+   ```
+
+### Setting Up the Frontend
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd packages/master-list-ui
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+   This runs `ng serve --ssl` as defined in the package.json.
+
+## Configuration
+
+- Frontend configuration is managed in the `environment.ts` file.
+- Backend configuration is managed through the `.env` file.
+
+## Database Management
+
+If you need to modify the database schema:
+
+1. Make your changes to the schema files in the `db_init` folder.
+2. Remove existing Docker containers.
+3. Delete the files inside the `docker/postgres/data` folder (where DB files are persisted).
+4. Run the Docker Compose build command again:
+   ```bash
+   docker-compose --env-file ../.env --profile init build --no-cache
+   ```
+
+## Authentication
+
+This application uses Azure B2C for authentication with the following features:
+- Sign-up/Sign-in policies
+- Google/Facebook identity providers
+- Password reset functionality
+
+## Contributing
+
+Please contact repository owners for contribution guidelines.
+
+## License
+
+[Your License Here]
