@@ -230,7 +230,6 @@ class NoteService:
             # Create parent association
             if parent_id:
                 # For every note item on this list, save the association
-                # and if this list is the origin, set is_origin to True
                 parent_association = NoteItemList(
                     note_item_id=note_item.id,
                     list_id=parent_id,
@@ -248,14 +247,37 @@ class NoteService:
                     continue
                     
                 tag_id = tag_ids_by_name[tag_name]
-                tag_association = NoteItemList(
-                    note_item_id=note_item.id,
-                    list_id=tag_id,
-                    list_type='tag',
-                    is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag' #(origin_type == 'tag')
+                
+                #check if the association already exists as tags can populate the list and be associated with note-items
+                match_found = any(i.note_item_id == note_item.id and
+                    i.list_id == tag_id and
+                    i.list_type == 'tag'
+                    for i in associations
                 )
+                if not match_found:
+                    tag_association = NoteItemList(
+                        note_item_id=note_item.id,
+                        list_id=tag_id,
+                        list_type='tag',
+                        is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag' #(origin_type == 'tag')
+                    )
+                    self.db.add(tag_association)
+                    associations.append(tag_association)
+            
+            match_found = any(i.note_item_id == note_item.id and
+                i.list_id == item.creation_list_id
+                for i in associations
+            )
+            if not match_found:
+                tag_association = NoteItemList(
+                        note_item_id=note_item.id,
+                        list_id=item.creation_list_id,
+                        list_type=item.creation_type,
+                        is_origin=True #(origin_type == 'tag')
+                    )
                 self.db.add(tag_association)
                 associations.append(tag_association)
+                
             
         # for i, item in enumerate(note_group.items):
         #     # Create new note item
