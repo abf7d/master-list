@@ -1,0 +1,7 @@
+pytest 
+pytest-cov 
+alembic 
+pytest-postgresql
+
+psycopg==3.1.12  # Add this line
+psycopg-binary==3.1.12  # Add this line

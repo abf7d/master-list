@@ -25,7 +25,7 @@ export const routes: Routes = [
     {
         path: 'lists',
         loadComponent: () => import('./components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
-        canActivate: [AuthorizedUserGuard],
+        canActivate: [AuthorizedUserGuard], //[MsalGuard], //[
         children: [
             {
                 path: '',
@@ -44,7 +44,7 @@ export const routes: Routes = [
     {
         path: 'lists/:listType/:id',
         loadComponent: () => import('./components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
-        canActivate: [AuthorizedUserGuard],
+        canActivate: [AuthorizedUserGuard], // [MsalGuard], //
         children: [
             {
                 path: '',

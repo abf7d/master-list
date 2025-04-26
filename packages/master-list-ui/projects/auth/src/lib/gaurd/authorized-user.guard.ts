@@ -245,10 +245,11 @@ export class AuthorizedUserGuard extends MsalGuard implements CanActivate {
             }
 
             // Check if claims are already loaded
-            if (this.accountData.hasClaims()) {
+            if (!this.accountData.isExpired()) {
                 // Claims already exist, check authorization
                 const isAuthorized = this.accountData.isAdmin() || this.accountData.isAuthorized();
                 if (!isAuthorized) {
+                    console.error('unexpired but unauthorized in auth-user-gaurd');
                     // User is authenticated but not authorized
                     return this.parentRouter.createUrlTree(['/unauthorized']);
                 }
@@ -261,6 +262,7 @@ export class AuthorizedUserGuard extends MsalGuard implements CanActivate {
                 // This will load claims from backend and should return whether user is authorized
                 const isAuthorized = await this.accountData.initializeClaims();
                 if (!isAuthorized) {
+                    console.error('fresh retreival unauthorized in auth-user-gaurd');
                     return this.parentRouter.createUrlTree(['/unauthorized']);
                 }
                 console.log('api call is Authorized to view pages');

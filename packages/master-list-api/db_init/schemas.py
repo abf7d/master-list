@@ -75,7 +75,7 @@ class NoteItemList(Base):
     list_id = Column(UUID(as_uuid=True), primary_key=True)  # Renamed from tag_id to list_id for clarity
     list_type = Column(String(4), nullable=False)  # 'tag' or 'note'
     is_origin = Column(Boolean, default=False)  # Fixed Boolean type
-    
+    sort_order = Column(Integer, nullable=True)
     __table_args__ = (
         CheckConstraint(list_type.in_(['tag', 'note']), name='check_list_type'),
         Index('idx_list_id_type', list_id, list_type), 

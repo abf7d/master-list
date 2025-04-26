@@ -57,6 +57,21 @@ export class ClaimsService {
         }
     }
 
+    public isExpired() {
+        if (typeof sessionStorage !== undefined) {
+            const token = sessionStorage.getItem(CONST.CLAIMS_TOKEN_CACHE_KEY);
+            if (token) {
+                const json = JSON.parse(token);
+                const tokenDetails = json?.token?.auth_token;
+                if (tokenDetails) {
+                    const expDate = this.jwtHelper.getTokenExpirationDate(tokenDetails);
+                    return expDate ? expDate.getTime() < new Date().getTime() : true;
+                }
+            }
+        }
+        return true;
+    }
+
     public hasClaims(): boolean {
         return typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem(CONST.CLAIMS_TOKEN_CACHE_KEY);
     }

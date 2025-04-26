@@ -77,7 +77,8 @@ class TagEntry(BaseModel):
     name: str
     parent_id: Optional[str]
     created_at: datetime
-    order: int
+    order: int # for color coding
+    sort_order: Optional[int] # for ordering the tags
     
 class NoteCreation(BaseModel):
     id: UUID
