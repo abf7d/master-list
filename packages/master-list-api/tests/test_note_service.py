@@ -188,62 +188,66 @@ def test_update_parent_association_new(note_service, test_user, test_note, test_
 #     # 3. To tag2
 #     assert len(new_associations) == 3
 
-# def test_update_items_integration(note_service, test_user, test_note, test_tags, test_note_items):
-#     """Integration test for the update_items function."""
-#     # Create a note group with one existing item and one new item
-#     note_group = CreateNoteGroup(
-#         parent_tag_id=test_note.id,
-#         parent_list_type="note",
-#         items=[
-#             # Update existing item
-#             NoteItem(
-#                 id=test_note_items[0].id,
-#                 content="Updated content",
-#                 tags=["tag1", "tag2"],  # Add a new tag
-#                 creation_list_id=test_note.id,
-#                 creation_type="note",
-#                 position=10  # Change position
-#             ),
-#             # Create new item
-#             NoteItem(
-#                 id=None,
-#                 content="Brand new item",
-#                 tags=["tag2"],
-#                 creation_list_id=None,
-#                 creation_type=None,
-#                 position=None
-#             )
-#         ]
-#     )
+def test_update_items_integration(note_service, test_user, test_note, test_tags, test_note_items):
+    """Integration test for the update_items function."""
+    # Create a note group with one existing item and one new item
     
-#     result = note_service.update_items(note_group, test_user.oauth_id)
+
+    print('!!!!!!!!!! 123 4')
     
-#     # Verify the result
-#     assert "created_note_items" in result
-#     assert "associations" in result
-#     assert len(result["created_note_items"]) == 2  # 1 updated + 1 new
+    note_group = CreateNoteGroup(
+        parent_tag_id=test_note.id,
+        parent_list_type="note",
+        items=[
+            # Update existing item
+            NoteItem(
+                id=test_note_items[0].id,
+                content="Updated content",
+                tags=["tag1", "tag2"],  # Add a new tag
+                creation_list_id=test_note.id,
+                creation_type="note",
+                position=10  # Change position
+            ),
+            # Create new item
+            NoteItem(
+                id=None,
+                content="Brand new item",
+                tags=["tag2"],
+                creation_list_id=None,
+                creation_type=None,
+                position=None
+            )
+        ]
+    )
     
-#     # Check that the existing item was updated
-#     updated_item = next(item for item in result["created_note_items"] 
-#                        if item.id == test_note_items[0].id)
-#     assert updated_item.content == "Updated content"
-#     assert updated_item.sequence_number == 10
+    result = note_service.update_items(note_group, test_user.oauth_id)
     
-#     # Check that a new item was created
-#     new_item = next(item for item in result["created_note_items"] 
-#                    if item.id != test_note_items[0].id)
-#     assert new_item.content == "Brand new item"
+    # Verify the result
+    assert "created_note_items" in result
+    assert "associations" in result
+    assert len(result["created_note_items"]) == 2  # 1 updated + 1 new
     
-#     # Get the associations for the updated item to verify tags
-#     assoc_query = select(
-#         NoteItemList.list_id,
-#         NoteItemList.list_type
-#     ).where(NoteItemList.note_item_id == test_note_items[0].id)
+    # Check that the existing item was updated
+    updated_item = next(item for item in result["created_note_items"] 
+                       if item.id == test_note_items[0].id)
+    assert updated_item.content == "Updated content"
+    assert updated_item.sequence_number == 10
     
-#     associations = note_service.db.execute(assoc_query).fetchall()
-#     tag_assocs = [list_id for list_id, list_type in associations if list_type == "tag"]
+    # Check that a new item was created
+    new_item = next(item for item in result["created_note_items"] 
+                   if item.id != test_note_items[0].id)
+    assert new_item.content == "Brand new item"
     
-#     # Should have associations to both tags
-#     assert len(tag_assocs) == 2
-#     assert test_tags[0].id in tag_assocs
-#     assert test_tags[1].id in tag_assocs
+    # Get the associations for the updated item to verify tags
+    assoc_query = select(
+        NoteItemList.list_id,
+        NoteItemList.list_type
+    ).where(NoteItemList.note_item_id == test_note_items[0].id)
+    
+    associations = note_service.db.execute(assoc_query).fetchall()
+    tag_assocs = [list_id for list_id, list_type in associations if list_type == "tag"]
+    
+    # Should have associations to both tags
+    assert len(tag_assocs) == 2
+    assert test_tags[0].id in tag_assocs
+    assert test_tags[1].id in tag_assocs
