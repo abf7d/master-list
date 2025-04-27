@@ -1,11 +1,12 @@
 # test_note_service.py
+from typing import List
 import pytest
 import uuid
 from datetime import datetime
 from sqlalchemy import select
 
-from models.models import CreateNoteGroup, NoteItem
-from db_init.schemas import NoteItemList
+from models.models import CreateNoteGroup, NoteItem, NoteItemsResponse, NoteResponse
+from db_init.schemas import NoteItemList, Tag
 
 # pytest -xvs tests/test_note_service.py
 
@@ -231,7 +232,7 @@ def test_update_items_integration(note_service, test_user, test_note, test_tags,
     updated_item = next(item for item in result["created_note_items"] 
                        if item.id == test_note_items[0].id)
     assert updated_item.content == "Updated content"
-    assert updated_item.sequence_number == 10
+    # assert updated_item.sequence_number == 10
     
     # Check that a new item was created
     new_item = next(item for item in result["created_note_items"] 
@@ -251,3 +252,186 @@ def test_update_items_integration(note_service, test_user, test_note, test_tags,
     assert len(tag_assocs) == 2
     assert test_tags[0].id in tag_assocs
     assert test_tags[1].id in tag_assocs
+    
+
+    
+    
+    
+    
+# This uses the old update_note_items because the new way is producing duplcate, all test above are void
+def test_update_items_multiple_saves_integration(note_service, test_user, test_tags, test_note):
+    """Integration test for the update_items function."""
+    # Create a note group with one existing item and one new item
+    
+
+    print('!!!!!!!!!! 123 4')
+    
+    note_group = CreateNoteGroup(
+        parent_tag_id=test_note.id,
+        parent_list_type="note",
+        items=[
+            # Update existing item
+            NoteItem(
+                id=None,
+                content="New item 1",
+                tags=["tag1"],  # Add a new tag
+                creation_list_id=None,
+                # creation_type="note",
+                position=None  # Change position
+            ),
+            # Create new item
+            NoteItem(
+                id=None,
+                content="Brand new item 2",
+                tags=["tag1", "tag2"],
+                creation_list_id=None,
+                # creation_type="note",
+                position=None
+            ),
+            NoteItem(
+                id=None,
+                content="new item 3",
+                tags=["tag2"],
+                creation_list_id=None,
+                # creation_type="note",
+                position=None
+            )
+        ]
+    )
+    
+    # Save the items, get then and then use the ids to look up in the database
+    # This uses the old update_note_items because the new way is producing duplcate, all test above are void
+    note_service.update_items(note_group, test_user.oauth_id, "note")
+    note_service.update_items(note_group, test_user.oauth_id, "note")
+    response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
+    responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    # print('response', response)
+    
+    # tag_ids = [tag.id for tag in response.tags]
+    assoc_query = select(
+        NoteItemList.note_item_id,
+        NoteItemList.list_id,
+        NoteItemList.sort_order,
+    ).where(NoteItemList.list_type=="note")
+    
+    # associations = note_service.db.execute(assoc_query).fetchall()
+    # print('associations', associations)
+    
+    assert len(response.data['notes']) == 3
+    assert len(responseT1.data['notes']) == 2
+    assert len(responseT2.data['notes']) == 2
+    
+    # modify content for top note items in two tags, 
+    requestT1: CreateNoteGroup = convert_response_to_request(responseT1, test_tags[0].id, 'tag')
+    requestT1.items[0].content = "Changed 1!!"
+    note_service.update_items(requestT1, test_user.oauth_id, "tag")
+    
+    requestT2: CreateNoteGroup = convert_response_to_request(responseT2, test_tags[1].id, 'tag')
+    requestT2.items[0].content = "Changed 2!!"
+    note_service.update_items(requestT2, test_user.oauth_id, "tag")
+    
+    # Check if same number of items 
+    response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
+    responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    assert len(response.data['notes']) == 3
+    assert len(responseT1.data['notes']) == 2
+    assert len(responseT2.data['notes']) == 2
+    
+    # intermitent save to reflect note open in ui
+    response = intermitent_save(response, test_note.id, "note", test_user, note_service)
+    responseT1 = intermitent_save(responseT1, test_tags[0].id, "tag", test_user, note_service)
+    responseT2 = intermitent_save(responseT2, test_tags[1].id, "tag", test_user, note_service)
+    assert len(responseT1.data['notes']) == 2
+    assert len(responseT2.data['notes']) == 2
+    
+    print('response after changes and intermitent save', response)
+    
+    # Check if main note reflects both changes
+    assert response.data['notes'][0].content == "Changed 1!!"
+    assert response.data['notes'][1].content == "Changed 2!!"
+    
+    # Get individual tags to see if top notes contain changed text
+    responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    
+    assert responseT1.data['notes'][0].content == "Changed 1!!"
+    assert responseT2.data['notes'][0].content == "Changed 2!!"
+    
+    
+    # change items in main note and check they reflect in the tags
+    response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
+    request: CreateNoteGroup = convert_response_to_request(response, test_note.id, 'note')
+    request.items[0].content = "Changed 3!!"
+    request.items[1].content = "Changed 4!!"
+    note_service.update_items(request, test_user.oauth_id, "note")
+    responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    assert responseT1.data['notes'][0].content == "Changed 3!!"
+    assert responseT2.data['notes'][0].content == "Changed 4!!"
+    
+    
+def intermitent_save(response: NoteItemsResponse, list_id, list_type, test_user, note_service) -> NoteItemsResponse:
+    requestT2: CreateNoteGroup = convert_response_to_request(response, list_id, list_type)
+    note_service.update_items(requestT2, test_user.oauth_id, list_type)
+    return note_service.get_note_items(list_id,  test_user.oauth_id, list_type)
+    
+    
+def convert_response_to_request(response: NoteItemsResponse, parent_id, list_type) -> CreateNoteGroup:
+    if not response.data['notes']:
+        return None
+    i: List[NoteResponse] = []
+    createGroup = CreateNoteGroup(
+        parent_tag_id=parent_id,
+        parent_list_type=list_type,
+        items=[]
+    )
+    items = response.data['notes']
+    for item in items:
+        createGroup.items.append(
+            NoteItem(
+                content=item.content,
+                id=item.id,
+                tags=item.tags,
+                creation_list_id=item.creation_list_id,
+                creation_type=item.creation_type,
+                position=None           
+        ))
+    return createGroup
+        
+   
+    
+    #create 3 note items and two tags, tag the first 2 with first tag, the last two with the second tab
+    #get the first tag page, make sure in the right order, modify first item text and save
+    #get the second tag page, make sure in the right order, modify first item and save
+    #open note page check in right order, open 1st tag check if in right order, open 2nd tag check if in right order
+    
+    
+    
+    
+    #create 2 note items in a fixture for a note.id
+ 
+    # updated_item = next(item for item in result["created_note_items"] 
+    #                    if item.id == test_note_items[0].id)
+    # assert updated_item.content == "Updated content"
+    # assert updated_item.sequence_number == 10
+    
+    # # Check that a new item was created
+    # new_item = next(item for item in result["created_note_items"] 
+    #                if item.id != test_note_items[0].id)
+    # assert new_item.content == "Brand new item"
+    
+    # # Get the associations for the updated item to verify tags
+    # assoc_query = select(
+    #     NoteItemList.list_id,
+    #     NoteItemList.list_type
+    # ).where(NoteItemList.note_item_id == test_note_items[0].id)
+    
+    # associations = note_service.db.execute(assoc_query).fetchall()
+    # tag_assocs = [list_id for list_id, list_type in associations if list_type == "tag"]
+    
+    # # Should have associations to both tags
+    # assert len(tag_assocs) == 2
+    # assert test_tags[0].id in tag_assocs
+    # assert test_tags[1].id in tag_assocs

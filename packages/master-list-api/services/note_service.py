@@ -106,6 +106,9 @@ class NoteService:
         parent_id = note_group.parent_tag_id
         parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
         
+        # First, handle deletion of items no longer in the list
+        self._delete_missing_items(note_group, parent_id, parent_list_type)
+        
         # Categorize items as new or existing
         new_items, existing_items, existing_item_ids = self._categorize_items(note_group, parent_id, parent_list_type)
         
@@ -138,6 +141,48 @@ class NoteService:
             "created_note_items": created_note_items,
             "associations": associations
         }
+        
+    def _delete_missing_items(self, note_group: CreateNoteGroup, parent_id: UUID, list_type: str):
+        """
+        Delete items that exist in the database but are not in the provided note_group.items list.
+        This will delete both the NoteItem entries and their associated NoteItemList records.
+        
+        Args:
+            note_group: CreateNoteGroup object containing current items
+            parent_id: UUID of the parent (tag or note)
+            list_type: Type of list ("tag" or "note")
+        """
+        if not parent_id:
+            return  # We can't determine which items to delete without a parent_id
+        
+        # Get IDs of items that should be kept
+        item_ids_to_keep = {item.id for item in note_group.items if item.id is not None}
+        
+        # Query to find all note items currently associated with this parent
+        query = (
+            self.db.query(NoteItem.id)
+            .join(NoteItemList, NoteItem.id == NoteItemList.note_item_id)
+            .filter(
+                NoteItemList.list_id == parent_id,
+                NoteItemList.list_type == list_type
+            )
+        )
+        
+        existing_item_ids = [row[0] for row in query.all()]
+        
+        # Find items that need to be deleted
+        item_ids_to_delete = set(existing_item_ids) - item_ids_to_keep
+        
+        if item_ids_to_delete:
+            # First delete associations in note_item_lists
+            self.db.query(NoteItemList).filter(
+                NoteItemList.note_item_id.in_(item_ids_to_delete)
+            ).delete(synchronize_session=False)
+            
+            # Then delete the note items themselves
+            self.db.query(NoteItem).filter(
+                NoteItem.id.in_(item_ids_to_delete)
+            ).delete(synchronize_session=False)
 
     def _categorize_items(self, note_group: CreateNoteGroup, parent_id: UUID, parent_list_type: str):
         """
@@ -253,14 +298,15 @@ class NoteService:
             ).values(
                 content=item.content,
                 updated_at=datetime.utcnow(),
-                sequence_number=item.position if item.position is not None else order
+                # don't think i use sequence number
+                # sequence_number=item.position if item.position is not None else order
             )
             self.db.execute(update_stmt)
             
             # Fetch the updated item to add to our result
             updated_item = self.db.execute(
                 select(NoteItem).where(NoteItem.id == item.id)
-            ).scalar_one()
+            ).scalar_one() # Aaron integration test is causing an error here  sqlalchemy.exc.NoResultFound: No row was found when one was required
             updated_items.append(updated_item)
             
             # Update parent association if it exists
@@ -277,7 +323,7 @@ class NoteService:
             
             # Ensure origin association exists
             origin_assoc = self._ensure_origin_association(
-                item, updated_item.id, existing_assoc_map
+                item, updated_item.id, order, existing_assoc_map
             )
             if origin_assoc:
                 new_associations.append(origin_assoc)
@@ -396,14 +442,15 @@ class NoteService:
                     list_id=tag_id,
                     list_type='tag',
                     is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag',
-                    sort_order=None  # New associations don't have a sort order yet
+                    sort_order=sort_order # Below didn't look right, the tag order should go inot the new tags
+                    # sort_order=None  # New associations don't have a sort order yet
                 )
                 self.db.add(tag_association)
                 new_associations.append(tag_association)
         
         return new_associations
 
-    def _ensure_origin_association(self, item, item_id, existing_assoc_map):
+    def _ensure_origin_association(self, item, item_id, sort_order, existing_assoc_map):
         """
         Ensure that the origin association exists for an item.
         
@@ -425,7 +472,7 @@ class NoteService:
                 list_id=item.creation_list_id,
                 list_type=item.creation_type,
                 is_origin=True,
-                sort_order=None
+                sort_order=sort_order #test
             )
             self.db.add(origin_association)
             return origin_association
@@ -516,270 +563,6 @@ class NoteService:
         
         return created_items, new_associations
         
-    # def update_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
-    #     """
-    #     Update existing note items and create new ones for a given parent (list_id).
-    #     This preserves the sort_order field for existing items.
-        
-    #     Args:
-    #         note_group: CreateNoteGroup object containing note items and parent info
-    #         user_id: UUID of the user making the update
-    #         origin_type: Type of origin list ("tag" or "note"), default is "note"
-            
-    #     Returns:
-    #         Dict containing created note_items and associations
-    #     """
-    #     parent_id = note_group.parent_tag_id
-    #     parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
-        
-    #     # Categorize items as new or existing
-    #     new_items = []
-    #     existing_items = []
-    #     existing_item_ids = []
-        
-    #     # Set creation id for all the items and categorize them
-    #     for i, item in enumerate(note_group.items):
-    #         data = {'data': item, 'order': i}
-    #         if item.creation_list_id is None:
-    #             # This is a new item
-    #             item.creation_list_id = item.creation_list_id or parent_id
-    #             item.creation_type = item.creation_type or parent_list_type
-    #             new_items.append(data)
-    #         else:
-    #             # This is an existing item
-    #             existing_items.append(data)
-    #             existing_item_ids.append(item.id)
-    #     print('existing items', existing_items)
-    #     print('new tems', new_items)
-        
-    #     associations = []
-    #     created_note_items = []
-        
-    #     # Pre-fetch all tag names to IDs to avoid multiple queries
-    #     all_tag_names = set()
-    #     for item in note_group.items:
-    #         all_tag_names.update(item.tags)
-        
-    #     # Then query the database once to get all tag IDs
-    #     tag_ids_by_name = {}
-    #     if all_tag_names:
-    #         tags_query = select(Tag.id, Tag.name).where(
-    #             Tag.name.in_(list(all_tag_names))
-    #         )
-    #         tag_results = self.db.execute(tags_query).fetchall()
-    #         tag_ids_by_name = {tag_name: tag_id for tag_id, tag_name in tag_results}
-        
-    #     # Handle existing items - update them and their associations
-    #     if existing_item_ids:
-    #         # Get current note item list associations for existing items
-    #         existing_associations_query = select(
-    #             NoteItemList.list_id,
-    #             NoteItemList.note_item_id,
-    #             NoteItemList.list_type,
-    #             NoteItemList.is_origin,
-    #             NoteItemList.sort_order
-    #         ).where(NoteItemList.note_item_id.in_(existing_item_ids))
-            
-    #         existing_associations = self.db.execute(existing_associations_query).fetchall()
-    #         existing_assoc_map = {}
-            
-    #         # Create a map for quick lookup
-    #         for list_id, note_item_id, list_type, is_origin, sort_order in existing_associations:
-    #             key = (note_item_id, list_id, list_type)
-    #             existing_assoc_map[key] = {
-    #                 'is_origin': is_origin,
-    #                 'sort_order': sort_order
-    #             }
-            
-    #         # Update existing items
-    #         for item_data in existing_items:
-    #             item = item_data['data']
-    #             order = item_data['order']
-                
-    #             # Update note item content and updated_at
-    #             update_stmt = update(NoteItem).where(
-    #                 NoteItem.id == item.id
-    #             ).values(
-    #                 content=item.content,
-    #                 updated_at=datetime.utcnow(),
-    #                 sequence_number=item.position if item.position is not None else order
-    #             )
-    #             self.db.execute(update_stmt)
-                
-    #             # Fetch the updated item to add to our result
-    #             updated_item = self.db.execute(
-    #                 select(NoteItem).where(NoteItem.id == item.id)
-    #             ).scalar_one()
-    #             created_note_items.append(updated_item)
-                
-    #             # Update parent association - create if doesn't exist
-    #             if parent_id:
-    #                 parent_key = (item.id, parent_id, parent_list_type)
-    #                 if parent_key in existing_assoc_map:
-    #                     # Update existing association
-    #                     is_origin = item.creation_list_id == parent_id and item.creation_type == parent_list_type
-    #                     sort_order = existing_assoc_map[parent_key]['sort_order']
-                        
-    #                     update_assoc_stmt = update(NoteItemList).where(
-    #                         and_(
-    #                             NoteItemList.note_item_id == item.id,
-    #                             NoteItemList.list_id == parent_id,
-    #                             NoteItemList.list_type == parent_list_type
-    #                         )
-    #                     ).values(
-    #                         is_origin=is_origin,
-    #                         sort_order=order if sort_order is None else sort_order
-    #                     )
-    #                     self.db.execute(update_assoc_stmt)
-    #                 else:
-    #                     # Create new association
-    #                     parent_association = NoteItemList(
-    #                         note_item_id=item.id,
-    #                         list_id=parent_id,
-    #                         list_type=parent_list_type,
-    #                         is_origin=item.creation_list_id == parent_id and item.creation_type == parent_list_type,
-    #                         sort_order=order
-    #                     )
-    #                     self.db.add(parent_association)
-    #                     associations.append(parent_association)
-                
-    #             # Handle tag associations
-    #             current_tag_ids = [tag_ids_by_name[tag_name] for tag_name in item.tags if tag_name in tag_ids_by_name]
-                
-    #             # Delete tag associations that are no longer needed
-    #             for (note_id, list_id, list_type) in existing_assoc_map:
-    #                 if note_id == item.id and list_type == 'tag' and list_id not in current_tag_ids:
-    #                     delete_assoc_stmt = delete(NoteItemList).where(
-    #                         and_(
-    #                             NoteItemList.note_item_id == note_id,
-    #                             NoteItemList.list_id == list_id,
-    #                             NoteItemList.list_type == 'tag'
-    #                         )
-    #                     )
-    #                     self.db.execute(delete_assoc_stmt)
-                
-    #             # Create or update tag associations
-    #             for tag_name in item.tags:
-    #                 if tag_name not in tag_ids_by_name:
-    #                     continue
-                    
-    #                 tag_id = tag_ids_by_name[tag_name]
-    #                 tag_key = (item.id, tag_id, 'tag')
-                    
-    #                 if tag_key in existing_assoc_map:
-    #                     # Update existing tag association
-    #                     is_origin = item.creation_list_id == tag_id and item.creation_type == 'tag'
-    #                     sort_order = existing_assoc_map[tag_key]['sort_order']
-                        
-    #                     update_tag_assoc_stmt = update(NoteItemList).where(
-    #                         and_(
-    #                             NoteItemList.note_item_id == item.id,
-    #                             NoteItemList.list_id == tag_id,
-    #                             NoteItemList.list_type == 'tag'
-    #                         )
-    #                     ).values(
-    #                         is_origin=is_origin,
-    #                         sort_order=sort_order  # Preserve sort order
-    #                     )
-    #                     self.db.execute(update_tag_assoc_stmt)
-    #                 else:
-    #                     # Create new tag association
-    #                     tag_association = NoteItemList(
-    #                         note_item_id=item.id,
-    #                         list_id=tag_id,
-    #                         list_type='tag',
-    #                         is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag',
-    #                         sort_order=None  # New associations don't have a sort order yet
-    #                     )
-    #                     self.db.add(tag_association)
-    #                     associations.append(tag_association)
-                
-    #             # Ensure origin list association exists
-    #             if item.creation_list_id:
-    #                 origin_key = (item.id, item.creation_list_id, item.creation_type)
-    #                 if origin_key not in existing_assoc_map:
-    #                     origin_association = NoteItemList(
-    #                         note_item_id=item.id,
-    #                         list_id=item.creation_list_id,
-    #                         list_type=item.creation_type,
-    #                         is_origin=True,
-    #                         sort_order=None
-    #                     )
-    #                     self.db.add(origin_association)
-    #                     associations.append(origin_association)
-        
-    #     # Process new items (similar to original function)
-    #     for i, item_data in enumerate(new_items):
-    #         item = item_data['data']
-    #         order = item_data['order']
-    #         position = item.position if item.position is not None else order
-            
-    #         # Create new note item
-    #         new_note_item = NoteItem(
-    #             content=item.content,
-    #             created_by=user_id,
-    #             sequence_number=position
-    #         )
-            
-    #         self.db.add(new_note_item)
-    #         created_note_items.append(new_note_item)
-        
-    #     # Flush to get generated IDs for new items
-    #     self.db.flush()
-        
-    #     # Create associations for new items
-    #     for i, (item_data, note_item) in enumerate(zip(new_items, created_note_items[-len(new_items):])):
-    #         item = item_data['data']
-    #         order = item_data['order']
-            
-    #         # Create parent association
-    #         if parent_id:
-    #             parent_association = NoteItemList(
-    #                 note_item_id=note_item.id,
-    #                 list_id=parent_id,
-    #                 list_type=parent_list_type,
-    #                 is_origin=item.creation_list_id == parent_id and item.creation_type == parent_list_type,
-    #                 sort_order=order
-    #             )
-    #             self.db.add(parent_association)
-    #             associations.append(parent_association)
-            
-    #         # Create tag associations
-    #         for tag_name in item.tags:
-    #             if tag_name not in tag_ids_by_name:
-    #                 continue
-                    
-    #             tag_id = tag_ids_by_name[tag_name]
-                
-    #             tag_association = NoteItemList(
-    #                 note_item_id=note_item.id,
-    #                 list_id=tag_id,
-    #                 list_type='tag',
-    #                 is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag',
-    #                 sort_order=None
-    #             )
-    #             self.db.add(tag_association)
-    #             associations.append(tag_association)
-            
-    #         # Create origin association if different from parent
-    #         if item.creation_list_id and (item.creation_list_id != parent_id or item.creation_type != parent_list_type):
-    #             origin_association = NoteItemList(
-    #                 note_item_id=note_item.id,
-    #                 list_id=item.creation_list_id,
-    #                 list_type=item.creation_type,
-    #                 is_origin=True,
-    #                 sort_order=None
-    #             )
-    #             self.db.add(origin_association)
-    #             associations.append(origin_association)
-        
-    #     # Commit changes
-    #     self.db.commit()
-        
-    #     return {
-    #         "created_note_items": created_note_items,
-    #         "associations": associations
-    #     }
     
     # Need to handle is_origin, need to persist when getting and need to update here when setting
     def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
@@ -1191,149 +974,6 @@ class NoteService:
             message="Success",
             error=None
         )
-    
-    
-    
-    
-    
-    
-    
-    # def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str = "note") -> NoteItemsResponse:#db: Session, list_id: UUID, list_type: str) -> Dict[str, Any]:
-    #     """
-    #     Given a list_id and list_type, retrieve all NoteItems in that list and all Tags associated with those NoteItems.
-        
-    #     Args:
-    #         db: Database session
-    #         list_id: UUID of the list (Note or Tag)
-    #         list_type: Type of the list ('note' or 'tag')
-            
-    #     Returns:
-    #         Dict containing note_items and tags
-    #     """
-    #     list_name = None
-    #     color_order = None
-    #     if list_type == "tag":
-    #         # Check if tag exists
-    #         tag_query = select(Tag).where(Tag.id == list_id)
-    #         tag = self.db.execute(tag_query).scalars().first()
-    #         if not tag:
-    #             return NoteItemsResponse(
-    #                 data=None,
-    #                 message=f"Tag with ID {list_id} not found",
-    #                 error="Tag not found"
-    #             )
-    #         list_name = tag.name
-    #         color_order = tag.creation_order
-    #     elif list_type == "note":
-    #         # Check if note exists
-    #         note_query = select(Note).where(Note.id == list_id)
-    #         note = self.db.execute(note_query).scalars().first()
-    #         if not note:
-    #             return NoteItemsResponse(
-    #                 data=None,
-    #                 message=f"Note with ID {list_id} not found",
-    #                 error="Note not found"
-    #             )
-    #         list_name = note.title
-            
-    #     # Step 1: Get all note_item_ids for the given list_id and list_type
-    #     note_item_ids_query = select(NoteItemList.note_item_id).where(
-    #         and_(
-    #             NoteItemList.list_id == list_id,
-    #             NoteItemList.list_type == list_type
-    #         )
-    #     )
-    #     note_item_ids = [row[0] for row in self.db.execute(note_item_ids_query).fetchall()]
-        
-    #     # Step 2: Get all note_items for these IDs
-    #     note_items_query = select(NoteItem).where(
-    #         NoteItem.id.in_(note_item_ids),
-    #         NoteItem.created_by == user_id
-    #     )
-    #     note_items = self.db.execute(note_items_query).scalars().all()
-    #     # note_items = [note_item in note_items_results]
-        
-    #     # Step 3: Get all tag associations (list_id and note_item_id pairs where list_type is 'tag')
-    #     tag_associations_query = select(
-    #         NoteItemList.list_id, 
-    #         NoteItemList.note_item_id,
-    #         NoteItemList.list_type,
-    #         NoteItemList.is_origin
-    #     ).where(
-    #         and_(
-    #             NoteItemList.note_item_id.in_(note_item_ids),
-    #         )
-    #     )
-    #     tag_associations = self.db.execute(tag_associations_query).fetchall()
-        
-    #     # Extract unique tag_ids from associations
-    #     tag_ids = list(set([association[0] for association in tag_associations if association[2] == 'tag']))
-        
-    #     # Step 4: Get all tags for these tag_ids
-    #     tags_query = select(Tag).where(
-    #         Tag.id.in_(tag_ids)
-    #     )
-    #     tags = self.db.execute(tags_query).scalars().all()
-        
-    #     # Map tag id to name for easier conversion
-    #     tag_map = {tag.id: tag.name for tag in tags}  
-       
-            
-    #     # Step 5: Construct the response    
-    #     note_responses = []
-    #     for note_item in note_items:
-            
-    #         assigned_tags = []
-            
-    #         origin_id = None
-    #         origin_type = None
-    #         for tag_id, note_item_id, list_type, is_origin in tag_associations:
-                
-    #             # if association is a tag and its note id matches this item
-    #             if note_item_id == note_item.id and list_type == 'tag' and tag_id in tag_map:
-    #                 name = tag_map[tag_id]
-    #                 assigned_tags.append(name)
-    #             if is_origin:
-    #                 origin_id = tag_id
-    #                 origin_type = list_type
-            
-    #         note_responses.append(
-    #             NoteResponse(
-    #                 id=note_item.id,
-    #                 content=note_item.content,
-    #                 created_at=note_item.created_at,
-    #                 updated_at=note_item.updated_at,
-    #                 creation_list_id=origin_id,
-    #                 creation_type=origin_type,
-    #                 sequence_number=note_item.sequence_number,
-    #                 tags=assigned_tags
-    #             )
-    #         )
-        
-        
-    #     tag_responses = [
-    #         TagEntry(
-    #             id=tag.id,
-    #             name=tag.name,
-    #             parent_id=tag.parent_id,
-    #             created_at=tag.created_at,
-    #             order=tag.creation_order
-    #         )
-    #         for tag in tags
-    #     ]
-    #     print(f"tag_responses: {str(tag_responses)}")
-    #     return NoteItemsResponse(
-    #         data={
-    #             "notes": note_responses, 
-    #             "tags": tag_responses,
-    #             "list_name": list_name,
-    #             "list_type": list_type,
-    #             "color_order": color_order
-    #         },
-    #         message="Success",
-    #         error=None
-        # )
-    
 
    
 
