@@ -202,7 +202,7 @@ class NoteService:
         
         for i, item in enumerate(note_group.items):
             data = {'data': item, 'order': i}
-            if item.creation_list_id is None:
+            if item.creation_list_id is None or item.id is None:
                 # This is a new item
                 item.creation_list_id = item.creation_list_id or parent_id
                 item.creation_type = item.creation_type or parent_list_type
@@ -539,6 +539,9 @@ class NoteService:
                     
                 tag_id = tag_ids_by_name[tag_name]
                 
+                if tag_id == parent_id:
+                    continue
+                
                 tag_association = NoteItemList(
                     note_item_id=note_item.id,
                     list_id=tag_id,
@@ -550,16 +553,16 @@ class NoteService:
                 new_associations.append(tag_association)
             
             # Create origin association if different from parent
-            if item.creation_list_id and (item.creation_list_id != parent_id or item.creation_type != parent_list_type):
-                origin_association = NoteItemList(
-                    note_item_id=note_item.id,
-                    list_id=item.creation_list_id,
-                    list_type=item.creation_type,
-                    is_origin=True,
-                    sort_order=None
-                )
-                self.db.add(origin_association)
-                new_associations.append(origin_association)
+            # if item.creation_list_id and (item.creation_list_id != parent_id or item.creation_type != parent_list_type):
+            #     origin_association = NoteItemList(
+            #         note_item_id=note_item.id,
+            #         list_id=item.creation_list_id,
+            #         list_type=item.creation_type,
+            #         is_origin=True,
+            #         sort_order=None
+            #     )
+            #     self.db.add(origin_association)
+            #     new_associations.append(origin_association)
         
         return created_items, new_associations
         

@@ -68,7 +68,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       redirectUri: environment.redirectUri, 
       postLogoutRedirectUri: environment.postLogoutUrl, //'/home',
       knownAuthorities: [environment.b2cPolicies.authorityDomain],
-      navigateToLoginRequestUrl: true,
+      navigateToLoginRequestUrl: false,
+      // navigateToLoginRequestUrl: true,
     },
     cache: {
       cacheLocation: BrowserCacheLocation.SessionStorage, 
