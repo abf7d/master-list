@@ -69,7 +69,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       postLogoutRedirectUri: environment.postLogoutUrl, //'/home',
       knownAuthorities: [environment.b2cPolicies.authorityDomain],
       navigateToLoginRequestUrl: false,
-      // navigateToLoginRequestUrl: true,
+      // navigateToLoginRequestUrl: true, //commenting this out allowed me to refresh the page and it navigated
     },
     cache: {
       cacheLocation: BrowserCacheLocation.SessionStorage, 
