@@ -1,0 +1,81 @@
+<div class="chart-options group">
+    <div class="tag-group-container">
+        <div class="actions">
+            <div class="title-container">
+                <span class="tag-title">Lists</span>
+                <span class="search" *ngIf="selectedTag">
+                    <span><a [routerLink]="['/lists', 'tag', selectedTag.navId!]"><i class="fa-solid fa-link tag-link"></i>Go To {{selectedTag.name}}</a></span>
+                </span>
+            </div>
+            <span class="float-right assign-button">
+                <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>
+                <span class="center">|</span>
+                <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
+                <span class="center">|</span>
+                <a href="javascript:void(0)" class="explore" (click)="filterTags()">Clear</a>
+            </span>
+        </div>
+        <div class="tags">
+            <div *ngFor="let tag of tags()">
+                <button
+                    type="button"
+                    (click)="select(tag)"
+                    [style.background-color]="tag.isSelected ? tag.backgroundcolor : '#bbb'"
+                    [style.color]="tag.isSelected ? tag.color : 'white'"
+                    class="btn btn-light tag-btn"
+                >
+                    <svg><circle r="7" cx="8" cy="12" [ngStyle]="{ fill: tag.backgroundcolor, stroke: tag.isSelected ? 'white' : '' }"></circle></svg>
+                    {{ tag.name }}
+                    <span class="remove" *ngIf="allowAdd" (click)="$event.stopPropagation(); showTagMenu(tag)">
+                        <i *ngIf="!tag.showDelMenu" class="fa-solid fa-chevron-down"></i>
+                        <i *ngIf="tag.showDelMenu" class="fa-solid fa-chevron-up"></i>
+                    </span>
+                </button>
+    
+                @if(tag.showDelMenu) {
+                <div class="autocomplete" (clickOutside)="closeDeleteMenu(tag)">
+                    <div class="entry" (click)="excludeFromList(tag)">Exclude from Note</div>
+                    <div class="entry">Remove from items</div>
+                    <div class="entry" (click)="remove(tag)">Delete everywhere</div>
+                </div>
+                }
+            </div>
+            <div>
+                <input
+                    class="add-tag"
+                    *ngIf="allowAdd"
+                    [(ngModel)]="autoCompleteInput"
+                    (ngModelChange)="autoComplete($event)"
+                    (click)="showDefaultMenu = matchedEntries.length === 0; autoCloseMenuToggle = showDefaultMenu"
+                    type="text"
+                    placeholder="Type Name"
+                    (keydown.tab)="add($event.target)"
+                />
+                @if(showDefaultMenu) {
+                <div class="default-menu autocomplete" (clickOutside)="showDefaultMenu = false">
+                    <div class="most-recent">
+                        <div class="entry">Most Recent</div>
+                        <div class="entry">Exclude from Note</div>
+                    </div>
+                    <div class="most-used">
+                        <div class="entry">Most Used</div>
+                        <div class="entry">Delete everywhere</div>
+                    </div>
+                </div>
+                }
+                <div class="autocomplete" *ngIf="!autoCloseMenuToggle && (matchedEntries.length > 0 || this.uniqeName)" (clickOutside)="closeCreateMenu()">
+                    <div class="entry" *ngFor="let item of matchedEntries;" (click)="includeInList(item)">
+                        {{item.name}}
+                    </div>
+                    @if(uniqeName) {
+                    <div class="unique-name">
+                        <div>Create Tag <b>{{autoCompleteInput}}</b></div>
+                        <div class="tab">Tab</div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>

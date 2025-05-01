@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { TagSelection } from '../../types/tag';
+// import { Injectable } from '@angular/core';
+// import { BehaviorSubject } from 'rxjs';
+// import { TagSelection } from '../../types/tag';
 
-@Injectable({
-    providedIn: 'root',
-})
-export class TagStateService {
-    loadOriginTag= new BehaviorSubject<TagSelection | null>(null);
-    constructor() {}
-}
+// @Injectable({
+//     providedIn: 'root',
+// })
+// export class TagStateService {
+//     loadOriginTag= new BehaviorSubject<TagSelection | null>(null);
+//     constructor() {}
+// }

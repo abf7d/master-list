@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Paragraph } from '../../types/note';
-import {} from '../meta-tags/meta-tag.service';
-import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
+// import {} from '../meta-tags/meta-tag.service';
+// import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';
 import { TagCssGenerator } from '../../services/tag-css-generator';
 import { BehaviorSubject, debounceTime, skip, Subject, tap } from 'rxjs';
@@ -12,21 +12,22 @@ import { ToastrService } from 'ngx-toastr';
 import { MasterLayoutService } from './master-layout.service';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
-import { AddTag } from '../tag-group/tag-group.component';
+// import { AddTag } from '../tag-group/tag-group.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ColorFactoryService } from '../../services/color-factory.service';
+import { AddTag, TagPickerComponent } from '../tag-picker/tag-picker.component';
 
 @Component({
     selector: 'app-list-editor',
-    imports: [CommonModule, MetaTagsComponent, RouterModule],
+    imports: [CommonModule, RouterModule, TagPickerComponent],
     templateUrl: './list-editor.component.html',
     styleUrl: './list-editor.component.scss',
     encapsulation: ViewEncapsulation.None,
 })
 export class ListEditorComponent {
     @ViewChild('editor') editorRef!: ElementRef;
-
-    tagGroup$: BehaviorSubject<TagSelectionGroup> = new BehaviorSubject<TagSelectionGroup>({ name: 'Lists', tags: [] });
+    tags: TagSelection[] = [];
+    // tagGroup$: BehaviorSubject<TagSelectionGroup> = new BehaviorSubject<TagSelectionGroup>({ name: 'Lists', tags: [] });
     paragraphs: Paragraph[] = [];
 
     private changeSubject = new Subject<void>();
@@ -71,9 +72,11 @@ export class ListEditorComponent {
         //     .getDefaultTags()
         //     .pipe(tap(x => this.tagColorService.initTagColors(x)))
         //     .subscribe(x => this.tagGroup$.next(x));
-        this.tagGroup$.subscribe();
-
+        // this.tagGroup$.subscribe();
+        // this.tags = [];
+        // this.updateAddName = [];
         this.route.paramMap.subscribe(params => {
+            
             let listId = params.get('id');
             let listType = params.get('listType');
             console.log('listId', listId, 'listType', listType)
@@ -116,6 +119,7 @@ export class ListEditorComponent {
             }
         });
     }
+    
 
     getPageNoteItems() {
         this.notesApi.getNoteElements(this.listId, this.listType /*'note'*/).subscribe({

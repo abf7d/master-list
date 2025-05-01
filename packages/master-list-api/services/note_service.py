@@ -412,7 +412,7 @@ class NoteService:
                 self.db.execute(delete_assoc_stmt)
         
         # Create or update tag associations
-        for tag_name in item.tags:
+        for i, tag_name in enumerate(item.tags):
             if tag_name not in tag_ids_by_name:
                 continue
             
@@ -424,6 +424,8 @@ class NoteService:
                 is_origin = item.creation_list_id == tag_id and item.creation_type == 'tag'
                 sort_order = existing_assoc_map[tag_key]['sort_order']
                 
+               
+                
                 update_tag_assoc_stmt = update(NoteItemList).where(
                     and_(
                         NoteItemList.note_item_id == item_id,
@@ -432,10 +434,13 @@ class NoteService:
                     )
                 ).values(
                     is_origin=is_origin,
-                    sort_order=sort_order  # Preserve sort order
+                    sort_order=sort_order # Preserve sort order
                 )
                 self.db.execute(update_tag_assoc_stmt)
             else:
+                # TODO: Need to calculate sort order correctly. If no sort_order then take the tag count and add to it the index
+                sort_order = i + len(item.tags)
+                
                 # Create new tag association
                 tag_association = NoteItemList(
                     note_item_id=item_id,
@@ -533,7 +538,7 @@ class NoteService:
                 new_associations.append(parent_association)
             
             # Create tag associations
-            for tag_name in item.tags:
+            for i, tag_name in enumerate(item.tags):
                 if tag_name not in tag_ids_by_name:
                     continue
                     
@@ -547,7 +552,7 @@ class NoteService:
                     list_id=tag_id,
                     list_type='tag',
                     is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag',
-                    sort_order=None
+                    sort_order=i
                 )
                 self.db.add(tag_association)
                 new_associations.append(tag_association)

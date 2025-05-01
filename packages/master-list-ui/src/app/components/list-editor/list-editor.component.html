@@ -44,17 +44,17 @@
 
 <div class="action-panel">
     <div class="areas" [ngClass]="{expanded: popListOut}">
-        <div *ngIf="(tagGroup$ | async) !== null" class="side-groups">
-            <app-meta-tags
+        <div class="side-groups">
+            <app-tag-picker
                 [hidden]="popListOut"
-                [tagGroups]="(tagGroup$ | async) ?? {name: '', tags: []}"
+                [tags]="tags"
                 (assignTag)="assignTagToRows($event)"
                 (unassignTag)="unassignTags($event)"
                 (removeTag)="deleteTag($event)"
                 (addTag)="addTag($event)"
                 [completeAdd]="updateAddName"
                 [completeDelete]="updateDeleteName"
-            ></app-meta-tags>
+            ></app-tag-picker>
             <div class="active-list-panel">
                 <div class="active-list">
                     <div class="preview-container">
