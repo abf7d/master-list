@@ -851,7 +851,8 @@ class NoteService:
             NoteItemList.note_item_id,
             NoteItemList.list_type,
             NoteItemList.is_origin,
-            NoteItemList.sort_order
+            NoteItemList.sort_order,
+            # NoteItemList.id #need to add associatin id primary key to table
         ).where(
             NoteItemList.note_item_id.in_(note_item_ids)
         ).order_by(
@@ -871,25 +872,34 @@ class NoteService:
         tags = self.db.execute(tags_query).scalars().all()
         
         # Map tag id to name and other properties for easier conversion
+        # These are Tag objects, not the associations
         tag_map = {tag.id: {
             'name': tag.name,
             'parent_id': tag.parent_id,
             'created_at': tag.created_at,
-            'order': tag.creation_order
+            'order': tag.creation_order,
+            # 'id' add tag id to the tag object
         } for tag in tags}
         
         # Step 4: Construct the response with ordered note items
         note_responses = []
         note_item_to_associations = {}
+        this_list_order = {}
         
         # Group associations by note_item_id for easier processing
-        for tag_id, note_item_id, list_type, is_origin, sort_order in tag_associations:
+        for a_list_id, note_item_id, a_list_type, is_origin, sort_order in tag_associations:
             if note_item_id not in note_item_to_associations:
                 note_item_to_associations[note_item_id] = []
             
+            # save order for organizing the note_items, if you are on this list
+            if list_id == a_list_id and a_list_type == list_type:
+                this_list_order[note_item_id] = sort_order
+                
+            # Need to get the sort order for the origin 
+            # These are NoteItemLIst objects/associations
             note_item_to_associations[note_item_id].append({
-                'tag_id': tag_id,
-                'list_type': list_type,
+                'tag_id': a_list_id,
+                'list_type': a_list_type,
                 'is_origin': is_origin,
                 'sort_order': sort_order
             })
@@ -901,35 +911,43 @@ class NoteService:
             
             origin_id = None
             origin_type = None
+            origin_sort_order = None
             
             # Process associations for this note item
             associations = note_item_to_associations.get(note_item.id, [])
             
             for assoc in associations:
-                tag_id = assoc['tag_id']
+                a_list_id = assoc['tag_id']
                 assoc_list_type = assoc['list_type']
                 is_origin = assoc['is_origin']
                 assoc_sort_order = assoc['sort_order']
                 
                 # Check if this is the origin
                 if is_origin:
-                    origin_id = tag_id
+                    origin_id = a_list_id
                     origin_type = assoc_list_type
+                    origin_sort_order = assoc_sort_order
+                    
+                # TODO: Maybe not: Potentially move checking if you are on this list here to get this list sort order
                 
                 # If it's a tag, add it to assigned_tags
-                if assoc_list_type == 'tag' and tag_id in tag_map:
+                if assoc_list_type == 'tag' and a_list_id in tag_map:
                     tag_data.append({
-                        'name': tag_map[tag_id]['name'],
+                        # 'id: ' add primary key id to the NoteItemLIst Table
+                        # Use a fake guid for now, but need to add the id to the NoteItemList table
+                        # 'id': ''
+                        'id': '11111111-1111-1111-1111-111111111111',
+                        'name': tag_map[a_list_id]['name'],
                         'sort_order': assoc_sort_order
                     })
             
-            # Sort tags by sort_order if available
-            tag_data.sort(
-                key=lambda x: (x['sort_order'] is None, x['sort_order'])
-            )
+            # # Sort tags by sort_order if available
+            # tag_data.sort(
+            #     key=lambda x: (x['sort_order'] is None, x['sort_order'])
+            # )
             
-            # Extract just the names in order
-            assigned_tags = [tag['name'] for tag in tag_data]
+            # # Extract just the names in order
+            # assigned_tags = [tag['name'] for tag in tag_data]
             
             note_responses.append(
                 NoteResponse(
@@ -940,36 +958,44 @@ class NoteService:
                     creation_list_id=origin_id,
                     creation_type=origin_type,
                     sequence_number=note_item.sequence_number,
-                    tags=assigned_tags,
-                    sort_order=sort_order  # Include sort_order in response if needed
+                    tags=tag_data, #assigned_tags,
+                    sort_order=sort_order,  # Include sort_order in response if needed
+                    origin_sort_order= origin_sort_order
                 )
             )
         
+        # Can I delete this tag ordering? The tag sort order denote's a note item's position on a list
+        # Not the tag's order on a note item 
         # Create tag responses in order
         tag_responses = []
         
         # Build a map of tags by note_item_id and their sort_orders
         tag_sort_orders = {}
-        for tag_id, note_item_id, list_type, is_origin, sort_order in tag_associations:
-            if list_type == 'tag' and tag_id in tag_map:
-                if tag_id not in tag_sort_orders or (sort_order is not None and (tag_sort_orders[tag_id] is None or sort_order < tag_sort_orders[tag_id])):
-                    tag_sort_orders[tag_id] = sort_order
+        for a_list_id, note_item_id, list_type, is_origin, sort_order in tag_associations:
+            if list_type == 'tag' and a_list_id in tag_map:
+                if a_list_id not in tag_sort_orders or (sort_order is not None and (tag_sort_orders[a_list_id] is None or sort_order < tag_sort_orders[a_list_id])):
+                    tag_sort_orders[a_list_id] = sort_order
         
         # Create tag responses with sort_order information
-        for tag_id, tag_info in tag_map.items():
+        for a_list_id, tag_info in tag_map.items():
             tag_responses.append(
                 TagEntry(
-                    id=tag_id,
+                    id=a_list_id,
                     name=tag_info['name'],
                     parent_id=tag_info['parent_id'],
                     created_at=tag_info['created_at'],
                     order=tag_info['order'],
-                    sort_order=tag_sort_orders.get(tag_id)  # Include sort_order if available
+                    # This is the tag object not the assoication, the sort_order is for the note_item's position on the page
+                    # not for the tag's positoin on the page. Putting none here for now, maybe alphabetical order for the future
+                    sort_order=None #tag_sort_orders.get(a_list_id)  # Include sort_order if available
                 )
             )
         
         # Sort tag responses by sort_order when available
         tag_responses.sort(key=lambda x: (x.sort_order is None, x.sort_order))
+        
+        # Sort the note items based on this list's sort_order
+        note_responses.sort(key=lambda x: (this_list_order.get(x.id) is None, this_list_order.get(x.id)))
         
         return NoteItemsResponse(
             data={

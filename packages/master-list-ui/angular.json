@@ -67,7 +67,8 @@
               "buildTarget": "master-list:build:production"
             },
             "development": {
-              "buildTarget": "master-list:build:development"
+              "buildTarget": "master-list:build:development",
+              "hmr": false
             }
           },
           "defaultConfiguration": "development"

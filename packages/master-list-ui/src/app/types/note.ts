@@ -6,6 +6,11 @@ export interface ParagraphNote {
   updatedAt: Date;
 }
 
+export interface NoteItemTag {
+  id: string | null;
+  name: string;
+  sort_order: number | null;
+}
 //Current Proof of Concept
 export interface Paragraph {
   id: string;
@@ -21,7 +26,7 @@ export interface Paragraph {
   };
   type: 'bullet' | 'number' | 'none' | 'code';
   level: number; // Indentation level
-  tags: string[];
+  tags: NoteItemTag[]; // string[];
   notes: ParagraphNote[];
   createdAt: Date;
   updatedAt: Date;

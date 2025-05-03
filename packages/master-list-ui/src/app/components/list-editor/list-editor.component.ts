@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Paragraph } from '../../types/note';
+import { NoteItemTag, Paragraph } from '../../types/note';
 // import {} from '../meta-tags/meta-tag.service';
 // import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';

@@ -151,7 +151,7 @@ async def delete_tag_button(request: Request, tag_name: str,
 #         updated_at=note.updated_at
 #     )
 
-
+# For saving note items on a note page
 @router.post("/note-items/", response_model=NoteItemsResponse)
 @authenticate
 async def post_note_items(request: Request, note_group: CreateNoteGroup, 
@@ -177,7 +177,7 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
         data='test1234'
     )
 
-
+# For loading elemetns on a note page, perhaps call this get_note_profile or get_list_page 
 @router.get("/note-items/{parent_tag_id}/{list_type}", response_model=NoteItemsResponse)
 @authenticate
 async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
@@ -202,7 +202,7 @@ async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
     )
 
 
-
+# For create a note from the left hand list
 @router.post("/note", response_model=ResponseData,)
 @authenticate
 async def create_note(request: Request,

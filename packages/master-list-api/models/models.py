@@ -6,13 +6,19 @@ from uuid import UUID
 
 # Pydantic models for API
   
+class TagProps(BaseModel):
+    id: UUID
+    name: str
+    sort_order: Optional[int] # for ordering the tags
+
+
 class NoteItem(BaseModel): # Paragraph object in the frontend
     """Request model for a single note item"""
     content: str  # Text content of the note
     id: Optional[UUID] = None  # Optional ID for the note
     # creation_tag_id: Optional[UUID] = None  # Optional tag to create under
     # sequence_number: Optional[int] = None  # Optional sequence number for ordering
-    tags: List[str] = []  # List of tag IDs associated with the note
+    tags: List[TagProps] = []  # List of tag IDs associated with the note
     # styles: Optional[dict] = None  # These should be specified only on the frontend and should be encoded in the content
     position: Optional[int] = None
     creation_list_id: Optional[UUID] = None  # Optional list ID to create under
@@ -36,6 +42,7 @@ class TagResponse(BaseModel):
     
     model_config = ConfigDict(from_attributes=True)
 
+
 class NoteResponse(BaseModel):
     id: UUID
     content: str
@@ -44,7 +51,9 @@ class NoteResponse(BaseModel):
     creation_list_id: Optional[UUID]
     creation_type: Optional[str]
     sequence_number: int
-    tags: List[str] #List['TagResponse']
+    tags: List[TagProps] 
+    origin_sort_order: int
+    # tags: List[str] #List['TagResponse']
 
     model_config = ConfigDict(from_attributes=True)
 

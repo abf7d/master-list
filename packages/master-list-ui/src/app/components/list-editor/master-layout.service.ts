@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject } from 'rxjs';
-import { Paragraph } from '../../types/note';
+import { NoteItemTag, Paragraph } from '../../types/note';
 import { ElementRef, Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { TagCssGenerator } from '../../services/tag-css-generator';
@@ -40,17 +40,17 @@ export class MasterLayoutService {
     const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));
     if (this.affectedRows.length > 0) {
       this.affectedRows.forEach((r) => {
-        r.tags = r.tags.filter((x) => !tags.includes(x));
+        r.tags = r.tags.filter((x) => !tags.find(a => x.name == a));
         const p = map.get(r.id);
         if (p) {
-          p.tags = p.tags.filter((x) => !tags.includes(x));
+          p.tags = p.tags.filter((x) => !tags.find(a => x.name == a));
         }
       });
     } else if (this.selectedParagraphIds) {
       this.selectedParagraphIds.forEach((x) => {
         const item = map.get(x);
         if (item) {
-          item.tags = item.tags.filter((x) => !tags.includes(x));
+          item.tags = item.tags.filter((x) => !tags.find(a => x.name == a));
         }
       });
     }
@@ -61,17 +61,29 @@ export class MasterLayoutService {
     const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));
     if (this.affectedRows.length > 0) {
       this.affectedRows.forEach((r) => {
-        r.tags = Array.from(new Set([tagName, ...r.tags]));
+        const foundTag = r.tags.find((x) => x.name === tagName);
+        if (!foundTag) {
+          const newTag: NoteItemTag = { id: null, name: tagName, sort_order: null };
+          r.tags.push(newTag)
         const p = map.get(r.id);
         if (p) {
-          p.tags = Array.from(new Set([tagName, ...r.tags]));
+          const foundTag = r.tags.find((x) => x.name === tagName);
+          if (!foundTag) {
+            const newTag: NoteItemTag = { id: null, name: tagName, sort_order: null };
+            p.tags.push(newTag);
+          }
         }
+      }
       });
     } else if (this.selectedParagraphIds) {
       this.selectedParagraphIds.forEach((x) => {
         const item = map.get(x);
         if (item) {
-          item.tags = Array.from(new Set([tagName, ...item.tags]));
+          const foundTag = item.tags.find((x) => x.name === tagName);
+          if (!foundTag) {
+            const newTag: NoteItemTag = { id: null, name: tagName, sort_order: null };
+            item.tags.push(newTag);
+          }
         }
       });
     }
@@ -414,7 +426,7 @@ export class MasterLayoutService {
   private renderParagraphs(paragraphs: Paragraph[]): void {
     this.onDocumentChange();
 
-    let allTags = paragraphs.reduce((tags: string[], paragraph) => {
+    let allTags = paragraphs.reduce((tags: NoteItemTag[], paragraph) => {
       if (paragraph.tags && Array.isArray(paragraph.tags)) {
         return [...tags, ...paragraph.tags];
       }
@@ -423,9 +435,10 @@ export class MasterLayoutService {
 
     // undefined is showing up in tags
     allTags = allTags.filter(x => x);
+    const names = allTags.map(x => x.name);
 
     // Call the service to ensure we have styles for all tags
-    this.tagColorService.ensureTagStyles(allTags);
+    this.tagColorService.ensureTagStyles(names);
 
     const editor = this.editorRef.nativeElement;
     editor.innerHTML = '';
@@ -494,7 +507,7 @@ export class MasterLayoutService {
    * @param bulletElements Array of the 4 nested bullet div elements
    */
   private applyTagClassesToBullets(
-    tags: string[],
+    tags: NoteItemTag[],
     bulletElements: HTMLElement[]
   ): void {
     // We'll handle up to 4 tags, one for each bullet level
@@ -517,7 +530,7 @@ export class MasterLayoutService {
         const tag = tagsToUse[index];
         // Use the service to generate the sanitized class name
         const tagClass = `tag-${this.tagColorService.sanitizeTagForCssClass(
-          tag
+          tag.name
         )}`;
         element.classList.add(tagClass);
       } else {
@@ -528,7 +541,7 @@ export class MasterLayoutService {
   }
 
   applyTagClassToContent(
-    tags: string[],
+    tags: NoteItemTag[],
     selectedHighlightTag: string | null,
     contentDiv: HTMLElement
   ) {
@@ -543,16 +556,16 @@ export class MasterLayoutService {
     if (selectedHighlightTag === '' && tags.length > 0) {
         const tag = tags[0];
         const tagClass = `highlight-${this.tagColorService.sanitizeTagForCssClass(
-            tag
+            tag.name
           )}`;
         contentDiv.classList.add(tagClass);
     } else if (selectedHighlightTag)  {
         
-      const foundTag = tags.find(x => x === selectedHighlightTag);
+      const foundTag = tags.find(x => x.name === selectedHighlightTag);
       if (foundTag) {
         const tag = foundTag;
         const tagClass = `highlight-${this.tagColorService.sanitizeTagForCssClass(
-            tag
+            tag.name
           )}`;
         contentDiv.classList.add(tagClass);
       }
