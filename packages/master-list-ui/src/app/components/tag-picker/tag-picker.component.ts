@@ -98,6 +98,9 @@ export class TagPickerComponent implements OnInit {
 
     public select = (tag: TagSelection) => {
         tag.isSelected = !tag.isSelected;
+        this.tags().forEach(x => {
+            if (x.name !== tag.name) x.isSelected = false;
+        });
         if (tag.isSelected) {
             this.selectedTag = tag;
         } else {

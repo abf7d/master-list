@@ -7,7 +7,7 @@ from uuid import UUID
 # Pydantic models for API
   
 class TagProps(BaseModel):
-    id: UUID
+    id: Optional[UUID]
     name: str
     sort_order: Optional[int] # for ordering the tags
 
