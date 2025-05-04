@@ -274,7 +274,7 @@ class NoteService:
                     is_origin=is_origin,
                     sort_order=parent_sort_order
                 )
-                print("association parent:", parent_id, "noteitem:", note_item.id, "sort_order:", parent_sort_order, 'is_origin:', is_origin)
+                # print("association parent:", parent_id, "noteitem:", note_item.id, "sort_order:", parent_sort_order, 'is_origin:', is_origin)
                 self.db.add(parent_association)
                 new_associations.append(parent_association)
             
@@ -321,16 +321,20 @@ class NoteService:
                 new_associations.append(tag_association)
             
             # Create origin association if different from parent
-            # if item.creation_list_id and (item.creation_list_id != parent_id or item.creation_type != parent_list_type):
-            #     origin_association = NoteItemList(
-            #         note_item_id=note_item.id,
-            #         list_id=item.creation_list_id,
-            #         list_type=item.creation_type,
-            #         is_origin=True,
-            #         sort_order=None
-            #     )
-            #     self.db.add(origin_association)
-            #     new_associations.append(origin_association)
+            # The origin association might not be on this list so saving the parent AND not a tag (like a note) cases
+            # above wouldn't have saved the origin association, origin_id is persisted, not on this list 
+            if item.creation_list_id and (item.creation_list_id != parent_id or item.creation_type != parent_list_type):
+                # print("origin sort order obj:", item)
+                
+                origin_association = NoteItemList(
+                    note_item_id=note_item.id,
+                    list_id=item.creation_list_id,
+                    list_type=item.creation_type,
+                    is_origin=True,
+                    sort_order=item.origin_sort_order
+                )
+                self.db.add(origin_association)
+                new_associations.append(origin_association)
         
         return created_items, new_associations
     
@@ -1149,14 +1153,18 @@ class NoteService:
             if note_item_id not in note_item_to_associations:
                 note_item_to_associations[note_item_id] = []
             
+            # print('assoication sort order', list_id, a_list_id, 'type', list_type, a_list_type, 'saveOrder', list_id == str(a_list_id)) # and a_list_type == list_type)
             # save order for organizing the note_items, if you are on this list
-            if list_id == a_list_id and a_list_type == list_type:
+            # print(type(list_id), type(str(a_list_id)))
+            # print('converted', list_id, str(a_list_id))
+            if list_id == str(a_list_id) and a_list_type == list_type:
+                # print('this list', note_item_id, sort_order)
                 this_list_order[note_item_id] = sort_order
                 
             # Need to get the sort order for the origin 
             # These are NoteItemLIst objects/associations
             note_item_to_associations[note_item_id].append({
-                'tag_id': a_list_id,
+                'list_id': a_list_id,
                 'list_type': a_list_type,
                 'is_origin': is_origin,
                 'sort_order': sort_order
@@ -1175,9 +1183,10 @@ class NoteService:
             
             # Process associations for this note item
             associations = note_item_to_associations.get(note_item.id, [])
+            # print('note assoicatiosn, id', note_item.id, associations)
             
             for assoc in associations:
-                a_list_id = assoc['tag_id']
+                a_list_id = assoc['list_id']
                 assoc_list_type = assoc['list_type']
                 is_origin = assoc['is_origin']
                 assoc_sort_order = assoc['sort_order']
@@ -1204,6 +1213,7 @@ class NoteService:
             # if origin_id is None:
                 #get origin id from NoteIemList
             
+            # print('note item', note_item.id, note_item.content, 'sort order', origin_sort_order)
             note_responses.append(
                 NoteResponse(
                     id=note_item.id,
@@ -1251,7 +1261,8 @@ class NoteService:
         
         # Sort the note items based on this list's sort_order
         note_responses.sort(key=lambda x:  (this_list_order.get(x.id) is None, this_list_order.get(x.id)))
-        [print(this_list_order.get(x.id)) for x in note_responses]
+        # print('orderMap', this_list_order)
+        [print('sortOrder', this_list_order.get(x.id), 'content', x.content) for x in note_responses]
         
         return NoteItemsResponse(
             data={

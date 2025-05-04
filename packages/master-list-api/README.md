@@ -25,6 +25,8 @@ docker-compose --env-file ../.env --profile init up
 the pg_db_init.py file was cached so I used the following and it refreshed properly:
 docker-compose --env-file ../.env --profile init build --no-cache
 docker-compose --env-file ../.env --profile init up
+
+docker-compose --env-file ../.env --profile init --profile test up
 ```
 
 

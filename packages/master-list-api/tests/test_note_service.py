@@ -347,6 +347,77 @@ def test_create_single_note(note_service, test_user, test_tags, test_note):
     assert responseT2.data['notes'][1].tags[0].name == "tag2"
     assert responseT2.data['notes'][1].tags[0].sort_order == 4
     
+    assoc_query = select(
+        NoteItemList.note_item_id,
+        NoteItemList.list_id,
+        NoteItemList.sort_order,
+        NoteItemList.list_type,
+        NoteItemList.is_origin
+    ).where(NoteItemList.list_type=="note")
+    
+    associations = note_service.db.execute(assoc_query).fetchall()
+    print('1) !!!!!!!!! associations', associations)
+    
+    
+    
+    # # modify content for top note items in two tags, 
+    # requestT1: CreateNoteGroup = convert_response_to_request(responseT1, test_tags[0].id, 'tag')
+    # requestT1.items[0].content = "Changed 1!!"
+    # note_service.update_note_items_sort_order(requestT1, test_user.oauth_id, "tag")
+    
+    requestT2: CreateNoteGroup = convert_response_to_request(responseT2, test_tags[1].id, 'tag')
+    requestT2.items[0].content = "Changed 2!!"
+    note_service.update_note_items_sort_order(requestT2, test_user.oauth_id, "tag")
+    
+    
+    responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    assert responseT1.data['notes'][0].content == "Changed 2!!"
+    
+    # assoc_query = select(
+    #     NoteItemList.note_item_id,
+    #     NoteItemList.list_id,
+    #     NoteItemList.sort_order,
+    #     NoteItemList.list_type,
+    #     NoteItemList.is_origin
+    # ).where(NoteItemList.list_type=="note")
+    
+    # associations = note_service.db.execute(assoc_query).fetchall()
+    # print('!!!!!!!!! associations', associations)
+    
+    # # Check if same number of items 
+    # response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
+    # responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    # responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    # assert len(response.data['notes']) == 3
+    # assert len(responseT1.data['notes']) == 2
+    # assert len(responseT2.data['notes']) == 2
+    
+    
+    
+    
+    
+    # # intermitent save to reflect note open in ui
+    # response = intermitent_save(response, test_note.id, "note", test_user, note_service)
+    # responseT1 = intermitent_save(responseT1, test_tags[0].id, "tag", test_user, note_service)
+    # responseT2 = intermitent_save(responseT2, test_tags[1].id, "tag", test_user, note_service)
+    # assert len(responseT1.data['notes']) == 2
+    # assert len(responseT2.data['notes']) == 2
+    
+    # print('response after changes and intermitent save', response)
+    
+    # # Check if main note reflects both changes
+    # assert response.data['notes'][0].content == "Changed 1!!"
+    # assert response.data['notes'][1].content == "Changed 2!!"
+    
+    # # Get individual tags to see if top notes contain changed text
+    # responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    # responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    
+    # assert responseT1.data['notes'][0].content == "Changed 1!!"
+    # assert responseT2.data['notes'][0].content == "Changed 2!!"
+    
+    
+    
     
     
 # This uses the old update_note_items because the new way is producing duplcate, all test above are void
@@ -511,7 +582,8 @@ def convert_response_to_request(response: NoteItemsResponse, parent_id, list_typ
                 tags=item.tags,
                 creation_list_id=item.creation_list_id,
                 creation_type=item.creation_type,
-                position=None           
+                position=None ,
+                origin_sort_order=item.origin_sort_order,          
         ))
     return createGroup
         

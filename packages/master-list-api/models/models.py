@@ -24,6 +24,7 @@ class NoteItem(BaseModel): # Paragraph object in the frontend
     creation_list_id: Optional[UUID] = None  # Optional list ID to create under
     creation_type: Optional[str] = None  # Optional type of creation (e.g., 'note', 'tag')
     # level: Optional[int] = None # Tab level for indentation should be stored in conent rather than 
+    origin_sort_order: Optional[int] = None  # Optional sort order for the note item
 # Pydantic Response Models
 
 # This needs to be updated on teh frontend because parewnt_list_type is new

@@ -352,6 +352,7 @@ export class MasterLayoutService {
         createdAt: existingParagraph?.createdAt || new Date(),
         creation_list_id: existingParagraph?.creation_list_id || null,
         creation_type: existingParagraph?.creation_type || null,
+        origin_sort_order: existingParagraph?.origin_sort_order, // Need to implement this as null not undefined
       };
     });
     paragraphs.length = 0;
