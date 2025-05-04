@@ -309,6 +309,68 @@ def get_test_create_group(test_note) :
             )
         ]
     )
+
+def get_tag_item_sort_order() :
+    return  NoteItem(
+        id=None,
+        content="Tags new item 1",
+        tags=[
+            TagProps(
+                name="tag2",
+                sort_order=None, 
+                id=None
+            )],  # Add a new tag
+        creation_list_id=None,
+        # creation_type="note",
+        position=None  # Change position
+    )
+def get_note_item_sort_order() :
+    return  NoteItem(
+        id=None,
+        content="Note new item 1",
+        tags=[
+            TagProps(
+                name="tag2",
+                sort_order=None, 
+                id=None
+            )],  # Add a new tag
+        creation_list_id=None,
+        # creation_type="note",
+        position=None  # Change position
+    )
+    
+    
+def test_sort_order(note_service, test_user, test_tags, test_note):
+    note_group = get_test_create_group(test_note)
+    note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
+    note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
+    response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
+    responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
+    responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    
+    assert len(response.data['notes']) == 3
+    assert len(responseT1.data['notes']) == 2
+    assert len(responseT2.data['notes']) == 2
+    
+    tag_item = get_tag_item_sort_order()
+    requestT2: CreateNoteGroup = convert_response_to_request(responseT2, test_tags[1].id, 'tag')
+    requestT2.items.append(tag_item)
+    print('noteitems from test', requestT2.items)
+    note_service.update_note_items_sort_order(requestT2, test_user.oauth_id, "tag")
+    
+    note_item = get_note_item_sort_order()
+    response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
+    request: CreateNoteGroup = convert_response_to_request(response, test_note.id, 'note')
+    request.items.append(note_item)
+    note_service.update_note_items_sort_order(request, test_user.oauth_id, "note")
+    
+    responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
+    
+    assert len(responseT2.data['notes']) == 4
+    assert responseT2.data['notes'][2].content == "Tags new item 1"
+    assert responseT2.data['notes'][3].content == "Note new item 1"
+    
+    
     
 def test_create_single_note(note_service, test_user, test_tags, test_note):
     note_group = get_test_create_group(test_note)

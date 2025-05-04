@@ -1158,7 +1158,6 @@ class NoteService:
             # print(type(list_id), type(str(a_list_id)))
             # print('converted', list_id, str(a_list_id))
             if list_id == str(a_list_id) and a_list_type == list_type:
-                # print('this list', note_item_id, sort_order)
                 this_list_order[note_item_id] = sort_order
                 
             # Need to get the sort order for the origin 
@@ -1261,7 +1260,6 @@ class NoteService:
         
         # Sort the note items based on this list's sort_order
         note_responses.sort(key=lambda x:  (this_list_order.get(x.id) is None, this_list_order.get(x.id)))
-        # print('orderMap', this_list_order)
         [print('sortOrder', this_list_order.get(x.id), 'content', x.content) for x in note_responses]
         
         return NoteItemsResponse(

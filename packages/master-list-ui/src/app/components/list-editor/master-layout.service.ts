@@ -67,7 +67,7 @@ export class MasterLayoutService {
           r.tags.push(newTag)
         const p = map.get(r.id);
         if (p) {
-          p.tags = this.duplicateTags(r.tags);
+          p.tags = this.duplicateTags(r.tags, true);
         }
       }
       });
@@ -324,7 +324,10 @@ export class MasterLayoutService {
     return elements;
   }
 
-  private duplicateTags(tags: NoteItemTag[]): NoteItemTag[] {
+  private duplicateTags(tags: NoteItemTag[], copyTagSort: boolean): NoteItemTag[] {
+    if (!copyTagSort) {
+      return tags.map((tag) => ({ ...tag, sort_order: null }));
+    }
     return tags.map((tag) => ({ ...tag }));
   }
   // Update the updateParagraphContent method to work with the new structure
@@ -347,7 +350,7 @@ export class MasterLayoutService {
         type: existingParagraph?.type || 'none',
         level: existingParagraph?.level || 0,
         notes: existingParagraph?.notes || [],
-        tags: this.duplicateTags(existingParagraph?.tags || []),
+        tags: this.duplicateTags(existingParagraph?.tags || [], true),
         updatedAt: existingParagraph?.updatedAt || new Date(),
         createdAt: existingParagraph?.createdAt || new Date(),
         creation_list_id: existingParagraph?.creation_list_id || null,
@@ -710,7 +713,7 @@ export class MasterLayoutService {
         type: paragraphs[currentIndex].type,
         level: paragraphs[currentIndex].level,
         notes: paragraphs[currentIndex].notes,
-        tags:  this.duplicateTags(paragraphs[currentIndex].tags || []),
+        tags:  this.duplicateTags(paragraphs[currentIndex].tags || [], false),
         updatedAt: new Date(),
         createdAt: new Date(),
         creation_list_id: null,
@@ -900,7 +903,7 @@ export class MasterLayoutService {
         type: 'code', // Mark this as code type
         level: paragraphs[currentIndex].level,
         notes: paragraphs[currentIndex].notes,
-        tags: this.duplicateTags(paragraphs[currentIndex].tags || []),
+        tags: this.duplicateTags(paragraphs[currentIndex].tags || [], false),
         updatedAt: paragraphs[currentIndex].updatedAt,
         createdAt: paragraphs[currentIndex].createdAt,
         creation_list_id: null,
@@ -924,7 +927,7 @@ export class MasterLayoutService {
           type: paragraphs[currentIndex].type,
           level: paragraphs[currentIndex].level,
           notes: paragraphs[currentIndex].notes,
-          tags: this.duplicateTags(paragraphs[currentIndex].tags || []),
+          tags: this.duplicateTags(paragraphs[currentIndex].tags || [], false),
           updatedAt: new Date(),
           createdAt: new Date(),
           creation_list_id: null,
