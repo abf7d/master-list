@@ -16,10 +16,12 @@ import { TagUpdate } from '../../types/tag/tag-update';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { AddTag, TagPickerComponent } from '../tag-picker/tag-picker.component';
+import { FormsModule } from '@angular/forms';
+import { AutosizeDirective } from '../../directives/auto-size.directive';
 
 @Component({
     selector: 'app-list-editor',
-    imports: [CommonModule, RouterModule, TagPickerComponent],
+    imports: [CommonModule, RouterModule, TagPickerComponent, FormsModule, AutosizeDirective],
     templateUrl: './list-editor.component.html',
     styleUrl: './list-editor.component.scss',
     encapsulation: ViewEncapsulation.None,
@@ -39,7 +41,7 @@ export class ListEditorComponent {
     public updateAddName!: TagUpdate | TagUpdate[];
     public listType: 'note' | 'tag' = 'note';
     public loadOriginParagraph!: BehaviorSubject<Paragraph | null>;
-    public listName!: string;
+    public listName: string = ''; //'Untitled';
     public listColor: string | null = null;
 
     affectedRows: Paragraph[] = [];
@@ -65,8 +67,7 @@ export class ListEditorComponent {
             });
     }
 
-    private componentVersion = 0;
-
+ 
     ngOnInit() {
         // this.tagApi
         //     .getDefaultTags()
@@ -91,6 +92,7 @@ export class ListEditorComponent {
                     } else {
                         console.error(`List with id ${listId} note found`);
                     }
+                    //240
                 });
             } else if (listType === 'tag') {
                 
@@ -263,7 +265,7 @@ export class ListEditorComponent {
         if (!this.isSaving && (!this.error || overrideError)) {
             this.isSaving = true;
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements([], this.listId, this.listType).subscribe({
+            this.notesApi.saveNoteElements([], this.listId, this.listType, this.listName).subscribe({
                 next: result => {
                     this.paragraphs = [];
                     this.isSaving = false;
@@ -281,8 +283,14 @@ export class ListEditorComponent {
     public saveNoteElements(overrideError: boolean = false): void {
         if (!this.isSaving && (!this.error || overrideError)) {
             this.isSaving = true;
+            if (!this.listName || this.listName.trim().length === 0) {
+                const p = this.paragraphs.find(x => x.content.trim().length > 0);
+                if (p) {
+                    this.listName = p.content.substring(0, 240).replace(/<[^>]*>/g, '');
+                }
+            }
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements(this.paragraphs, this.listId, this.listType).subscribe({
+            this.notesApi.saveNoteElements(this.paragraphs, this.listId, this.listType, this.listName).subscribe({
                 next: result => {
                     this.isSaving = false;
                 },

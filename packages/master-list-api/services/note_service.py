@@ -93,6 +93,15 @@ class NoteService:
     def update_note_items_sort_order(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
         parent_id = note_group.parent_tag_id
         parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
+        title = note_group.parent_list_title
+        
+        # Update title if this is a note and we have a title provided
+        if origin_type == "note" and parent_id and title is not None:
+            # Update the title directly with a SQL update statement
+            self.db.query(Note).filter(Note.id == parent_id).update({
+                "title": title,
+                "updated_at": datetime.utcnow()
+            })
         
         # First, handle deletion of items no longer in the list (this has changed to delete all items and then add the new ones)
         self._delete_missing_items_sort_order(note_group, parent_id, parent_list_type)
@@ -1043,7 +1052,7 @@ class NoteService:
         }
     
     
-    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str = "note") -> NoteItemsResponse:
+    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str) -> NoteItemsResponse:
         """
         Given a list_id and list_type, retrieve all NoteItems in that list and all Tags associated with those NoteItems.
         Orders NoteItems based on sort_order field in NoteItemList.
@@ -1058,6 +1067,12 @@ class NoteService:
         """
         list_name = None
         color_order = None
+        if list_type not in ["note", "tag"]:
+            return NoteItemsResponse(
+                data=None,
+                message="Invalid list type. Must be 'note' or 'tag'.",
+                error="Invalid list type"
+            )
         if list_type == "tag":
             # Check if tag exists
             tag_query = select(Tag).where(Tag.id == list_id)
@@ -1235,8 +1250,8 @@ class NoteService:
         
         # Build a map of tags by note_item_id and their sort_orders
         tag_sort_orders = {}
-        for a_list_id, note_item_id, list_type, is_origin, sort_order in tag_associations:
-            if list_type == 'tag' and a_list_id in tag_map:
+        for a_list_id, note_item_id, b_list_type, is_origin, sort_order in tag_associations:
+            if b_list_type == 'tag' and a_list_id in tag_map:
                 if a_list_id not in tag_sort_orders or (sort_order is not None and (tag_sort_orders[a_list_id] is None or sort_order < tag_sort_orders[a_list_id])):
                     tag_sort_orders[a_list_id] = sort_order
         

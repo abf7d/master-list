@@ -34,6 +34,7 @@ class CreateNoteGroup(BaseModel):
     # content: List[str]  # Full text that will be split into paragraphs
     items: List[NoteItem]  # List of note items to create 
     parent_list_type: Optional[str] = 'note'  # Optional list type for the parent tag 
+    parent_list_title: Optional[str] = None 
     
 class TagResponse(BaseModel):
     id: UUID

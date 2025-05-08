@@ -21,14 +21,18 @@
         <button (click)="clearList(true)">Clear Note</button>
         <button (click)="logOut()">Log Out</button>
         @if((loadOriginParagraph | async) !== null){
-        <a [routerLink]="['/lists', (loadOriginParagraph | async)!.creation_type, (loadOriginParagraph | async)!.creation_list_id]">Load origin of selected time</a>
+        <a [routerLink]="['/lists', (loadOriginParagraph | async)!.creation_type, (loadOriginParagraph | async)!.creation_list_id]"
+            >Load origin of selected time</a
+        >
         }
     </div>
     <h3 class="title">
         @if(listColor !== null) {
-            <div class="tag-color-disc" [ngStyle]="{'background-color': listColor}"></div>
+        <div class="tag-color-disc" [ngStyle]="{'background-color': listColor}"></div>
+        } @if(listType === 'tag') { {{listName || 'Untitled'}} } @else {
+        <textarea rows="1" autosize type="text" class="title-input" placeholder="Untitled" [(ngModel)]="listName"> </textarea>
         }
-        {{listName || 'Untitled'}}</h3>
+    </h3>
     <div class="note-editor-pannel">
         <div
             #editor

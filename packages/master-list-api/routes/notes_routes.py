@@ -181,7 +181,7 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
 @router.get("/note-items/{parent_tag_id}/{list_type}", response_model=NoteItemsResponse)
 @authenticate
 async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
-        note_service: NoteService = Depends(get_note_service),):
+        note_service: NoteService = Depends(get_note_service),):  
     return note_service.get_note_items(parent_tag_id, request.state.user_id, list_type)
     
     
