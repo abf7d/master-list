@@ -57,7 +57,8 @@ export class MasterLayoutService {
     this.renderParagraphs(paragraphs);
   }
   assignTagToRows(tagName: string, paragraphs: Paragraph[]) {
-    this.applyInlineStyle('', paragraphs);
+    // this.applyInlineStyle('', paragraphs);
+    this.setAffectedRange(paragraphs);
     const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));
     if (this.affectedRows.length > 0) {
       this.affectedRows.forEach((r) => {
@@ -86,8 +87,42 @@ export class MasterLayoutService {
     this.renderParagraphs(paragraphs);
   }
 
+  setAffectedRange(paragraphs: Paragraph[]) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    let startNode = range.startContainer;
+    let endNode = range.endContainer;
+    let startContentDiv = this.findParentWithClass(startNode, 'content-div');
+    let endContentDiv = this.findParentWithClass(endNode, 'content-div');
+    if (!startContentDiv || !endContentDiv) return;
+
+    let startEditorRow = this.findParentWithClass(
+      startContentDiv,
+      'editor-row'
+    );
+    let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
+    if (!startEditorRow || !endEditorRow) return;
+    // Handle single editor row case
+    if (startEditorRow === endEditorRow) {
+      
+      this.setAffectedElements([], paragraphs);
+    }
+    // Handle multiple editor rows
+    else {
+      // Get all affected editor rows
+      const affectedRows = this.getElementsBetween(
+        startEditorRow,
+        endEditorRow
+      );
+
+      this.setAffectedElements(affectedRows, paragraphs);
+    }
+  }
+
+
+
   applyInlineStyle(style: string, paragraphs: Paragraph[]): void {
-    console.log('def', paragraphs.map(x => x.id))
     const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return;
 
@@ -111,7 +146,6 @@ export class MasterLayoutService {
     let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
 
     if (!startEditorRow || !endEditorRow) return;
-    console.log('abc', paragraphs.map(x => x.id))
     // Create the style span
     // below is not unselecting because new spans are being created, need to reverse the
     // creation of the spans
@@ -204,24 +238,14 @@ export class MasterLayoutService {
   // Creating a duplicatge paragraph and putting it at the top
   private mergeParagraphs(affectedRows: any[], paragraphs: Paragraph[]) {
    
-    console.log('one', paragraphs.map(x => x.id))
     const firstItem = affectedRows[0];
-   
-   
-    
-
     let contentX = paragraphs.find(x => x.id === firstItem.id);
     const two = paragraphs.filter(x => x.id === contentX!.id)
-    console.log('three', two.length, two)
-  
 
     const firstContent =  firstItem.querySelector('.content-div');;
     const idMap = new Map<string, Paragraph>(paragraphs.map(x => ([x.id, x])));
 
-
-    console.log('123a', paragraphs.map(x => x.id))
     affectedRows.slice(1, affectedRows.length).forEach((r, i) => {
-      console.log('123-', i, paragraphs.map(x => x.id))
       const br = document.createElement('br');
      
       const rowContent = r.querySelector('.content-div');
@@ -239,33 +263,6 @@ export class MasterLayoutService {
 
     // 2 paragraphs being created
     const changedpara = paragraphs.filter(x => x.id === contentX!.id)
-    console.log(changedpara.length, changedpara)
-    console.log('456', paragraphs.map(x => x.id))
-    // const rowElements =
-    //   this.editorRef.nativeElement.querySelectorAll('.editor-row');
-
-    // const newParagraphs = Array.from(paragraphs).map((row: Paragraph) => {
-      
-    //   const existingParagraph = paragraphs.find((para) => para.id === row.id);
-
-    //   return {
-    //     id: row.id,
-    //     content: row.content,
-    //     styles: existingParagraph?.styles || {
-    //       fontSize: '16px',
-    //       textAlign: 'left',
-    //     },
-    //     type: existingParagraph?.type || 'none',
-    //     level: existingParagraph?.level || 0,
-    //     notes: existingParagraph?.notes || [],
-    //     tags: existingParagraph?.tags || [],
-    //     updatedAt: existingParagraph?.updatedAt || new Date(),
-    //     createdAt: existingParagraph?.createdAt || new Date(),
-    //   };
-    // });
-
-    //  paragraphs.length = 0;
-    //  paragraphs.push(...newParagraphs);
   }
 
   // When a tag or tags are assigned, use applyInlineStyle function that uses this function
@@ -276,7 +273,6 @@ export class MasterLayoutService {
     this.affectedRows = paragraphs.filter((x) => {
       return ids.get(x.id);
     });
-    console.log(this.affectedRows);
   }
 
   // Helper method to find parent element with a specific class

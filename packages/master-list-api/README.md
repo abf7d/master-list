@@ -12,11 +12,6 @@ AZURE_AD_CLIENT_SECRET="<criticalpass>"
 ```
 
 ```
-  #   # cd docker
-#   # docker compose --profile init up
-
-# for running the newer scripts teh above is not recognizing script changes
-# docker-compose --profile init up --build
 
 when the env variables are not found add env to the docker compose command. In the docker folder run
 
@@ -27,6 +22,9 @@ docker-compose --env-file ../.env --profile init build --no-cache
 docker-compose --env-file ../.env --profile init up
 
 docker-compose --env-file ../.env --profile init --profile test up
+
+Running tests:
+pytest -xvs --capture=tee-sys tests/test_note_service.py
 ```
 
 

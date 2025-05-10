@@ -95,13 +95,7 @@ class NoteService:
         parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
         title = note_group.parent_list_title
         
-        # Update title if this is a note and we have a title provided
-        if origin_type == "note" and parent_id and title is not None:
-            # Update the title directly with a SQL update statement
-            self.db.query(Note).filter(Note.id == parent_id).update({
-                "title": title,
-                "updated_at": datetime.utcnow()
-            })
+        self._save_title(origin_type, parent_id, title)
         
         # First, handle deletion of items no longer in the list (this has changed to delete all items and then add the new ones)
         self._delete_missing_items_sort_order(note_group, parent_id, parent_list_type)
@@ -128,6 +122,25 @@ class NoteService:
             "created_note_items": created_note_items,
             "associations": associations
         }
+        
+    def _save_title(self, origin_type: str, parent_id: UUID, title: str):
+        """
+        Save the title for a note.
+        
+        Args:
+            origin_type: Type of origin list ("tag" or "note")
+            parent_id: UUID of the parent
+            title: Title to save
+            
+        Returns:
+            None
+        """
+        if origin_type == "note" and parent_id and title is not None:
+            # Update the title directly with a SQL update statement
+            self.db.query(Note).filter(Note.id == parent_id).update({
+                "title": title,
+                "updated_at": datetime.utcnow()
+            })
         
     def _delete_missing_items_sort_order(self, note_group: CreateNoteGroup, parent_id: UUID, list_type: str):
         """
