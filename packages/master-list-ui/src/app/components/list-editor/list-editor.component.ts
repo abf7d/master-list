@@ -29,7 +29,6 @@ import { AutosizeDirective } from '../../directives/auto-size.directive';
 export class ListEditorComponent {
     @ViewChild('editor') editorRef!: ElementRef;
     tags: TagSelection[] = [];
-    // tagGroup$: BehaviorSubject<TagSelectionGroup> = new BehaviorSubject<TagSelectionGroup>({ name: 'Lists', tags: [] });
     paragraphs: Paragraph[] = [];
 
     private changeSubject = new Subject<void>();
@@ -53,61 +52,42 @@ export class ListEditorComponent {
         private manager: MasterLayoutService,
         private authService: AuthCoreService,
         private route: ActivatedRoute,
-        private colorFactory: ColorFactoryService
+        private colorFactory: ColorFactoryService,
     ) {
         this.loadOriginParagraph = this.manager.loadOriginParagraph;
         this.manager.setChangeSubject(this.changeSubject);
-        this.changeSubject
-            .pipe(
-                debounceTime(2000), // 2 seconds of inactivity
-                skip(1),
-            )
-            .subscribe(() => {
-                this.saveNoteElements();
-            });
+        this.initPeriodicSave();
     }
 
- 
+    initPeriodicSave() {
+        this.changeSubject
+        .pipe(
+            debounceTime(2000), // 2 seconds of inactivity
+            skip(1),
+        )
+        .subscribe(() => {
+            this.saveNoteElements();
+        });
+    }
+
     ngOnInit() {
-        // this.tagApi
-        //     .getDefaultTags()
-        //     .pipe(tap(x => this.tagColorService.initTagColors(x)))
-        //     .subscribe(x => this.tagGroup$.next(x));
-        // this.tagGroup$.subscribe();
-        // this.tags = [];
-        // this.updateAddName = [];
         this.route.paramMap.subscribe(params => {
-            
             let listId = params.get('id');
             let listType = params.get('listType');
-            console.log('listId', listId, 'listType', listType)
             this.listType = listType as 'tag' | 'note';
             if (listType === 'note') {
                 this.tagApi.getNotes(null, 1, 10, listId).subscribe(x => {
                     const found = x.data.find((y: any) => y.id === listId);
                     if (found) {
                         this.listId = found.id;
-                        console.log('noteId found', this.listId);
                         this.getPageNoteItems();
                     } else {
                         console.error(`List with id ${listId} note found`);
                     }
-                    //240
                 });
             } else if (listType === 'tag') {
-                
                 this.tagApi.getTags(null, 1, 10, listId).subscribe(x => {
                     const found = x.data.find((y: any) => y.id === listId);
-                    console.log('found', found);
-                    // if (!found) {
-                    //     this.tagApi.createTag('my-note-test').subscribe(response => {
-                    //         this.noteId = response.data.id;
-                    //         console.log('noteId created', this.noteId);
-                    //         const tagUpdate = { id: response.data.order, name: response.data.name };
-                    //         this.updateAddName = tagUpdate;
-                    //         this.getNotes();
-                    //     });
-                    // } else {
                     if (found) {
                         this.listId = found.id;
                         console.log('noteId found', this.listId);
@@ -115,13 +95,10 @@ export class ListEditorComponent {
                     } else {
                         console.error(`List with id ${listId} note found`);
                     }
-
-                    // }
                 });
             }
         });
     }
-    
 
     getPageNoteItems() {
         this.notesApi.getNoteElements(this.listId, this.listType /*'note'*/).subscribe({
@@ -141,7 +118,7 @@ export class ListEditorComponent {
                 this.updateAddName = tagUpdates;
                 this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
                 this.listName = x.data.list_name;
-                if(x.data.list_type === 'tag' && x.data.color_order !== null) {
+                if (x.data.list_type === 'tag' && x.data.color_order !== null) {
                     const color = this.colorFactory.getColor(x.data.color_order);
                     this.listColor = color.backgroundcolor;
                 } else {
@@ -259,6 +236,13 @@ export class ListEditorComponent {
 
     public handlePaste(event: ClipboardEvent) {
         this.manager.handlePaste(event, this.paragraphs);
+    }
+    public cutNoteItems() {
+        this.paragraphs = this.manager.cutNoteItems(this.paragraphs);
+
+    }
+    public pasteNoteItems() {
+        this.paragraphs = this.manager.pasteNoteItems(this.paragraphs);
     }
 
     public clearList(overrideError: boolean = false) {

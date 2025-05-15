@@ -15,6 +15,7 @@ export class MasterLayoutService {
   affectedRows: Paragraph[] = [];
   editorRef!: ElementRef;
   loadOriginParagraph = new BehaviorSubject<Paragraph | null>(null);
+  clipBoard: Paragraph[] = [];
 
   selectedHighlightTag: string | null = null
 
@@ -57,7 +58,6 @@ export class MasterLayoutService {
     this.renderParagraphs(paragraphs);
   }
   assignTagToRows(tagName: string, paragraphs: Paragraph[]) {
-    // this.applyInlineStyle('', paragraphs);
     this.setAffectedRange(paragraphs);
     const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));
     if (this.affectedRows.length > 0) {
@@ -85,6 +85,74 @@ export class MasterLayoutService {
       });
     }
     this.renderParagraphs(paragraphs);
+  }
+  public cutNoteItems(paragraphs: Paragraph[]) : Paragraph[] {
+    this.clipBoard = [];
+    this.setAffectedRange(paragraphs);
+    const map = new Map<string, Paragraph>(paragraphs.map((x) => [x.id, x]));
+
+    if (this.affectedRows.length > 0) {
+      this.clipBoard = this.affectedRows;
+      paragraphs = paragraphs.filter((x) => {
+        return !this.affectedRows.find((r) => r.id === x.id);
+      });
+
+    } else if (this.selectedParagraphIds) {
+      this.selectedParagraphIds.forEach((x) => {
+        const item = map.get(x);
+        if (item) {
+          this.clipBoard.push(item);
+        }
+      });
+      paragraphs = paragraphs.filter((x) => {
+        return !this.selectedParagraphIds?.find((r) => r === x.id);
+      });
+    }
+    this.renderParagraphs(paragraphs);
+    return paragraphs;
+  }
+
+  public pasteNoteItems(paragraphs: Paragraph[]): Paragraph[] {
+    if (this.clipBoard.length === 0) {
+      return paragraphs;
+    }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return paragraphs;
+
+    const range = selection.getRangeAt(0);
+
+    // Get start and end nodes
+    let startNode = range.startContainer;
+   
+    // Find the containing content divs and editor rows
+    let startContentDiv = this.findParentWithClass(startNode, 'content-div');
+    if (!startContentDiv) return paragraphs;
+    let startEditorRow = this.findParentWithClass(
+      startContentDiv,
+      'editor-row'
+    );
+    // let editorRow = startContentDiv.closest('.editor-row');
+    if (!startEditorRow /*|| !editorRow */) return paragraphs;
+    
+    const id  = startEditorRow.id;
+    const selectedParagraph = paragraphs.find(
+      (x) => x.id === id
+    );
+
+    
+
+
+
+
+      
+      if (selectedParagraph) {
+        const index = paragraphs.indexOf(selectedParagraph);
+        paragraphs.splice(index + 1, 0, ...this.clipBoard);
+      }
+
+    this.renderParagraphs(paragraphs);
+    this.clipBoard = [];
+    return paragraphs;
   }
 
   setAffectedRange(paragraphs: Paragraph[]) {

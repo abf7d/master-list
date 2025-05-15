@@ -7,6 +7,10 @@
             <button (click)="applyInlineStyle('strike')" title="Large Text">S</button>
             <button (click)="applyInlineStyle('merge')" title="Large Text">Merge</button>
         </div>
+        <div>
+            <button (click)="cutNoteItems()">Cut</button>
+            <button (click)="pasteNoteItems()">Paste</button>
+        </div>
 
         <select name="" (change)="setHighlight($event)">
             <option value="">Select To Highlight</option>
