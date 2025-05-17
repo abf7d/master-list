@@ -13,15 +13,16 @@ import { MasterLayoutService } from './master-layout.service';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
 // import { AddTag } from '../tag-group/tag-group.component';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { AddTag, TagPickerComponent } from '../tag-picker/tag-picker.component';
 import { FormsModule } from '@angular/forms';
 import { AutosizeDirective } from '../../directives/auto-size.directive';
+import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 
 @Component({
     selector: 'app-list-editor',
-    imports: [CommonModule, RouterModule, TagPickerComponent, FormsModule, AutosizeDirective],
+    imports: [CommonModule, RouterModule, TagPickerComponent, FormsModule, AutosizeDirective, ClickOutsideDirective],
     templateUrl: './list-editor.component.html',
     styleUrl: './list-editor.component.scss',
     encapsulation: ViewEncapsulation.None,
@@ -42,6 +43,7 @@ export class ListEditorComponent {
     public loadOriginParagraph!: BehaviorSubject<Paragraph | null>;
     public listName: string = ''; //'Untitled';
     public listColor: string | null = null;
+    public showExtraMenu = false;
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -53,6 +55,7 @@ export class ListEditorComponent {
         private authService: AuthCoreService,
         private route: ActivatedRoute,
         private colorFactory: ColorFactoryService,
+        private router: Router,
     ) {
         this.loadOriginParagraph = this.manager.loadOriginParagraph;
         this.manager.setChangeSubject(this.changeSubject);
@@ -61,13 +64,13 @@ export class ListEditorComponent {
 
     initPeriodicSave() {
         this.changeSubject
-        .pipe(
-            debounceTime(2000), // 2 seconds of inactivity
-            skip(1),
-        )
-        .subscribe(() => {
-            this.saveNoteElements();
-        });
+            .pipe(
+                debounceTime(2000), // 2 seconds of inactivity
+                skip(1),
+            )
+            .subscribe(() => {
+                this.saveNoteElements();
+            });
     }
 
     ngOnInit() {
@@ -190,6 +193,34 @@ export class ListEditorComponent {
         this.manager.applyInlineStyle(style, this.paragraphs);
     }
 
+    public deleteList() {
+        if (this.listType === 'note') {
+            this.tagApi.deleteNote(this.listId).subscribe({
+                next: result => {
+                    this.toastr.success('Note deleted', 'Success');
+                    this.router.navigate(['/', 'lists']);
+                },
+                error: result => {
+                    this.error = true;
+                    this.isSaving = false;
+                    this.toastr.error('Error deleting Note', 'Error');
+                },
+            });
+        } else if (this.listType === 'tag') {
+            this.tagApi.deleteTag(this.listName).subscribe({
+                next: result => {
+                    this.toastr.success('Tag deleted', 'Success');
+                    this.router.navigate(['/', 'lists']);
+                },
+                error: result => {
+                    this.error = true;
+                    this.isSaving = false;
+                    this.toastr.error('Error deleting Tag', 'Error');
+                },
+            });
+        }
+    }
+
     ctrlDown = false;
     @HostListener('keydown.meta', ['$event'])
     onMeta(event: KeyboardEvent): void {
@@ -239,7 +270,6 @@ export class ListEditorComponent {
     }
     public cutNoteItems() {
         this.paragraphs = this.manager.cutNoteItems(this.paragraphs);
-
     }
     public pasteNoteItems() {
         this.paragraphs = this.manager.pasteNoteItems(this.paragraphs);

@@ -24,6 +24,18 @@
         <button [disabled]="!error" (click)="clearError()">Clear Error</button>
         <button (click)="clearList(true)">Clear Note</button>
         <button (click)="logOut()">Log Out</button>
+        <div (clickOutside)="showExtraMenu = false" [hidden]="listType !== 'note' && listType !== 'tag'">
+            <button (click)="showExtraMenu = !showExtraMenu">...</button>
+            <div class="extra-menu" [hidden]="!showExtraMenu">
+                <div (click)="deleteList()">
+                    @if(listType === 'note'){ 
+                        Delete Note
+                    } 
+                    @else if(listType === 'tag') {
+                        Delete Tag
+                    }</div>
+            </div>
+        </div>
         @if((loadOriginParagraph | async) !== null){
         <a [routerLink]="['/lists', (loadOriginParagraph | async)!.creation_type, (loadOriginParagraph | async)!.creation_list_id]"
             >Load origin of selected time</a

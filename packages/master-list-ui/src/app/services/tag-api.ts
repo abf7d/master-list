@@ -79,6 +79,9 @@ export class TagApiService {
        return  this.http.post<TagCreate>(urlJoin(environment.masterListApi, '/note'), { params });
 
     }
+    public deleteNote(id: string): Observable<Response<any>> {
+        return this.http.delete<Response<any>>(urlJoin(environment.masterListApi, '/note', id));
+    }
 
     public getDefaultTags(): Observable<TagSelectionGroup> {
         return of({

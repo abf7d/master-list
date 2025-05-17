@@ -238,7 +238,34 @@ async def get_tags(
     print('data', data)
     return response
 
+@router.delete("/note/{note_id}", response_model=ResponseData,)
+@authenticate
+async def delete_tag_button(request: Request, note_id: UUID,
+    graph_service: GraphService = Depends(get_graph_service),
+    note_service: NoteService = Depends(get_note_service),
+    token_service: TokenService = Depends(get_token_service)):
+    # tag_buttons_db.append(tag_button)
+    # Convert it to a TagCreation by unpacking and adding the id
+    
+    # Integrate Redis!!!
+    # claims = await graph_service.get_claims(request.state.user_id)
+    # role = token_service.get_role(request.state.user_id, request.state.exp, claims, request.state.decoded_token)
 
+    # if(role == "user" or role == "admin"):
+    print('IS AUTHORIZED!!!!!!!!!')
+    
+    success = note_service.delete_note(note_id, request.state.user_id)
+    print('Finished Save!!!!!!!!!')
+    # Now create the TagResponse
+    response = ResponseData(
+        message="Note deleted successfully",
+        error="",
+        data=success
+    )
+    # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
+    # response = TagResponse('success', None, data)
+    print('tag response', response)
+    return response
 
 
 
