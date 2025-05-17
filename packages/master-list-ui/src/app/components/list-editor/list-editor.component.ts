@@ -44,6 +44,7 @@ export class ListEditorComponent {
     public listName: string = ''; //'Untitled';
     public listColor: string | null = null;
     public showExtraMenu = false;
+    public tagHighlightNames: string[] = [];
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -104,17 +105,19 @@ export class ListEditorComponent {
     }
 
     getPageNoteItems() {
+        this.tagHighlightNames = [];
         this.notesApi.getNoteElements(this.listId, this.listType /*'note'*/).subscribe({
             next: x => {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
                 const tags = x.data.tags;
+                
                 this.paragraphs = noteElements;
 
                 // Todo: check if it is adding multiple tags
                 const tagUpdates = tags.map(tag => {
                     const tagUpdate = { id: tag.order, name: tag.name, navId: tag.id };
-                    // this.updateAddName = tagUpdate;
+                    this.tagHighlightNames.push(tag.name);
                     this.tagColorService.addTag(tag);
                     return tagUpdate;
                 });
@@ -161,6 +164,7 @@ export class ListEditorComponent {
             this.tagApi.createTag(tag.name!).subscribe(response => {
                 this.tagColorService.addTag(response.data);
                 console.log('add tag response', response);
+                this.tagHighlightNames = Array.from(new Set([...this.tagHighlightNames, response.data.name]));
                 const tagUpdate = { id: response.data.order, name: response.data.name, navId: response.data.id };
                 this.updateAddName = tagUpdate;
             });
@@ -172,6 +176,7 @@ export class ListEditorComponent {
     public deleteTag(name: string) {
         this.tagApi.deleteTag(name).subscribe(response => {
             console.log('add tag response', response);
+            this.tagHighlightNames = this.tagHighlightNames.filter(x => x !== name);
             if (response.data) {
                 this.updateDeleteName = { name };
             }
@@ -185,6 +190,7 @@ export class ListEditorComponent {
     }
 
     public assignTagToRows(tagName: string) {
+        this.tagHighlightNames = Array.from(new Set([...this.tagHighlightNames, tagName]));
         this.manager.assignTagToRows(tagName, this.paragraphs);
     }
 

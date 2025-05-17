@@ -15,10 +15,9 @@
         <select name="" (change)="setHighlight($event)">
             <option value="">Select To Highlight</option>
             <option value="">All</option>
-            <option value="Critical Pass">Critical Pass</option>
-            <option value="Work">Work</option>
-            <option value="Misc Triage">Misc Triage</option>
-            <option></option>
+            @for(name of tagHighlightNames; track name) {
+            <option [value]="name">{{name}}</option>
+            }
         </select>
         <button (click)="saveNoteElements(true)">Save Note Elements (getToken testing)</button>
         <button [disabled]="!error" (click)="clearError()">Clear Error</button>
@@ -27,13 +26,7 @@
         <div (clickOutside)="showExtraMenu = false" [hidden]="listType !== 'note' && listType !== 'tag'">
             <button (click)="showExtraMenu = !showExtraMenu">...</button>
             <div class="extra-menu" [hidden]="!showExtraMenu">
-                <div (click)="deleteList()">
-                    @if(listType === 'note'){ 
-                        Delete Note
-                    } 
-                    @else if(listType === 'tag') {
-                        Delete Tag
-                    }</div>
+                <div (click)="deleteList()">@if(listType === 'note'){ Delete Note } @else if(listType === 'tag') { Delete Tag }</div>
             </div>
         </div>
         @if((loadOriginParagraph | async) !== null){
