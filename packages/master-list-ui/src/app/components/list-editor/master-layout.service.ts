@@ -659,7 +659,16 @@ export class MasterLayoutService {
         }
     }
 
+    resetHistory() {
+        this.historyManager.resetHistory();
+    }
+
     onKeyDown(paragraphs: Paragraph[], event: KeyboardEvent): void {
+        if (event.ctrlKey || event.metaKey) {
+            this.ctrlDown = true;
+        } else {
+            this.ctrlDown = false;
+        }
         if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
             event.preventDefault();
             if (event.shiftKey) {

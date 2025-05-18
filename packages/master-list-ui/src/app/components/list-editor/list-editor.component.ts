@@ -130,6 +130,8 @@ export class ListEditorComponent {
                 } else {
                     this.listColor = null;
                 }
+                this.manager.resetHistory();
+                this.manager.saveHistory(this.paragraphs);
             },
         });
     }
@@ -227,18 +229,9 @@ export class ListEditorComponent {
         }
     }
 
-    ctrlDown = false;
-    @HostListener('keydown.meta', ['$event'])
-    onMeta(event: KeyboardEvent): void {
-        this.manager.ctrlDown = true;
-    }
     @HostListener('keyup.meta', ['$event'])
     offMeta(event: KeyboardEvent): void {
         this.manager.ctrlDown = false;
-    }
-    @HostListener('keydown.ctrl', ['$event'])
-    onCtrl(event: KeyboardEvent): void {
-        this.manager.ctrlDown = true;
     }
     @HostListener('keyup.ctrl', ['$event'])
     offCtrl(event: KeyboardEvent): void {

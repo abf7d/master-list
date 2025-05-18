@@ -47,6 +47,12 @@ export class ListHistoryService {
       this.currentIndex -= excessEntries;
     }
   }
+
+  resetHistory() {
+    this.history = [];
+    this.currentIndex = -1;
+    this.isUndoRedoing = false;
+  }
   
   // Clear all history
   clearHistory() {
