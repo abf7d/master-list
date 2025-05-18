@@ -4,7 +4,9 @@ import { Activity, Project } from '../types/projtect';
 // import { TagGroupOption } from '../types/tag/tag-group-option';
 import { TagGroup, TagGroupOption, TagSelection, TagSelectionGroup } from '../types/tag';
 import { TagUpdate } from '../types/tag/tag-update';
-import { TagProps } from './tag-api';
+import { TagProps } from '../types/response/response';
+// import { TagProps } from '../types/response/response';
+// import { TagProps } from './tag-api';
 // import { Activity, Project, TagGroup, TagGroupOption, TagLoad, TagSelection, TagSelectionGroup } from '@critical-pass/project/types';
 // import { ColorFactoryService } from '@critical-pass/shared/serializers';
 

@@ -1,36 +1,13 @@
 import { Injectable } from '@angular/core';
-import { NoteElement } from '../types/note';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '@master-list/environments';
 import urlJoin from 'url-join';
 import { TagButton, TagSelection, TagSelectionGroup } from '../types/tag';
 import { Observable, of } from 'rxjs';
 import { TagUpdate } from '../types/tag/tag-update';
+import { NoteSerach, TagCreate, TagSearch, Response } from '../types/response/response';
 
-export interface Response<T> {
-    message: string;
-    error?: string;
-    data: T;
-}
 
-export interface TagProps {
-    id: string;
-    name: string;
-    parent_id: string;
-    created_at: string;
-    order: number;
-}
-export interface NoteProps {
-    id: string;
-    title: string;
-    description: string;
-    create_at: string;
-    updated_at: string;
-    order: number;
-}
-export interface TagSearch extends Response<TagProps[]> {}
-export interface TagCreate extends Response<TagProps> {}
-export interface NoteSerach extends Response<NoteProps[]>{}
 
 @Injectable({
     providedIn: 'root',
@@ -54,13 +31,6 @@ export class TagApiService {
         params = (id !== null) ? params.set('id', id) : params;
         return this.http.get<NoteSerach>(urlJoin(environment.masterListApi, '/notes'), { params });
     }
-    // public createTag(tag: TagButton): Observable<any>{
-    //     const body = JSON.stringify(tag);
-    //     const headers = new HttpHeaders().set('Content-Type', 'application/json');
-
-    //     return this.http
-    //         .post<Response<any>>(urlJoin(environment.masterListApi, '/tag'), body, { headers });
-    // }
 
     public createTag(tag: string): Observable<TagCreate> {
         const body = JSON.stringify({ name: tag });
@@ -107,17 +77,5 @@ export class TagApiService {
                 },
             ],
         });
-    }
-
-    async updateNoteElements(noteId: string, elements: NoteElement[]): Promise<void> {
-        // Call the API to update elements for a note
-    }
-
-    async createNoteElement(noteId: string, element: NoteElement): Promise<void> {
-        // Call the API to create a new element
-    }
-
-    async deleteNoteElement(noteId: string, elementId: string): Promise<void> {
-        // Call the API to delete an element
     }
 }

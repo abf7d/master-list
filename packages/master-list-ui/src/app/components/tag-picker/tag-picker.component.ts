@@ -5,10 +5,11 @@ import { Project } from '../../types/projtect';
 import { CommonModule } from '@angular/common';
 import { TagUpdate } from '../../types/tag/tag-update';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { TagApiService, TagProps } from '../../services/tag-api';
+import { TagApiService } from '../../services/tag-api';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
+import { TagProps } from '../../types/response/response';
 
 @Component({
     selector: 'app-tag-picker',

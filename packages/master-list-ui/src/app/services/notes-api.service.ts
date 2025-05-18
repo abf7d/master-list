@@ -1,11 +1,10 @@
 import { Injectable } from "@angular/core";
-import { NoteElement, Paragraph } from "../types/note";
+import { Paragraph } from "../types/note";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "@master-list/environments";
 import urlJoin from "url-join";
 import { Observable } from "rxjs";
-import { TagUpdate } from "../types/tag/tag-update";
-import { TagProps } from "./tag-api";
+import { NoteSaveResult, PageResult, TagProps } from "../types/response/response";
 
 @Injectable({
     providedIn: 'root',
@@ -24,35 +23,4 @@ export class NotesApiService {
         return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}/${listType}`));
       
     }
-    
-    // async updateNoteElements(noteId: string, elements: NoteElement[]): Promise<void> {
-    //     // Call the API to update elements for a note
-    // }
-    
-    // async createNoteElement(noteId: string, element: NoteElement): Promise<void> {
-    //     // Call the API to create a new element
-    // }
-    
-    // async deleteNoteElement(noteId: string, elementId: string): Promise<void> {
-    //     // Call the API to delete an element
-    // }
-
-
-}
-export interface NoteSaveResult {
-    message:string;
-    data:any;
-}
-
-export interface PageResult {
-    message: string;
-    error?: string;
-    data: NoteElementResponse;
-}
-export interface NoteElementResponse {
-    notes: Paragraph[];
-    tags: TagProps[];
-    list_name: string;
-    list_type: string;
-    color_order: number | null;
 }

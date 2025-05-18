@@ -407,13 +407,6 @@ export class MasterLayoutService {
       return {
         id: row.id,
         content: contentDiv.innerHTML,
-        styles: existingParagraph?.styles || {
-          fontSize: '16px',
-          textAlign: 'left',
-        },
-        type: existingParagraph?.type || 'none',
-        level: existingParagraph?.level || 0,
-        notes: existingParagraph?.notes || [],
         tags: this.duplicateTags(existingParagraph?.tags || [], true),
         updatedAt: existingParagraph?.updatedAt || new Date(),
         createdAt: existingParagraph?.createdAt || new Date(),
@@ -466,14 +459,6 @@ export class MasterLayoutService {
     const paragraph: Paragraph = {
       id,
       content: content,
-      styles: {
-        fontSize: '16px',
-        textAlign: 'left',
-        minHeight: '24px',
-      },
-      type: 'none',
-      level: level,
-      notes: [],
       tags: [],
       updatedAt: new Date(),
       createdAt: new Date(),
@@ -535,11 +520,6 @@ export class MasterLayoutService {
       contentDiv.innerHTML = paragraph.content;
       level1.appendChild(contentDiv);
 
-      // Apply styles from paragraph to the content div
-      Object.assign(contentDiv.style, paragraph.styles);
-
-      // Handle indentation
-      outerDiv.style.paddingLeft = `${paragraph.level * 40}px`;
 
       // Apply tag-based classes to bullets
       this.applyTagClassesToBullets(paragraph.tags || [], [
@@ -562,9 +542,9 @@ export class MasterLayoutService {
       editor.appendChild(outerDiv);
 
       // Mark this row with its type if it's a list item
-      if (paragraph.type === 'number' || paragraph.type === 'bullet') {
-        outerDiv.setAttribute('data-list-type', paragraph.type);
-      }
+      // if (paragraph.type === 'number' || paragraph.type === 'bullet') {
+      //   outerDiv.setAttribute('data-list-type', paragraph.type);
+      // }
     });
   }
 
@@ -773,10 +753,6 @@ export class MasterLayoutService {
       const newParagraph: Paragraph = {
         id: crypto.randomUUID(),
         content: afterCursorHTML,
-        styles: { ...paragraphs[currentIndex].styles },
-        type: paragraphs[currentIndex].type,
-        level: paragraphs[currentIndex].level,
-        notes: paragraphs[currentIndex].notes,
         tags:  this.duplicateTags(paragraphs[currentIndex].tags || [], false),
         updatedAt: new Date(),
         createdAt: new Date(),
@@ -959,14 +935,6 @@ export class MasterLayoutService {
       const newParagraph: Paragraph = {
         id: crypto.randomUUID(),
         content: pastedText, // Keep all content together
-        styles: {
-          ...paragraphs[currentIndex].styles,
-          fontFamily: 'monospace', // Apply code styling
-          whiteSpace: 'pre', // Preserve whitespace
-        },
-        type: 'code', // Mark this as code type
-        level: paragraphs[currentIndex].level,
-        notes: paragraphs[currentIndex].notes,
         tags: this.duplicateTags(paragraphs[currentIndex].tags || [], false),
         updatedAt: paragraphs[currentIndex].updatedAt,
         createdAt: paragraphs[currentIndex].createdAt,
@@ -987,10 +955,6 @@ export class MasterLayoutService {
         const newParagraph: Paragraph = {
           id: crypto.randomUUID(),
           content: line,
-          styles: { ...paragraphs[currentIndex].styles },
-          type: paragraphs[currentIndex].type,
-          level: paragraphs[currentIndex].level,
-          notes: paragraphs[currentIndex].notes,
           tags: this.duplicateTags(paragraphs[currentIndex].tags || [], false),
           updatedAt: new Date(),
           createdAt: new Date(),
