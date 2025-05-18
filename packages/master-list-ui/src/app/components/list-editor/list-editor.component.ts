@@ -259,6 +259,7 @@ export class ListEditorComponent {
 
     @HostListener('keydown', ['$event'])
     onKeyDown(event: KeyboardEvent): void {
+        event.stopPropagation();
         this.manager.onKeyDown(this.paragraphs, event);
     }
 
