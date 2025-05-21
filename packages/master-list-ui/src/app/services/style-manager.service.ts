@@ -104,14 +104,14 @@ export class StyleMangerService {
      *  - Splits boundary text nodes so styling never bleeds  */
 
     // This only works if muliple lines are selected and if there is already a style, it doesn't split it up with a new style, it just adds the style to the parent
-    toggleDecoration(decoration1: TextDecoration): void {
+    toggleDecoration(decoration1: TextDecoration): Range | null{
         const decoration = decoration1 === 'bold' ? 'bold' : decoration1 === 'underline' ? 'underline' : 'strike';
 
         const sel = window.getSelection();
-        if (!sel?.rangeCount) return;
+        if (!sel?.rangeCount) return null;
 
         const range = sel.getRangeAt(0);
-        if (range.collapsed) return;
+        if (range.collapsed) return null;
 
         const className = `rt-${decoration}`;
 
@@ -136,7 +136,7 @@ export class StyleMangerService {
         while (walker.nextNode()) {
             textNodes.push(this.isolateForRange(walker.currentNode as Text, range));
         }
-        if (!textNodes.length) return;
+        if (!textNodes.length) return null;
 
         /* STEP 1 – drop invisible boundary markers so we can restore
               the user’s highlight after DOM surgery. */
@@ -168,64 +168,8 @@ export class StyleMangerService {
 
         startMarker.remove();
         endMarker.remove();
-        //     const sel = window.getSelection();
-        //     if (!sel?.rangeCount) return;
-        //     const range = sel.getRangeAt(0);
-        //     if (range.collapsed) return; // nothing selected
 
-        //     const className = `rt-${decoration}`;
-
-        //     /* Collect every TEXT node touched by the selection,
-        //  isolating partial boundary nodes as we go            */
-        //     const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_TEXT, {
-        //         acceptNode(node) {
-        //             if (!node.textContent?.trim()) return NodeFilter.FILTER_REJECT;
-
-        //             const nodeRange = document.createRange();
-        //             nodeRange.selectNodeContents(node);
-
-        //             return range.compareBoundaryPoints(Range.END_TO_START, nodeRange) < 0 && range.compareBoundaryPoints(Range.START_TO_END, nodeRange) > 0
-        //                 ? NodeFilter.FILTER_ACCEPT
-        //                 : NodeFilter.FILTER_REJECT;
-        //         },
-        //     });
-
-        //     const textNodes: Text[] = [];
-        //     while (walker.nextNode()) {
-        //         const raw = walker.currentNode as Text;
-        //         const exact = this.isolateForRange(raw, range); // ← restores [before][selected][after] split
-        //         textNodes.push(exact);
-        //     }
-
-        //     /* Decide if we’re adding or removing the class */
-        //     const allStyled = textNodes.every(t => t.parentElement?.classList.contains(className));
-
-        //     /* Apply the mutation node by node */
-        //     textNodes.forEach(t => {
-        //         /* 1) Ensure a single wrapper element exists */
-        //         let wrap = t.parentElement;
-        //         if (!wrap || !wrap.classList.contains('rt-wrapper')) {
-        //             wrap = document.createElement('span');
-        //             wrap.classList.add('rt-wrapper');
-        //             t.replaceWith(wrap);
-        //             wrap.appendChild(t);
-        //         }
-
-        //         /* 2) Toggle the specific class */
-        //         if (allStyled) {
-        //             wrap.classList.remove(className);
-        //         } else {
-        //             wrap.classList.add(className);
-        //         }
-
-        //         /* 3) If wrapper now has no style classes, unwrap it */
-        //         const onlyMarkerLeft = wrap.classList.length === 1 && wrap.classList.contains('rt-wrapper');
-
-        //         if (onlyMarkerLeft) wrap.replaceWith(...wrap.childNodes);
-        //     });
-
-        //     /* Keep user selection visible after DOM changes */
-        //     sel.removeAllRanges();
-        //     sel.addRange(range);
+        return newRange;
+       
     }
 }

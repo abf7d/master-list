@@ -19,6 +19,7 @@ import { AddTag, TagPickerComponent } from '../tag-picker/tag-picker.component';
 import { FormsModule } from '@angular/forms';
 import { AutosizeDirective } from '../../directives/auto-size.directive';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
+import { TextDecoration } from '../../services/style-manager.service';
 
 @Component({
     selector: 'app-list-editor',
@@ -197,8 +198,11 @@ export class ListEditorComponent {
     }
 
     // Bold, italics, lineThrough click event
-    public applyInlineStyle(style: string): void {
+    public applyInlineStyle(style: TextDecoration): void {
         this.manager.applyInlineStyle(style, this.paragraphs);
+    }
+    public mergeNoteItems(): void {
+        this.manager.mergeNoteItems(this.paragraphs);
     }
 
     public deleteList() {

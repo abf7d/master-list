@@ -30,7 +30,7 @@ export class MasterLayoutService {
         private tagColorService: TagCssGenerator,
         private toastr: ToastrService,
         private historyManager: ListHistoryService, // Assuming you have a history manager service
-        private styleManager: StyleMangerService
+        private styleManager: StyleMangerService,
     ) {}
     public setEditorRef(editorRef: any) {
         this.editorRef = editorRef;
@@ -42,7 +42,7 @@ export class MasterLayoutService {
     private changeSubject!: Subject<void>;
 
     unassignTag(tags: string[], paragraphs: Paragraph[]) {
-        this.applyInlineStyle('', paragraphs); // updates the affected rows
+        this.setAffectedRange(paragraphs); // updates the affected rows
         const map = new Map<string, Paragraph>(paragraphs.map(x => [x.id, x]));
         if (this.affectedRows.length > 0) {
             this.affectedRows.forEach(r => {
@@ -178,117 +178,33 @@ export class MasterLayoutService {
         }
     }
 
+    mergeNoteItems(paragraphs: Paragraph[]) {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+        let startNode = range.startContainer;
+        let endNode = range.endContainer;
+        let startContentDiv = this.findParentWithClass(startNode, 'content-div');
+        let endContentDiv = this.findParentWithClass(endNode, 'content-div');
+        if (!startContentDiv || !endContentDiv) return;
 
-    applyInlineStyle(style: string, paragraphs: Paragraph[]): void {
-      console.log('applyInlineStyle', style);
-      this.styleManager.toggleDecoration(<TextDecoration>style);
-      return;
-        // const selection = window.getSelection();
-        // if (!selection || selection.rangeCount === 0) return;
+        let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
+        let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
+        if (!startEditorRow || !endEditorRow) return;
+        const affectedRows = this.getElementsBetween(startEditorRow, endEditorRow);
 
-        // const range = selection.getRangeAt(0);
+        this.mergeParagraphs(affectedRows, paragraphs);
+        selection.removeAllRanges();
+        this.saveHistory(paragraphs);
+        this.renderParagraphs(paragraphs);
+        return;
+    }
 
-        // // Get start and end nodes
-        // let startNode = range.startContainer;
-        // let endNode = range.endContainer;
-
-        // // Find the containing content divs and editor rows
-        // let startContentDiv = this.findParentWithClass(startNode, 'content-div');
-        // let endContentDiv = this.findParentWithClass(endNode, 'content-div');
-
-        // if (!startContentDiv || !endContentDiv) return;
-
-        // // Find the editor rows that contain these content divs
-        // let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
-        // let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
-
-        // if (!startEditorRow || !endEditorRow) return;
-        // // Create the style span
-        // // below is not unselecting because new spans are being created, need to reverse the
-        // // creation of the spans
-        // const span = document.createElement('span');
-        // switch (style) {
-        //     case 'bold':
-        //         // This doesn't work need to find another way
-        //         if (span.style.fontWeight == 'bold') {
-        //             span.style.fontWeight = 'normal';
-        //         } else {
-        //             span.style.fontWeight = 'bold';
-        //         }
-        //         break;
-        //     case 'italic':
-        //         span.style.fontStyle = 'italic';
-        //         break;
-        //     case 'large':
-        //         span.style.fontSize = '1.2em';
-        //         break;
-        //     case 'strike':
-        //         // This doesn't work need to find another way
-        //         console.log('text dec', span.style);
-        //         if (span.style.textDecoration === 'line-through') {
-        //             span.style.textDecoration = 'initial';
-        //         } else {
-        //             span.style.textDecoration = 'line-through';
-        //         }
-        // }
-
-        // // Handle single editor row case
-        // if (startEditorRow === endEditorRow) {
-        //     const content = range.extractContents();
-        //     span.appendChild(content);
-        //     range.insertNode(span);
-        //     this.setAffectedElements([], paragraphs);
-        // }
-        // // Handle multiple editor rows
-        // else {
-        //     // Get all affected editor rows
-        //     const affectedRows = this.getElementsBetween(startEditorRow, endEditorRow);
-
-        //     if (style === 'merge') {
-        //         // The edited paragraph is going up to the top and the first line of taht paragraph still has a paragraph at
-        //         // with that id (selecing colors the top) the previous positoin
-        //         // then pressing enter deltes the compound paragraph
-        //         // console.log('one', paragraphs.map(x => x.id))
-        //         this.mergeParagraphs(affectedRows, paragraphs);
-        //         selection.removeAllRanges();
-        //         this.saveHistory(paragraphs);
-        //         this.renderParagraphs(paragraphs);
-        //         return;
-        //     }
-        //     affectedRows.forEach((row, index) => {
-        //         // Find the content div within this row
-        //         const contentDiv = row.querySelector('.content-div');
-        //         if (!contentDiv) return;
-
-        //         const contentRange = document.createRange();
-        //         contentRange.selectNodeContents(contentDiv);
-
-        //         // For first row, start from selection start
-        //         if (index === 0) {
-        //             contentRange.setStart(range.startContainer, range.startOffset);
-        //         }
-
-        //         // For last row, end at selection end
-        //         if (index === affectedRows.length - 1) {
-        //             contentRange.setEnd(range.endContainer, range.endOffset);
-        //         }
-
-        //         // Apply styling to the range
-        //         const clonedSpan = span.cloneNode() as HTMLElement;
-        //         const content = contentRange.extractContents();
-        //         clonedSpan.appendChild(content);
-        //         contentRange.insertNode(clonedSpan);
-        //     });
-        //     this.setAffectedElements(affectedRows, paragraphs);
-        // }
-
-        // // Update our data model
-        // this.updateParagraphContent(paragraphs);
-        // this.saveHistory(paragraphs);
-
-        // // Restore selection
-        // selection.removeAllRanges();
-        // selection.addRange(range);
+    applyInlineStyle(style: TextDecoration, paragraphs: Paragraph[]): void {
+        this.styleManager.toggleDecoration(style);
+        this.updateParagraphContent(paragraphs);
+        this.saveHistory(paragraphs);
+        return;
     }
 
     // Creating a duplicatge paragraph and putting it at the top
@@ -637,7 +553,6 @@ export class MasterLayoutService {
     }
 
     saveHistory(paragraphs: Paragraph[]) {
-
         this.historyManager.saveState(paragraphs);
     }
 
