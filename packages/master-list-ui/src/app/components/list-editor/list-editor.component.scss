@@ -282,6 +282,7 @@ app-note-editor {
     margin: 0.75em 0;
     min-height: 24px;
     display: flex;
+
 }
 
 .bullet {
@@ -306,6 +307,7 @@ app-note-editor {
 .editor-row > .bullet::before {
     // background-color: #3498db; /* Blue */
     left: -2px;
+   
 }
 
 /* Second level bullet */
@@ -324,6 +326,8 @@ app-note-editor {
 .editor-row > .bullet > .bullet > .bullet > .bullet::before {
     // background-color: #f39c12; /* Orange */
     left: -2px;
+
+
 }
 .editor-row > .bullet::before,
 .editor-row > .bullet > .bullet::before,
@@ -443,3 +447,13 @@ h3 {
 }
 .extra-menu-container {
 }
+
+
+
+
+
+.rt-wrapper      { /* purely structural marker */ }
+
+.rt-bold         { font-weight: 700; }
+.rt-underline    { text-decoration: underline; }
+.rt-strike       { text-decoration: line-through; }
