@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { MsalGuard } from '@azure/msal-angular';
 import { AuthorizedUserGuard } from '../../projects/auth/src/lib/gaurd/authorized-user.guard';
+import { ErrorComponent } from './components/error/error.component';
 
 export const routes: Routes = [
     {
@@ -11,6 +12,10 @@ export const routes: Routes = [
     {
         path: 'home',
         loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent),
+    },
+    {
+        path: 'error',
+        component: ErrorComponent
     },
     // {
     //     path: 'main',
