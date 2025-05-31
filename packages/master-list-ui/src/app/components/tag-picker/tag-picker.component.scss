@@ -39,7 +39,7 @@ cp-tag-selection {
     padding: 10px;
     padding-bottom: 7px;
 }
-.assign-button *  {
+.assign-button > *  {
     padding: 10px;
     padding-left: 0px;
     line-height: 2.2rem;
@@ -100,4 +100,7 @@ svg {
     width: 100%;
     display: flex;
     justify-content: space-between;
+}
+.assign-button {
+    display: flex;
 }

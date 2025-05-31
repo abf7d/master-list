@@ -16,7 +16,7 @@ class NoteService:
     def __init__(self, db: Session):
         self.db = db
     
-    def update_note_items_sort_order(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
+    def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
         parent_id = note_group.parent_tag_id
         parent_list_type = note_group.parent_list_type if note_group.parent_list_type is not None else origin_type
         title = note_group.parent_list_title
@@ -24,16 +24,16 @@ class NoteService:
         self._save_title(origin_type, parent_id, title)
         
         # First, handle deletion of items no longer in the list (this has changed to delete all items and then add the new ones)
-        self._delete_missing_items_sort_order(note_group, parent_id, parent_list_type)
+        self._delete_existing_items(note_group, parent_id, parent_list_type)
         
         # Categorize items as new or existing (no longer categorizes, just maps all items to sort order)
-        new_items = self._categorize_items_sort_order(note_group, parent_id, parent_list_type)
+        new_items = self._initialize_note_iems(note_group, parent_id, parent_list_type)
         
         # Get tag mappings
-        tag_ids_by_name = self._get_tag_ids_map_sort_order(note_group)
+        tag_ids_by_name = self._get_tag_name_id_map(note_group)
         
         # Process new items
-        new_created_items, new_associations = self._create_new_items_sort_order(
+        new_created_items, new_associations = self._save_note_items(
             new_items, tag_ids_by_name, parent_id, parent_list_type, user_id
         )
         
@@ -68,7 +68,7 @@ class NoteService:
                 "updated_at": datetime.utcnow()
             })
         
-    def _delete_missing_items_sort_order(self, note_group: CreateNoteGroup, parent_id: UUID, list_type: str):
+    def _delete_existing_items(self, note_group: CreateNoteGroup, parent_id: UUID, list_type: str):
         """
         Delete items that exist in the database but are not in the provided note_group.items list.
         This will delete both the NoteItem entries and their associated NoteItemList records.
@@ -110,7 +110,7 @@ class NoteService:
                 NoteItem.id.in_(item_ids_to_delete)
             ).delete(synchronize_session=False)
     
-    def _categorize_items_sort_order(self, note_group: CreateNoteGroup, parent_id: UUID, parent_list_type: str):
+    def _initialize_note_iems(self, note_group: CreateNoteGroup, parent_id: UUID, parent_list_type: str):
         """
         Categorize items as new or existing.
         
@@ -141,7 +141,7 @@ class NoteService:
         return new_items #, existing_items, existing_item_ids
     
     
-    def _get_tag_ids_map_sort_order(self, note_group: CreateNoteGroup):
+    def _get_tag_name_id_map(self, note_group: CreateNoteGroup):
         """
         Get a map of tag names to tag IDs.
         
@@ -168,7 +168,7 @@ class NoteService:
         
         return tag_ids_by_name
     
-    def _create_new_items_sort_order(self, new_items, tag_ids_by_name, parent_id, parent_list_type, user_id):
+    def _save_note_items(self, new_items, tag_ids_by_name, parent_id, parent_list_type, user_id):
         """
         Create new note items and their associations.
         
@@ -222,7 +222,6 @@ class NoteService:
                     is_origin=is_origin,
                     sort_order=parent_sort_order
                 )
-                # print("association parent:", parent_id, "noteitem:", note_item.id, "sort_order:", parent_sort_order, 'is_origin:', is_origin)
                 self.db.add(parent_association)
                 new_associations.append(parent_association)
             
@@ -272,7 +271,6 @@ class NoteService:
             # The origin association might not be on this list so saving the parent AND not a tag (like a note) cases
             # above wouldn't have saved the origin association, origin_id is persisted, not on this list 
             if item.creation_list_id and (item.creation_list_id != parent_id or item.creation_type != parent_list_type):
-                # print("origin sort order obj:", item)
                 
                 origin_association = NoteItemList(
                     note_item_id=note_item.id,
@@ -287,30 +285,6 @@ class NoteService:
         return created_items, new_associations
     
     
-        
-    
-    # Need to handle is_origin, need to persist when getting and need to update here when setting
-    def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
-        """
-        Update note items for a given parent (list_id).
-        Steps:
-        1. Delete existing associations between parent_id and note_items
-        2. Delete existing note_items
-        3. Create new note_items
-        4. Create new associations
-        
-        Args:
-            db: Database session
-            note_group: CreateNoteGroup object containing note items and parent info
-            user_id: UUID of the user making the update
-            origin_type: Type of origin list ("tag" or "note"), default is "tag"
-            
-        Returns:
-            Dict containing created note_items and associations
-        """
-        # return self.update_items(note_group, user_id, origin_type) 
-        return self.update_note_items_sort_order(note_group, user_id, origin_type)
-       
     
     def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str) -> NoteItemsResponse:
         """
@@ -389,7 +363,6 @@ class NoteService:
             NoteItemList.list_type,
             NoteItemList.is_origin,
             NoteItemList.sort_order,
-            # NoteItemList.id #need to add associatin id primary key to table
         ).where(
             NoteItemList.note_item_id.in_(note_item_ids)
         ).order_by(

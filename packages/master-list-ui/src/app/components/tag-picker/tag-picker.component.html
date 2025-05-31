@@ -7,13 +7,21 @@
                     <span><a [routerLink]="['/lists', 'tag', selectedTag.navId!]"><i class="fa-solid fa-link tag-link"></i>Go To {{selectedTag.name}}</a></span>
                 </span>
             </div>
-            <span class="float-right assign-button">
+            <div class="float-right assign-button">
                 <a href="javascript:void(0)" (click)="assign()">Assign To Activities</a>
                 <span class="center">|</span>
                 <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
                 <span class="center">|</span>
-                <a href="javascript:void(0)" class="explore" (click)="filterTags()">Clear</a>
-            </span>
+                <a href="javascript:void(0)" class="" (click)="filterTags()">Clear</a>
+                
+                <div (clickOutside)="showMoveMenu = false">
+                    <a href="javascript:void(0)" (click)="showMoveMenu = !showMoveMenu">...</a>
+                    <div class="extra-menu" [hidden]="!showMoveMenu">
+                        <div (click)="move()">Move To List</div>
+                        <div (click)="archive()">Archive</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="tags">
             <div *ngFor="let tag of tags()">

@@ -31,6 +31,7 @@ export class TagPickerComponent implements OnInit {
     public uniqeName = false;
     public showDefaultMenu = false;
     public selectedTag: TagSelection | null = null;
+    public showMoveMenu = false;
 
     @Input() allowAdd = true;
     public activeGroup: TagSelectionGroup | null = null;
@@ -187,6 +188,8 @@ export class TagPickerComponent implements OnInit {
         this.add({ value: tag.name }, false, tag);
         this.matchedEntries = this.matchedEntries.filter(t => t.name !== tag.name);
     }
+    public move() {}
+    public archive() {}
 }
 export interface AddTag {
     name?: string;

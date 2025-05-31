@@ -342,8 +342,8 @@ def get_note_item_sort_order() :
     
 def test_sort_order(note_service, test_user, test_tags, test_note):
     note_group = get_test_create_group(test_note)
-    note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
-    note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
+    note_service.update_note_items(note_group, test_user.oauth_id, "note")
+    note_service.update_note_items(note_group, test_user.oauth_id, "note")
     response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
     responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
     responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
@@ -356,13 +356,13 @@ def test_sort_order(note_service, test_user, test_tags, test_note):
     requestT2: CreateNoteGroup = convert_response_to_request(responseT2, test_tags[1].id, 'tag')
     requestT2.items.append(tag_item)
     print('noteitems from test', requestT2.items)
-    note_service.update_note_items_sort_order(requestT2, test_user.oauth_id, "tag")
+    note_service.update_note_items(requestT2, test_user.oauth_id, "tag")
     
     note_item = get_note_item_sort_order()
     response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
     request: CreateNoteGroup = convert_response_to_request(response, test_note.id, 'note')
     request.items.append(note_item)
-    note_service.update_note_items_sort_order(request, test_user.oauth_id, "note")
+    note_service.update_note_items(request, test_user.oauth_id, "note")
     
     responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
     
@@ -374,8 +374,8 @@ def test_sort_order(note_service, test_user, test_tags, test_note):
     
 def test_create_single_note(note_service, test_user, test_tags, test_note):
     note_group = get_test_create_group(test_note)
-    note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
-    note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
+    note_service.update_note_items(note_group, test_user.oauth_id, "note")
+    note_service.update_note_items(note_group, test_user.oauth_id, "note")
     response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
     responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
     responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
@@ -425,11 +425,11 @@ def test_create_single_note(note_service, test_user, test_tags, test_note):
     # # modify content for top note items in two tags, 
     # requestT1: CreateNoteGroup = convert_response_to_request(responseT1, test_tags[0].id, 'tag')
     # requestT1.items[0].content = "Changed 1!!"
-    # note_service.update_note_items_sort_order(requestT1, test_user.oauth_id, "tag")
+    # note_service.update_note_items(requestT1, test_user.oauth_id, "tag")
     
     requestT2: CreateNoteGroup = convert_response_to_request(responseT2, test_tags[1].id, 'tag')
     requestT2.items[0].content = "Changed 2!!"
-    note_service.update_note_items_sort_order(requestT2, test_user.oauth_id, "tag")
+    note_service.update_note_items(requestT2, test_user.oauth_id, "tag")
     
     
     responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
@@ -546,8 +546,8 @@ def test_create_single_note(note_service, test_user, test_tags, test_note):
     
 #     # Save the items, get then and then use the ids to look up in the database
 #     # This uses the old update_note_items because the new way is producing duplcate, all test above are void
-#     note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
-#     note_service.update_note_items_sort_order(note_group, test_user.oauth_id, "note")
+#     note_service.update_note_items(note_group, test_user.oauth_id, "note")
+#     note_service.update_note_items(note_group, test_user.oauth_id, "note")
 #     response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
 #     responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
 #     responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
@@ -573,11 +573,11 @@ def test_create_single_note(note_service, test_user, test_tags, test_note):
 #     # modify content for top note items in two tags, 
 #     requestT1: CreateNoteGroup = convert_response_to_request(responseT1, test_tags[0].id, 'tag')
 #     requestT1.items[0].content = "Changed 1!!"
-#     note_service.update_note_items_sort_order(requestT1, test_user.oauth_id, "tag")
+#     note_service.update_note_items(requestT1, test_user.oauth_id, "tag")
     
 #     requestT2: CreateNoteGroup = convert_response_to_request(responseT2, test_tags[1].id, 'tag')
 #     requestT2.items[0].content = "Changed 2!!"
-#     note_service.update_note_items_sort_order(requestT2, test_user.oauth_id, "tag")
+#     note_service.update_note_items(requestT2, test_user.oauth_id, "tag")
     
 #     # Check if same number of items 
 #     response = note_service.get_note_items(test_note.id, test_user.oauth_id, "note")
@@ -613,7 +613,7 @@ def test_create_single_note(note_service, test_user, test_tags, test_note):
 #     request: CreateNoteGroup = convert_response_to_request(response, test_note.id, 'note')
 #     request.items[0].content = "Changed 3!!"
 #     request.items[1].content = "Changed 4!!"
-#     note_service.update_note_items_sort_order(request, test_user.oauth_id, "note")
+#     note_service.update_note_items(request, test_user.oauth_id, "note")
 #     responseT1 = note_service.get_note_items(test_tags[0].id , test_user.oauth_id, "tag")
 #     responseT2 = note_service.get_note_items(test_tags[1].id,  test_user.oauth_id, "tag")
 #     assert responseT1.data['notes'][0].content == "Changed 3!!"
@@ -622,7 +622,7 @@ def test_create_single_note(note_service, test_user, test_tags, test_note):
     
 def intermitent_save(response: NoteItemsResponse, list_id, list_type, test_user, note_service) -> NoteItemsResponse:
     requestT2: CreateNoteGroup = convert_response_to_request(response, list_id, list_type)
-    note_service.update_note_items_sort_order(requestT2, test_user.oauth_id, list_type)
+    note_service.update_note_items(requestT2, test_user.oauth_id, list_type)
     return note_service.get_note_items(list_id,  test_user.oauth_id, list_type)
     
     
