@@ -15,11 +15,13 @@ import { TagUpdate } from '../../types/tag/tag-update';
 // import { AddTag } from '../tag-group/tag-group.component';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ColorFactoryService } from '../../services/color-factory.service';
-import { AddTag, TagPickerComponent } from '../tag-picker/tag-picker.component';
+import { TagPickerComponent } from '../tag-picker/tag-picker.component';
 import { FormsModule } from '@angular/forms';
 import { AutosizeDirective } from '../../directives/auto-size.directive';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 import { TextDecoration } from '../../services/style-manager.service';
+import { AddTag, MoveItems } from '../../types/tag/tag-picker-events';
+import { ModalService } from '../confirm-dialog/modal.service';
 
 @Component({
     selector: 'app-list-editor',
@@ -58,6 +60,7 @@ export class ListEditorComponent {
         private route: ActivatedRoute,
         private colorFactory: ColorFactoryService,
         private router: Router,
+        private modal: ModalService,
     ) {
         this.loadOriginParagraph = this.manager.loadOriginParagraph;
         this.manager.setChangeSubject(this.changeSubject);
@@ -112,7 +115,7 @@ export class ListEditorComponent {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
                 const tags = x.data.tags;
-                
+
                 this.paragraphs = noteElements;
 
                 // Todo: check if it is adding multiple tags
@@ -184,6 +187,27 @@ export class ListEditorComponent {
                 this.updateDeleteName = { name };
             }
         });
+    }
+    public async moveItems(event: MoveItems) {
+        const hasSelection = this.manager.areLinesSelected(this.paragraphs);
+        if (!hasSelection) {
+            this.toastr.warning('No list items selected', 'No items to move');
+        } else {
+            const ok = await this.modal.confirm({
+                title: 'Move Items',
+                message: 'Are you sure you want to move the selected items to ' + event.tagName + '? This action cannot be undone.',
+                okText: 'Move',
+                cancelText: 'Cancel',
+                maxWidth: '490px',
+            });
+            console.log('ok', ok);
+            if (ok) {
+                // any custom code you like
+                console.log('🗑️  File deleted');
+            } else {
+                console.log('File kept');
+            }
+        }
     }
 
     public removeTag() {}

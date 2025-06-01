@@ -10,6 +10,8 @@ import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
 import { TagProps } from '../../types/response/response';
+import { ModalService } from '../confirm-dialog/modal.service';
+import { AddTag, MoveItems } from '../../types/tag/tag-picker-events';
 
 @Component({
     selector: 'app-tag-picker',
@@ -22,6 +24,7 @@ export class TagPickerComponent implements OnInit {
     readonly assignTag = output<string>();
     readonly addTag = output<AddTag>();
     readonly removeTag = output<string>();
+    readonly moveClick = output<MoveItems>();
     readonly completeAdd = model<TagUpdate | TagUpdate[]>();
     readonly completeDelete = input<TagDelete>();
     readonly tags = model<TagSelection[]>([]);
@@ -188,15 +191,14 @@ export class TagPickerComponent implements OnInit {
         this.add({ value: tag.name }, false, tag);
         this.matchedEntries = this.matchedEntries.filter(t => t.name !== tag.name);
     }
-    public move() {}
+    public move() {
+        const valid = this.tags().find(x => x.isSelected)
+        if (!valid) {
+            this.toastr.warning('No tags selected', 'Nothing tagged');
+            return;
+        }
+        this.moveClick.emit({action: 'move', tagName: valid.name});
+    }
+
     public archive() {}
-}
-export interface AddTag {
-    name?: string;
-    tag?: TagProps;
-    create: boolean;
-}
-export interface RemoveTag {
-    tag?: TagSelection;
-    delete: boolean;
 }

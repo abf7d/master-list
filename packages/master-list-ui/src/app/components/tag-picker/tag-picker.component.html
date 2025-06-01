@@ -4,7 +4,9 @@
             <div class="title-container">
                 <span class="tag-title">Lists</span>
                 <span class="search" *ngIf="selectedTag">
-                    <span><a [routerLink]="['/lists', 'tag', selectedTag.navId!]"><i class="fa-solid fa-link tag-link"></i>Go To {{selectedTag.name}}</a></span>
+                    <span
+                        ><a [routerLink]="['/lists', 'tag', selectedTag.navId!]"><i class="fa-solid fa-link tag-link"></i>Go To {{selectedTag.name}}</a></span
+                    >
                 </span>
             </div>
             <div class="float-right assign-button">
@@ -13,12 +15,17 @@
                 <a href="javascript:void(0)" (click)="removeAll()">Unassign</a>
                 <span class="center">|</span>
                 <a href="javascript:void(0)" class="" (click)="filterTags()">Clear</a>
-                
+
                 <div (clickOutside)="showMoveMenu = false">
+                    <!--  the js:void allows us to click an element while maintaining the text selection for tag/untag/move-->
                     <a href="javascript:void(0)" (click)="showMoveMenu = !showMoveMenu">...</a>
                     <div class="extra-menu" [hidden]="!showMoveMenu">
-                        <div (click)="move()">Move To List</div>
-                        <div (click)="archive()">Archive</div>
+                        <div>
+                            <a href="javascript:void(0)" (click)="move()">Move To List</a>
+                        </div>
+                        <div>
+                            <a href="javascript:void(0)" (click)="archive()">Archive</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -39,7 +46,7 @@
                         <i *ngIf="tag.showDelMenu" class="fa-solid fa-chevron-up"></i>
                     </span>
                 </button>
-    
+
                 @if(tag.showDelMenu) {
                 <div class="autocomplete" (clickOutside)="closeDeleteMenu(tag)">
                     <div class="entry" (click)="excludeFromList(tag)">Exclude from Note</div>
@@ -72,9 +79,7 @@
                 </div>
                 }
                 <div class="autocomplete" *ngIf="!autoCloseMenuToggle && (matchedEntries.length > 0 || this.uniqeName)" (clickOutside)="closeCreateMenu()">
-                    <div class="entry" *ngFor="let item of matchedEntries;" (click)="includeInList(item)">
-                        {{item.name}}
-                    </div>
+                    <div class="entry" *ngFor="let item of matchedEntries;" (click)="includeInList(item)">{{item.name}}</div>
                     @if(uniqeName) {
                     <div class="unique-name">
                         <div>Create Tag <b>{{autoCompleteInput}}</b></div>
@@ -85,5 +90,4 @@
             </div>
         </div>
     </div>
-    
 </div>

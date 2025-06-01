@@ -1,0 +1,68 @@
+:host {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+} /* top layer */
+.backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    animation: fade 0.2s;
+}
+.dialog {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    min-width: 320px;
+    max-width: 90vw;
+    background: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+    animation: zoomIn 0.2s;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+.header,
+.footer {
+    padding: 1rem;
+}
+.body {
+    padding: 1rem;
+    overflow: auto;
+}
+.header {
+    border-bottom: 1px solid #e2e2e2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.footer {
+    border-top: 1px solid #e2e2e2;
+    text-align: right;
+}
+.close {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes zoomIn {
+    from {
+        scale: 0.9;
+        opacity: 0;
+    }
+    to {
+        scale: 1;
+        opacity: 1;
+    }
+}

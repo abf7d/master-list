@@ -206,6 +206,10 @@ export class MasterLayoutService {
         this.saveHistory(paragraphs);
         return;
     }
+    areLinesSelected(paragraphs: Paragraph[]): boolean {
+        this.setAffectedRange(paragraphs);
+        return this.affectedRows.length > 0 || this.selectedParagraphIds.length > 0;
+    }
 
     // Creating a duplicatge paragraph and putting it at the top
     private mergeParagraphs(affectedRows: any[], paragraphs: Paragraph[]) {

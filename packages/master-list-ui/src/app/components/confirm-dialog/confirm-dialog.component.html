@@ -1,0 +1,20 @@
+<div class="backdrop" (click)="cancel()"></div>
+
+<div class="dialog" role="alertdialog" [ngStyle]="{'maxWidth': maxWidth}" [attr.aria-labelledby]="titleId" [attr.aria-describedby]="msgId">
+    <header class="header">
+        <h2 [id]="titleId">{{ title }}</h2>
+        <button class="close" aria-label="Close" (click)="cancel()">×</button>
+    </header>
+
+    <section class="body" [id]="msgId">
+        <ng-content></ng-content>
+        @if(message && !hasProjectedContent) {
+        <p>{{ message }}</p>
+        }
+    </section>
+
+    <footer class="footer">
+        <button class="btn secondary" (click)="cancel()">{{ cancelText }}</button>
+        <button class="btn primary" (click)="confirm()">{{ okText }}</button>
+    </footer>
+</div>
