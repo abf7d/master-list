@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { Paragraph } from "../types/note";
+import { MoveParagraphs, Paragraph } from "../types/note";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { environment } from "@master-list/environments";
 import urlJoin from "url-join";
@@ -22,5 +22,10 @@ export class NotesApiService {
         // Call the API to get elements for a note
         return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}/${listType}`));
       
+    }
+    public moveNoteElements(movedState: MoveParagraphs, listId: string, listType: 'note' | 'tag', tagName: string): Observable<NoteSaveResult> {
+        const body = JSON.stringify({ moved_state: movedState, list_id: listId, list_type: listType, tag_name: tagName });
+        const headers = new HttpHeaders().set('Content-Type', 'application/json');
+        return this.http.post<NoteSaveResult>(urlJoin(environment.masterListApi, 'note-items/move'), body, { headers });
     }
 }

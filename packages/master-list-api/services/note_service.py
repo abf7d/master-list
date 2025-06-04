@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Note, Tag, NoteItem, NoteItemList
-from models.models import CreateNoteGroup, NoteCreation, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
+from models.models import CreateNoteGroup, MoveNoteGroup, NoteCreation, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
 from sqlalchemy import and_, select, delete, tuple_, update
 from sqlalchemy import func, case
 
@@ -15,6 +15,62 @@ from sqlalchemy import func, case
 class NoteService:
     def __init__(self, db: Session):
         self.db = db
+        
+    def move_note_items(self, note_group: MoveNoteGroup, user_id: UUID) -> NoteGroupResponse:
+        """
+        Move note items to a new list or tag.
+        
+        Args:
+            note_group: MoveNoteGroup object containing the items to move
+            user_id: UUID of the user performing the move
+        """
+        # Validate the note group
+        if not note_group or not note_group.moved_state:
+            raise HTTPException(status_code=400, detail="Invalid note group data")
+        
+        # Get the parent ID and type from the note group
+        parent_id = note_group.list_id
+        parent_list_type = note_group.list_type
+        state = note_group.moved_state
+        
+        # Save the title for the new list or tag
+        # self._save_title(parent_list_type, parent_id, note_group.tag_name)
+        new_tag_item_response = self.get_note_items(list_id=note_group.tag_name, user_id=user_id, list_type="tag")
+        for item in state.moved:
+            item.creation_list_id = None
+            item.creation_type = None
+        # new_tag_items.data['notes'] = state.moved   
+        createGroup = CreateNoteGroup(
+            parent_tag_id=note_group.tag_name,
+            parent_list_type='tag',
+            items=[]
+        )
+        items = new_tag_item_response.data['notes']
+        for item in items:
+            createGroup.items.append(
+                NoteItem(
+                    content=item.content,
+                    id=item.id,
+                    tags=item.tags,
+                    creation_list_id=item.creation_list_id,
+                    creation_type=item.creation_type,
+                    position=None ,
+                    origin_sort_order=item.origin_sort_order,          
+            ))
+        createGroup.items.extend(state.moved)
+        response_moved = self.update_note_items(createGroup, user_id=user_id, list_type="tag")
+        
+        createGroupCurrent = CreateNoteGroup(
+            parent_tag_id=parent_id,
+            parent_list_type=parent_list_type,
+            items=state.filtered
+        )
+        response_filtered = self.update_note_items(createGroupCurrent, user_id=user_id, list_type=parent_list_type)
+        
+        return {
+            "response_filtered": response_filtered,
+            "respone_voed": response_moved
+        }
     
     def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
         parent_id = note_group.parent_tag_id

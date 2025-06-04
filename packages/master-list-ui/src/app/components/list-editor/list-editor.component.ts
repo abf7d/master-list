@@ -189,8 +189,8 @@ export class ListEditorComponent {
         });
     }
     public async moveItems(event: MoveItems) {
-        const hasSelection = this.manager.areLinesSelected(this.paragraphs);
-        if (!hasSelection) {
+        const movedState = this.manager.moveParagraph(this.paragraphs);
+        if (!movedState.moved || movedState.moved.length === 0) {
             this.toastr.warning('No list items selected', 'No items to move');
         } else {
             const ok = await this.modal.confirm({
@@ -200,12 +200,23 @@ export class ListEditorComponent {
                 cancelText: 'Cancel',
                 maxWidth: '490px',
             });
-            console.log('ok', ok);
             if (ok) {
-                // any custom code you like
-                console.log('🗑️  File deleted');
+                this.notesApi.moveNoteElements(movedState, this.listId, this.listType, event.tagName).subscribe({
+                    next: result => {
+                        this.toastr.success('Items moved successfully', 'Success');
+                        // this.paragraphs = movedState.filtered
+                        // this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
+                        // this.manager.resetHistory();
+                    },
+                    error: result => {
+                        this.error = true;
+                        this.isSaving = false;
+                        console.error('error', result);
+                        this.toastr.error('Error moving items', 'Error');
+                    },
+                });
             } else {
-                console.log('File kept');
+                console.log('Cancelled move items');
             }
         }
     }

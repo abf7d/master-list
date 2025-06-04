@@ -36,6 +36,17 @@ class CreateNoteGroup(BaseModel):
     parent_list_type: Optional[str] = 'note'  # Optional list type for the parent tag 
     parent_list_title: Optional[str] = None 
     
+class MoveState(BaseModel):
+    """Request model for moving a group of note items"""
+    filtered: List[NoteItem]
+    moved: List[NoteItem]
+    
+class MoveNoteGroup(BaseModel):
+    moved_state: MoveState
+    list_id: str
+    list_type: str
+    tag_name: str
+      
 class TagResponse(BaseModel):
     id: UUID
     name: str

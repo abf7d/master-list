@@ -14,3 +14,8 @@ export interface Paragraph {
   creation_type: 'note' | 'tag' | null;
   origin_sort_order?: number;
 }
+
+export interface MoveParagraphs {
+  filtered: Paragraph[];
+  moved: Paragraph[];
+}

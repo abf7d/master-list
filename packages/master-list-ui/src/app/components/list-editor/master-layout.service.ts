@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject } from 'rxjs';
-import { NoteItemTag, Paragraph } from '../../types/note';
+import { MoveParagraphs, NoteItemTag, Paragraph } from '../../types/note';
 import { ElementRef, Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { TagCssGenerator } from '../../services/tag-css-generator';
@@ -206,9 +206,11 @@ export class MasterLayoutService {
         this.saveHistory(paragraphs);
         return;
     }
-    areLinesSelected(paragraphs: Paragraph[]): boolean {
+    moveParagraph(paragraphs: Paragraph[]): MoveParagraphs {
         this.setAffectedRange(paragraphs);
-        return this.affectedRows.length > 0 || this.selectedParagraphIds.length > 0;
+        const moved = this.affectedRows.length > 0 ? this.affectedRows : paragraphs.filter(x => this.selectedParagraphIds.includes(x.id));
+        const filtered = paragraphs.filter(x => !moved.find(y => x.id === y.id));
+        return { moved, filtered}
     }
 
     // Creating a duplicatge paragraph and putting it at the top
