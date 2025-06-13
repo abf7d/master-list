@@ -181,7 +181,7 @@ async def move_note_items(request: Request, note_group: MoveNoteGroup,
         note_service: NoteService = Depends(get_note_service),):
     print('MOVE GROUP', note_group)
     
-    # note_service.update_note_items(note_group, request.state.user_id)
+    note_service.move_note_items(note_group, request.state.user_id)
    
     # Convert db_note to NoteResponse format
     return NoteItemsResponse(

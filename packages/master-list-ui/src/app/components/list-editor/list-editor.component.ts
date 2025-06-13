@@ -5,7 +5,7 @@ import { NoteItemTag, Paragraph } from '../../types/note';
 // import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NotesApiService } from '../../services/notes-api.service';
 import { TagCssGenerator } from '../../services/tag-css-generator';
-import { BehaviorSubject, debounceTime, skip, Subject, tap } from 'rxjs';
+import { BehaviorSubject, debounceTime, skip, Subject, takeUntil, tap } from 'rxjs';
 import { TagDelete, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { TagApiService } from '../../services/tag-api';
 import { ToastrService } from 'ngx-toastr';
@@ -48,6 +48,8 @@ export class ListEditorComponent {
     public listColor: string | null = null;
     public showExtraMenu = false;
     public tagHighlightNames: string[] = [];
+    private hasStartedPeriodicSave = false;
+    private destroy$ = new Subject<void>();
 
     affectedRows: Paragraph[] = [];
     constructor(
@@ -64,18 +66,24 @@ export class ListEditorComponent {
     ) {
         this.loadOriginParagraph = this.manager.loadOriginParagraph;
         this.manager.setChangeSubject(this.changeSubject);
-        this.initPeriodicSave();
     }
 
-    initPeriodicSave() {
+    private initPeriodicSave() {
+        if (this.hasStartedPeriodicSave) return;
+        this.hasStartedPeriodicSave = true;
+    
         this.changeSubject
             .pipe(
-                debounceTime(2000), // 2 seconds of inactivity
-                skip(1),
+                debounceTime(2000),
+                takeUntil(this.destroy$)
             )
             .subscribe(() => {
                 this.saveNoteElements();
             });
+    }
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     ngOnInit() {
@@ -150,7 +158,7 @@ export class ListEditorComponent {
 
     clearError() {
         this.error = false;
-        this.changeSubject.next();
+        // this.changeSubject.next();
     }
 
     public setHighlight(event: Event): void {
@@ -204,9 +212,9 @@ export class ListEditorComponent {
                 this.notesApi.moveNoteElements(movedState, this.listId, this.listType, event.tagName).subscribe({
                     next: result => {
                         this.toastr.success('Items moved successfully', 'Success');
-                        // this.paragraphs = movedState.filtered
-                        // this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
-                        // this.manager.resetHistory();
+                        this.paragraphs = movedState.filtered
+                        this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
+                        this.manager.resetHistory();
                     },
                     error: result => {
                         this.error = true;
@@ -221,23 +229,31 @@ export class ListEditorComponent {
         }
     }
 
+    private triggerChange() {
+        this.initPeriodicSave();  // Ensure the save loop is started
+        this.changeSubject.next(); 
+    }
     public removeTag() {}
 
     public unassignTags(tags: string[]): void {
         this.manager.unassignTag(tags, this.paragraphs);
+        this.triggerChange();
     }
 
     public assignTagToRows(tagName: string) {
         this.tagHighlightNames = Array.from(new Set([...this.tagHighlightNames, tagName]));
         this.manager.assignTagToRows(tagName, this.paragraphs);
+        this.triggerChange();
     }
 
     // Bold, italics, lineThrough click event
     public applyInlineStyle(style: TextDecoration): void {
         this.manager.applyInlineStyle(style, this.paragraphs);
+        this.triggerChange();
     }
     public mergeNoteItems(): void {
         this.manager.mergeNoteItems(this.paragraphs);
+        this.triggerChange();
     }
 
     public deleteList() {
@@ -287,6 +303,7 @@ export class ListEditorComponent {
 
     onInput(event: Event): void {
         this.manager.onInput(event, this.paragraphs);
+        this.triggerChange();
     }
 
     @HostListener('keydown', ['$event'])
@@ -331,6 +348,7 @@ export class ListEditorComponent {
                 },
             });
         }
+        this.triggerChange();
     }
 
     public saveNoteElements(overrideError: boolean = false): void {

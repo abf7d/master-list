@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Note, Tag, NoteItem, NoteItemList
+from models.models import NoteItem as NoteItemModel
 from models.models import CreateNoteGroup, MoveNoteGroup, NoteCreation, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
 from sqlalchemy import and_, select, delete, tuple_, update
 from sqlalchemy import func, case
@@ -35,38 +36,52 @@ class NoteService:
         
         # Save the title for the new list or tag
         # self._save_title(parent_list_type, parent_id, note_group.tag_name)
-        new_tag_item_response = self.get_note_items(list_id=note_group.tag_name, user_id=user_id, list_type="tag")
-        for item in state.moved:
-            item.creation_list_id = None
-            item.creation_type = None
-        # new_tag_items.data['notes'] = state.moved   
-        createGroup = CreateNoteGroup(
-            parent_tag_id=note_group.tag_name,
-            parent_list_type='tag',
-            items=[]
-        )
-        items = new_tag_item_response.data['notes']
-        for item in items:
-            createGroup.items.append(
-                NoteItem(
-                    content=item.content,
-                    id=item.id,
-                    tags=item.tags,
-                    creation_list_id=item.creation_list_id,
-                    creation_type=item.creation_type,
-                    position=None ,
-                    origin_sort_order=item.origin_sort_order,          
-            ))
-        createGroup.items.extend(state.moved)
-        response_moved = self.update_note_items(createGroup, user_id=user_id, list_type="tag")
+        
+        # need to look up the tag name to get the tag id
+        tag_id = None
+        tag_query = select(Tag).where(Tag.name == note_group.tag_name) #, Tag.created_by == user_id)
+        tag = self.db.execute(tag_query).scalars().first()
+        if not tag:
+            raise HTTPException(status_code=404, detail=f"Tag '{note_group.tag_name}' not found for user {user_id}")
+        tag_id = tag.id
+        
         
         createGroupCurrent = CreateNoteGroup(
             parent_tag_id=parent_id,
             parent_list_type=parent_list_type,
             items=state.filtered
         )
-        response_filtered = self.update_note_items(createGroupCurrent, user_id=user_id, list_type=parent_list_type)
+        response_filtered = self.update_note_items(createGroupCurrent, user_id=user_id, origin_type=parent_list_type)
         
+        
+        new_tag_item_response = self.get_note_items(list_id=tag_id, user_id=user_id, list_type="tag")
+        for item in state.moved:
+            item.creation_list_id = None
+            item.creation_type = None
+            item.id = None
+        # new_tag_items.data['notes'] = state.moved   
+        createGroup = CreateNoteGroup(
+            parent_tag_id=tag_id,
+            parent_list_type='tag',
+            items=[]
+        )
+        items = new_tag_item_response.data['notes']
+        for item in items:
+            createGroup.items.append(
+                NoteItemModel(
+                    content=item.content,
+                    id=item.id,
+                    tags=item.tags,
+                    creation_list_id=item.creation_list_id,
+                    
+                    creation_type=item.creation_type,
+                    position=None ,
+                    origin_sort_order=item.origin_sort_order,          
+            ))
+        createGroup.items.extend(state.moved)
+        response_moved = self.update_note_items(createGroup, user_id=user_id, origin_type="tag")
+        
+       
         return {
             "response_filtered": response_filtered,
             "respone_voed": response_moved
@@ -223,6 +238,80 @@ class NoteService:
             tag_ids_by_name = {tag_name: tag_id for tag_id, tag_name in tag_results}
         
         return tag_ids_by_name
+    
+# try saving the filtered first to delete the items then try to save?
+#     {
+#     "moved_state": {
+#         "moved": [
+#             {
+#                 "id": "cea7d443-1e3a-48d8-9e6a-25d887ac6720",
+#                 "content": "six 6",
+#                 "created_at": "2025-06-06T15:55:16.818903",
+#                 "updated_at": "2025-06-06T15:55:16.818904",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_numb 1,
+#                 "tags": [],
+#                 "origin_sort_order": 1
+#             },
+#             {
+#                 "id": "8aa381e0-0f86-4ee4-a7a0-160b0921613f",
+#                 "content": "111111",
+#                 "created_at": "2025-06-06T15:55:16.818912",
+#                 "updated_at": "2025-06-06T15:55:16.818913",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 2,
+#                 "tags": [],
+#                 "origin_sort_order": 2
+#             }
+#         ],
+#         "filtered": [
+#             {
+#                 "id": "2593feb8-b3c2-43db-b46c-65788f7201cf",
+#                 "content": "one 1",
+#                 "created_at": "2025-06-06T15:55:16.818887",
+#                 "updated_at": "2025-06-06T15:55:16.818893",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 0,
+#                 "tags": [
+#                     {
+#                         "id": "11111111-1111-1111-1111-111111111111",
+#                         "name": "2",
+#                         "sort_order": 25
+#                     }
+#                 ],
+#                 "origin_sort_order": 0
+#             },
+#             {
+#                 "id": "acf9251c-f7f0-46a5-8848-97a6198a85e0",
+#                 "content": "4444",
+#                 "created_at": "2025-06-06T15:55:16.818921",
+#                 "updated_at": "2025-06-06T15:55:16.818922",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 3,
+#                 "tags": [],
+#                 "origin_sort_order": 3
+#             },
+#             {
+#                 "id": "7c0a7efe-3863-4d8e-943f-b091e78fb3d0",
+#                 "content": "<br>",
+#                 "created_at": "2025-06-06T15:55:16.818929",
+#                 "updated_at": "2025-06-06T15:55:16.818930",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 4,
+#                 "tags": [],
+#                 "origin_sort_order": 4
+#             }
+#         ]
+#     },
+#     "list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#     "list_type": "note",
+#     "tag_name": "2"
+# }
     
     def _save_note_items(self, new_items, tag_ids_by_name, parent_id, parent_list_type, user_id):
         """
