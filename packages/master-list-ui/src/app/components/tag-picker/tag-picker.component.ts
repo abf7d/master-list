@@ -35,6 +35,7 @@ export class TagPickerComponent implements OnInit {
     public showDefaultMenu = false;
     public selectedTag: TagSelection | null = null;
     public showMoveMenu = false;
+    public selectedIndex = -1;
 
     @Input() allowAdd = true;
     public activeGroup: TagSelectionGroup | null = null;
@@ -46,7 +47,6 @@ export class TagPickerComponent implements OnInit {
         private toastr: ToastrService,
         private tagApi: TagApiService,
     ) {
-
         effect(() => {
             const newTag = this.completeAdd();
             if (Array.isArray(newTag)) {
@@ -150,17 +150,26 @@ export class TagPickerComponent implements OnInit {
     };
 
     public add(event: any, create = true, tag?: TagProps) {
+        if (this.selectedIndex > -1) {
+            const selectedTag = this.selectedIndex < this.matchedEntries.length ? this.matchedEntries[this.selectedIndex] : null; // “Create tag …”
+            if (selectedTag) {
+                tag = selectedTag; 
+                create = false;
+            }
+        }
         const name = event.value;
         if (this.tags().find(x => x.name === name)) {
             return;
         }
-        // this.addGroup(name, tag, create);
         if (!create) {
-          const tagUpdate: TagUpdate = { name: tag!.name, id: tag!.order, navId: tag!.id };
-          this.handleAddTagComplete(tagUpdate);
+            const tagUpdate: TagUpdate = { name: tag!.name, id: tag!.order, navId: tag!.id };
+            this.handleAddTagComplete(tagUpdate);
         }
         this.addTag.emit({ name, tag, create });
         this.autoCompleteInput = '';
+
+        this.selectedIndex = -1; // Reset selected index after adding
+        this.autoCloseMenuToggle = true;
     }
 
     public autoComplete(currentValue: string) {
@@ -175,7 +184,6 @@ export class TagPickerComponent implements OnInit {
                 this.matchedEntries = tags.data.filter(t => !map.get(t.name));
                 this.uniqeName = !this.matchedEntries.map(t => t.name).includes(this.autoCompleteInput);
             });
-            //     }
         } else {
             this.uniqeName = false;
             this.showDefaultMenu = true;
@@ -192,13 +200,73 @@ export class TagPickerComponent implements OnInit {
         this.matchedEntries = this.matchedEntries.filter(t => t.name !== tag.name);
     }
     public move() {
-        const valid = this.tags().find(x => x.isSelected)
+        const valid = this.tags().find(x => x.isSelected);
         if (!valid) {
             this.toastr.warning('No tags selected', 'Nothing tagged');
             return;
         }
-        this.moveClick.emit({action: 'move', tagName: valid.name});
+        this.moveClick.emit({ action: 'move', tagName: valid.name });
     }
 
     public archive() {}
+
+    public onKeyDown(evt: KeyboardEvent): void {
+        if (this.menuClosed) {
+            return;
+        }
+
+        switch (evt.key) {
+            case 'ArrowDown':
+                evt.preventDefault();
+                this.moveSelection(1);
+                break;
+
+            case 'ArrowUp':
+                evt.preventDefault();
+                this.moveSelection(-1);
+                break;
+
+            case 'Enter':
+                evt.preventDefault();
+                
+                if (this.selectedIndex > -1) {
+                    const selectedTag = this.selectedIndex < this.matchedEntries.length ? this.matchedEntries[this.selectedIndex] : null; 
+                    if (selectedTag) {
+                        const tag = selectedTag; 
+                        const create = false;
+                        const tagUpdate: TagUpdate = { name: tag!.name, id: tag!.order, navId: tag!.id };
+                        this.handleAddTagComplete(tagUpdate);
+                        this.addTag.emit({ name: tag.name, tag, create });
+                        this.autoCompleteInput = '';
+                        this.selectedIndex = -1; // Reset selected index after adding
+                        this.autoCloseMenuToggle = true;
+                    }
+                }
+                break;
+
+            case 'Escape':
+                this.closeCreateMenu();
+                break;
+        }
+    }
+
+    public get menuClosed() {
+        return this.autoCloseMenuToggle || !(this.matchedEntries.length || this.uniqeName);
+    }
+
+    private moveSelection(step: 1 | -1): void {
+        const total = this.matchedEntries.length + (this.uniqeName ? 1 : 0);
+        if (!total) {
+            return;
+        }
+        this.selectedIndex = (this.selectedIndex + step + total) % total;
+        const name = this.matchedEntries[this.selectedIndex]?.name;
+        if (name) {
+            this.autoCompleteInput = name;
+        }
+
+        // optional: keep active item in view
+        const el = document.getElementById(`item-${this.selectedIndex}`);
+        el?.scrollIntoView({ block: 'nearest' });
+    }
 }

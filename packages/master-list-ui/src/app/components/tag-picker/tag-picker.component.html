@@ -62,8 +62,9 @@
                     [(ngModel)]="autoCompleteInput"
                     (ngModelChange)="autoComplete($event)"
                     (click)="showDefaultMenu = matchedEntries.length === 0; autoCloseMenuToggle = showDefaultMenu"
+                    (keydown)="onKeyDown($event)"  
                     type="text"
-                    placeholder="Type Name"
+                    placeholder="Type Name"ß
                     (keydown.tab)="add($event.target)"
                 />
                 @if(showDefaultMenu) {
@@ -78,10 +79,10 @@
                     </div>
                 </div>
                 }
-                <div class="autocomplete" *ngIf="!autoCloseMenuToggle && (matchedEntries.length > 0 || this.uniqeName)" (clickOutside)="closeCreateMenu()">
-                    <div class="entry" *ngFor="let item of matchedEntries;" (click)="includeInList(item)">{{item.name}}</div>
+                <div class="autocomplete" *ngIf="!menuClosed" (clickOutside)="closeCreateMenu()">
+                    <div class="entry" *ngFor="let item of matchedEntries; let i = index" [id]="'item-' + i" [class.active]="i === selectedIndex"  (click)="includeInList(item)">{{item.name}}</div>
                     @if(uniqeName) {
-                    <div class="unique-name">
+                    <div class="unique-name" [class.active]="selectedIndex === matchedEntries.length">
                         <div>Create Tag <b>{{autoCompleteInput}}</b></div>
                         <div class="tab">Tab</div>
                     </div>
