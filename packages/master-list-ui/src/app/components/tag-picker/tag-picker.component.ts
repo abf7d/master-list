@@ -153,7 +153,7 @@ export class TagPickerComponent implements OnInit {
         if (this.selectedIndex > -1) {
             const selectedTag = this.selectedIndex < this.matchedEntries.length ? this.matchedEntries[this.selectedIndex] : null; // “Create tag …”
             if (selectedTag) {
-                tag = selectedTag; 
+                tag = selectedTag;
                 create = false;
             }
         }
@@ -199,16 +199,18 @@ export class TagPickerComponent implements OnInit {
         this.add({ value: tag.name }, false, tag);
         this.matchedEntries = this.matchedEntries.filter(t => t.name !== tag.name);
     }
-    public move() {
-        const valid = this.tags().find(x => x.isSelected);
-        if (!valid) {
-            this.toastr.warning('No tags selected', 'Nothing tagged');
-            return;
+    public move(target: 'list' | 'page') {
+        if (target === 'list') {
+            const valid = this.tags().find(x => x.isSelected);
+            if (!valid) {
+                this.toastr.warning('No tags selected', 'Nothing tagged');
+                return;
+            }
+            this.moveClick.emit({ action: 'list', tagName: valid.name });
+        } else {
+            this.moveClick.emit({ action: 'page', tagName: null });
         }
-        this.moveClick.emit({ action: 'move', tagName: valid.name });
     }
-
-    public archive() {}
 
     public onKeyDown(evt: KeyboardEvent): void {
         if (this.menuClosed) {
@@ -218,21 +220,21 @@ export class TagPickerComponent implements OnInit {
         switch (evt.key) {
             case 'ArrowDown':
                 evt.preventDefault();
-                this.moveSelection(1);
+                this.moveCursor(1);
                 break;
 
             case 'ArrowUp':
                 evt.preventDefault();
-                this.moveSelection(-1);
+                this.moveCursor(-1);
                 break;
 
             case 'Enter':
                 evt.preventDefault();
-                
+
                 if (this.selectedIndex > -1) {
-                    const selectedTag = this.selectedIndex < this.matchedEntries.length ? this.matchedEntries[this.selectedIndex] : null; 
+                    const selectedTag = this.selectedIndex < this.matchedEntries.length ? this.matchedEntries[this.selectedIndex] : null;
                     if (selectedTag) {
-                        const tag = selectedTag; 
+                        const tag = selectedTag;
                         const create = false;
                         const tagUpdate: TagUpdate = { name: tag!.name, id: tag!.order, navId: tag!.id };
                         this.handleAddTagComplete(tagUpdate);
@@ -254,7 +256,7 @@ export class TagPickerComponent implements OnInit {
         return this.autoCloseMenuToggle || !(this.matchedEntries.length || this.uniqeName);
     }
 
-    private moveSelection(step: 1 | -1): void {
+    private moveCursor(step: 1 | -1): void {
         const total = this.matchedEntries.length + (this.uniqeName ? 1 : 0);
         if (!total) {
             return;
@@ -263,6 +265,7 @@ export class TagPickerComponent implements OnInit {
         const name = this.matchedEntries[this.selectedIndex]?.name;
         if (name) {
             this.autoCompleteInput = name;
+            this.uniqeName = false;
         }
 
         // optional: keep active item in view

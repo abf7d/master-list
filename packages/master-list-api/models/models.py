@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 import uuid
@@ -34,7 +34,8 @@ class CreateNoteGroup(BaseModel):
     # content: List[str]  # Full text that will be split into paragraphs
     items: List[NoteItem]  # List of note items to create 
     parent_list_type: Optional[str] = 'note'  # Optional list type for the parent tag 
-    parent_list_title: Optional[str] = None 
+    parent_list_title: Optional[str] = None
+    page: Optional[int] = None  # Optional page number for pagination 
     
 class MoveState(BaseModel):
     """Request model for moving a group of note items"""
@@ -45,7 +46,9 @@ class MoveNoteGroup(BaseModel):
     moved_state: MoveState
     list_id: str
     list_type: str
-    tag_name: str
+    tag_name: str | None = None  
+    move_type: Literal['list', 'page']  # type alias
+    current_page: Optional[int] = None  # Optional current page number for pagination
       
 class TagResponse(BaseModel):
     id: UUID
@@ -101,6 +104,7 @@ class TagEntry(BaseModel):
     created_at: datetime
     order: int # for color coding
     sort_order: Optional[int] # for ordering the tags
+    max_page: Optional[int] = None  
     
 class NoteCreation(BaseModel):
     id: UUID
@@ -112,6 +116,7 @@ class NoteEntry(BaseModel):
     created_at: datetime
     updated_at: datetime
     order: Optional[int]
+    max_page: Optional[int] = None 
     
 class NoteItemsResponse(BaseModel):
     message: Optional[str]

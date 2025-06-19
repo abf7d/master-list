@@ -21,10 +21,10 @@
                     <a href="javascript:void(0)" (click)="showMoveMenu = !showMoveMenu">...</a>
                     <div class="extra-menu" [hidden]="!showMoveMenu">
                         <div>
-                            <a href="javascript:void(0)" (click)="move()">Move To List</a>
+                            <a href="javascript:void(0)" (click)="move('list')">Move To List</a>
                         </div>
                         <div>
-                            <a href="javascript:void(0)" (click)="archive()">Archive</a>
+                            <a href="javascript:void(0)" (click)="move('page')">Move To New Page</a>
                         </div>
                     </div>
                 </div>
@@ -84,6 +84,11 @@
                     @if(uniqeName) {
                     <div class="unique-name" [class.active]="selectedIndex === matchedEntries.length">
                         <div>Create Tag <b>{{autoCompleteInput}}</b></div>
+                        <div class="tab">Tab</div>
+                    </div>
+                    } @else {
+                    <div class="unique-name" [class.active]="selectedIndex === matchedEntries.length">
+                        <div>Add Tag</div>
                         <div class="tab">Tab</div>
                     </div>
                     }

@@ -11,6 +11,6 @@ export interface RemoveTag {
     delete: boolean;
 }
 export interface MoveItems {
-    action: 'move' | 'archive';
-    tagName: string;
+    action: 'list' | 'page';
+    tagName: string | null;
 }

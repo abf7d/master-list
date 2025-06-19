@@ -54,6 +54,16 @@
             (click)="onEditorClick($event)"
         ></div>
     </div>
+    <div class="pager">
+        <div class="pages">
+            <i class="fa-solid fa-arrow-left"></i>
+            <div [class.current-page]="null === currentPage"(click)="loadPage(0)"><i class="fa-solid fa-home"></i></div>
+            @for(page of pages; track page){
+            <div [class.current-page]="page === currentPage"(click)="loadPage(page)">{{page}}</div>
+            }
+            <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </div>
 </div>
 
 <div class="action-panel">

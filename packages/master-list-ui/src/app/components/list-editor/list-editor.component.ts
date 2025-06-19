@@ -48,6 +48,9 @@ export class ListEditorComponent {
     public listColor: string | null = null;
     public showExtraMenu = false;
     public tagHighlightNames: string[] = [];
+    public maxPage = 0;
+    public currentPage: number | null = null;
+    public pages: number[] = [];
     private hasStartedPeriodicSave = false;
     private destroy$ = new Subject<void>();
 
@@ -71,15 +74,10 @@ export class ListEditorComponent {
     private initPeriodicSave() {
         if (this.hasStartedPeriodicSave) return;
         this.hasStartedPeriodicSave = true;
-    
-        this.changeSubject
-            .pipe(
-                debounceTime(2000),
-                takeUntil(this.destroy$)
-            )
-            .subscribe(() => {
-                this.saveNoteElements();
-            });
+
+        this.changeSubject.pipe(debounceTime(2000), takeUntil(this.destroy$)).subscribe(() => {
+            this.saveNoteElements();
+        });
     }
     ngOnDestroy() {
         this.destroy$.next();
@@ -90,6 +88,7 @@ export class ListEditorComponent {
         this.route.paramMap.subscribe(params => {
             let listId = params.get('id');
             let listType = params.get('listType');
+            this.currentPage = +params.get('page')! || null;
             this.listType = listType as 'tag' | 'note';
             if (listType === 'note') {
                 this.tagApi.getNotes(null, 1, 10, listId).subscribe(x => {
@@ -118,11 +117,13 @@ export class ListEditorComponent {
 
     getPageNoteItems() {
         this.tagHighlightNames = [];
-        this.notesApi.getNoteElements(this.listId, this.listType /*'note'*/).subscribe({
+        this.notesApi.getNoteElements(this.listId, this.listType, this.currentPage).subscribe({
             next: x => {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
                 const tags = x.data.tags;
+                this.maxPage = x.data.max_page;
+                this.pages =  Array.from({ length: this.maxPage }, (_, i) => i + 1); 
 
                 this.paragraphs = noteElements;
 
@@ -200,19 +201,29 @@ export class ListEditorComponent {
         const movedState = this.manager.moveParagraph(this.paragraphs);
         if (!movedState.moved || movedState.moved.length === 0) {
             this.toastr.warning('No list items selected', 'No items to move');
-        } else {
+        } else if (event.action === 'list' && !event.tagName) {
+            this.toastr.warning('No list selected', 'Please select a list to move items to');
+        }else {
+            let message = '';
+            if (event.action === 'list') {
+                message = 'Are you sure you want to move the selected items to the list ' + event.tagName + '? This action cannot be undone.';
+            } else if (event.action === 'page') {
+                message = 'Are you sure you want to move the selected items to a new page?';
+            }
             const ok = await this.modal.confirm({
                 title: 'Move Items',
-                message: 'Are you sure you want to move the selected items to ' + event.tagName + '? This action cannot be undone.',
+                message,
                 okText: 'Move',
                 cancelText: 'Cancel',
                 maxWidth: '490px',
             });
             if (ok) {
-                this.notesApi.moveNoteElements(movedState, this.listId, this.listType, event.tagName).subscribe({
+                this.notesApi.moveNoteElements(movedState, this.listId, this.listType, event.tagName, event.action, this.currentPage).subscribe({
                     next: result => {
+                        this.maxPage = result.data.max_page;
+                        this.pages =  Array.from({ length: this.maxPage }, (_, i) => i + 1); 
                         this.toastr.success('Items moved successfully', 'Success');
-                        this.paragraphs = movedState.filtered
+                        this.paragraphs = movedState.filtered;
                         this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
                         this.manager.resetHistory();
                     },
@@ -230,8 +241,8 @@ export class ListEditorComponent {
     }
 
     private triggerChange() {
-        this.initPeriodicSave();  // Ensure the save loop is started
-        this.changeSubject.next(); 
+        this.initPeriodicSave(); // Ensure the save loop is started
+        this.changeSubject.next();
     }
     public removeTag() {}
 
@@ -335,7 +346,7 @@ export class ListEditorComponent {
         if (!this.isSaving && (!this.error || overrideError)) {
             this.isSaving = true;
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements([], this.listId, this.listType, this.listName).subscribe({
+            this.notesApi.saveNoteElements([], this.listId, this.listType, this.listName, this.currentPage).subscribe({
                 next: result => {
                     this.paragraphs = [];
                     this.isSaving = false;
@@ -361,7 +372,7 @@ export class ListEditorComponent {
                 }
             }
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements(this.paragraphs, this.listId, this.listType, this.listName).subscribe({
+            this.notesApi.saveNoteElements(this.paragraphs, this.listId, this.listType, this.listName, this.currentPage).subscribe({
                 next: result => {
                     this.isSaving = false;
                 },
@@ -372,5 +383,14 @@ export class ListEditorComponent {
                 },
             });
         }
+    }
+    loadPage(page: number) {
+        if (page < 0 || page > this.maxPage) {
+            this.toastr.error('Invalid page number', 'Error');
+            return;
+        }
+        this.currentPage = page;
+        this.router.navigate(['/', 'lists', this.listType, this.listId,  page]);
+        this.getPageNoteItems();
     }
 }
