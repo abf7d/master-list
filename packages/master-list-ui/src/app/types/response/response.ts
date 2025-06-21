@@ -13,6 +13,7 @@ export interface TagProps {
     created_at: string;
     order: number;
     max_page?: number | null;
+    page?: number | null;
 }
 export interface NoteProps {
     id: string;

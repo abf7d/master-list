@@ -10,6 +10,7 @@ class TagProps(BaseModel):
     id: Optional[UUID]
     name: str
     sort_order: Optional[int] # for ordering the tags
+    page: Optional[int] = None  
 
 
 class NoteItem(BaseModel): # Paragraph object in the frontend
@@ -25,6 +26,7 @@ class NoteItem(BaseModel): # Paragraph object in the frontend
     creation_type: Optional[str] = None  # Optional type of creation (e.g., 'note', 'tag')
     # level: Optional[int] = None # Tab level for indentation should be stored in conent rather than 
     origin_sort_order: Optional[int] = None  # Optional sort order for the note item
+    origin_page: Optional[int] = None  # Page number of for this note item on the origin note/tag
 # Pydantic Response Models
 
 # This needs to be updated on teh frontend because parewnt_list_type is new
@@ -35,7 +37,7 @@ class CreateNoteGroup(BaseModel):
     items: List[NoteItem]  # List of note items to create 
     parent_list_type: Optional[str] = 'note'  # Optional list type for the parent tag 
     parent_list_title: Optional[str] = None
-    page: Optional[int] = None  # Optional page number for pagination 
+    page: Optional[int] = None  # The page that the user is currentl[y on Optional page number for pagination 
     
 class MoveState(BaseModel):
     """Request model for moving a group of note items"""
@@ -69,6 +71,7 @@ class NoteResponse(BaseModel):
     sequence_number: int
     tags: List[TagProps] 
     origin_sort_order: int
+    origin_page: Optional[int] = None  # Optional page number for pagination
     # tags: List[str] #List['TagResponse']
 
     model_config = ConfigDict(from_attributes=True)

@@ -464,6 +464,7 @@ class NoteService:
                 
                 # Determine the sort_order value
                 sort_order = tag.sort_order
+                a_page = tag.page
                 if sort_order is None:
                     # Check if we've already cached the highest sort order for this tag
                     if tag_id not in highest_sort_orders:
@@ -488,7 +489,8 @@ class NoteService:
                     list_id=tag_id,
                     list_type='tag',
                     is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag',
-                    sort_order=sort_order # If sort order is None then we will have to get the tag count for that id in the NoteItemList table
+                    sort_order=sort_order, # If sort order is None then we will have to get the tag count for that id in the NoteItemList table
+                    page=a_page
                 )
                 self.db.add(tag_association)
                 new_associations.append(tag_association)
@@ -503,7 +505,8 @@ class NoteService:
                     list_id=item.creation_list_id,
                     list_type=item.creation_type,
                     is_origin=True,
-                    sort_order=item.origin_sort_order
+                    sort_order=item.origin_sort_order,
+                    page=item.origin_page
                 )
                 self.db.add(origin_association)
                 new_associations.append(origin_association)
@@ -590,6 +593,7 @@ class NoteService:
             NoteItemList.list_type,
             NoteItemList.is_origin,
             NoteItemList.sort_order,
+            NoteItemList.page
         ).where(
             NoteItemList.note_item_id.in_(note_item_ids)
         ).order_by(
@@ -624,7 +628,7 @@ class NoteService:
         this_list_order = {}
         
         # Group associations by note_item_id for easier processing
-        for a_list_id, note_item_id, a_list_type, is_origin, sort_order in tag_associations:
+        for a_list_id, note_item_id, a_list_type, is_origin, sort_order, a_page in tag_associations:
             if note_item_id not in note_item_to_associations:
                 note_item_to_associations[note_item_id] = []
             
@@ -637,7 +641,8 @@ class NoteService:
                 'list_id': a_list_id,
                 'list_type': a_list_type,
                 'is_origin': is_origin,
-                'sort_order': sort_order
+                'sort_order': sort_order,
+                'page': a_page
             })
         
         # Process note items in the order they were fetched (by sort_order)
@@ -660,12 +665,14 @@ class NoteService:
                 assoc_list_type = assoc['list_type']
                 is_origin = assoc['is_origin']
                 assoc_sort_order = assoc['sort_order']
+                a_page = assoc['page']
                 
                 # Check if this is the origin
                 if is_origin:
                     origin_id = a_list_id
                     origin_type = assoc_list_type
                     origin_sort_order = assoc_sort_order
+                    origin_page = a_page
                     
                 # TODO: Maybe not: Potentially move checking if you are on this list here to get this list sort order
                 
@@ -674,7 +681,8 @@ class NoteService:
                     tag_data.append({
                         'id': '11111111-1111-1111-1111-111111111111',
                         'name': tag_map[a_list_id]['name'],
-                        'sort_order': assoc_sort_order
+                        'sort_order': assoc_sort_order,
+                        'page': a_page
                     })
             
             note_responses.append(
@@ -688,7 +696,8 @@ class NoteService:
                     sequence_number=note_item.sequence_number,
                     tags=tag_data, #assigned_tags,
                     sort_order=sort_order,  # Include sort_order in response if needed
-                    origin_sort_order= origin_sort_order
+                    origin_sort_order= origin_sort_order,
+                    origin_page=origin_page
                 )
             )
         
@@ -698,8 +707,9 @@ class NoteService:
         tag_responses = []
         
         # Build a map of tags by note_item_id and their sort_orders
+        # tag_sort_orders isn't used even though it is set here, can I remove it
         tag_sort_orders = {}
-        for a_list_id, note_item_id, b_list_type, is_origin, sort_order in tag_associations:
+        for a_list_id, note_item_id, b_list_type, is_origin, sort_order, a_page in tag_associations:
             if b_list_type == 'tag' and a_list_id in tag_map:
                 if a_list_id not in tag_sort_orders or (sort_order is not None and (tag_sort_orders[a_list_id] is None or sort_order < tag_sort_orders[a_list_id])):
                     tag_sort_orders[a_list_id] = sort_order

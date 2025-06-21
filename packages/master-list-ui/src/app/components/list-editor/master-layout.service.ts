@@ -292,7 +292,7 @@ export class MasterLayoutService {
 
     private duplicateTags(tags: NoteItemTag[], copyTagSort: boolean): NoteItemTag[] {
         if (!copyTagSort) {
-            return tags.map(tag => ({ ...tag, sort_order: null }));
+            return tags.map(tag => ({ ...tag, sort_order: null, page: null }));
         }
         return tags.map(tag => ({ ...tag }));
     }
@@ -314,6 +314,7 @@ export class MasterLayoutService {
                 creation_list_id: existingParagraph?.creation_list_id || null,
                 creation_type: existingParagraph?.creation_type || null,
                 origin_sort_order: existingParagraph?.origin_sort_order, // Need to implement this as null not undefined
+                origin_page: existingParagraph?.origin_page || null,
             };
         });
         paragraphs.length = 0;
