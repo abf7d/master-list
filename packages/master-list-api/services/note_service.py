@@ -748,8 +748,74 @@ class NoteService:
             message="Success",
             error=None
         )
+        
+    
+    def delete_page(
+        self,
+        list_id: UUID,
+        user_id: UUID,  # Not used in this method but could be useful for logging or future checks,
+        list_type: str,       # 'note' or 'tag'
+        page_to_delete: int
+    ) -> None:
+        """
+        Remove a page from a note/list, delete the NoteItems on that page,
+        and clean up every association that refers to those NoteItems.
+        """
 
-   
+        if list_type not in ("note", "tag"):
+            raise ValueError("list_type must be 'note' or 'tag'")
+
+        with self.db.begin():                       # one atomic tx
+        # ── 1. delete page-specific associations, grab their ids ──────────────
+            item_ids_subq = (
+                select(NoteItem.id)
+                .join(NoteItemList, NoteItem.id == NoteItemList.note_item_id)
+                .where(
+                    NoteItemList.list_id   == list_id,
+                    NoteItemList.list_type == list_type,
+                    NoteItemList.page      == page_to_delete,
+                    NoteItem.created_by    == user_id,
+                )
+            )
+
+            page_assoc_cte = (
+                delete(NoteItemList)
+                .where(NoteItemList.note_item_id.in_(item_ids_subq))
+                .returning(NoteItemList.note_item_id)
+                .cte("page_assoc")
+            )
+
+            # materialise the delete
+            self.db.execute(select(func.count()).select_from(page_assoc_cte))
+
+            # ── 2. delete every remaining association for those items ─────────────
+            delete_other_assoc_stmt = (
+                delete(NoteItemList)
+                .where(NoteItemList.note_item_id.in_(select(page_assoc_cte.c.note_item_id)))
+            )
+            self.db.execute(delete_other_assoc_stmt, execution_options={"synchronize_session": False})
+
+            # ── 3. drop the NoteItem rows themselves ───────────────────────────────
+            delete_items_stmt = (
+                delete(NoteItem)
+                .where(NoteItem.id.in_(select(page_assoc_cte.c.note_item_id)))
+            )
+            self.db.execute(delete_items_stmt, execution_options={"synchronize_session": False})
+
+            # ── 4. re-number later pages ───────────────────────────────────────────
+            renumber_stmt = (
+                update(NoteItemList)
+                .where(
+                    and_(
+                        NoteItemList.list_id == list_id,
+                        NoteItemList.list_type == list_type,
+                        NoteItemList.page > page_to_delete,
+                    )
+                )
+                .values(page=NoteItemList.page - 1)
+            )
+            self.db.execute(renumber_stmt, execution_options={"synchronize_session": False})
+
 
     # TODO: Move to tag repo, then call from here
     def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> TagEntry:
@@ -797,9 +863,6 @@ class NoteService:
             order=tag.creation_order,
             sort_order=None
         )
-        
-        
-        
     
     def create_note(self, user_id:  Optional[UUID]) -> TagEntry:
         """

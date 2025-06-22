@@ -31,6 +31,19 @@ export class NotesApiService {
         const page = currentPage !== null && currentPage !== 0 ? currentPage : '';
         return this.http.get<PageResult>(urlJoin(environment.masterListApi, `/note-items/${noteId}/${listType}`), { params });
     }
+
+    public deletePage(
+        listId: string,
+        listType: 'note' | 'tag',
+        currentPage: number | null,
+    ): Observable<NoteSaveResult> {
+        let params = new HttpParams();
+        if (currentPage !== null && currentPage !== 0) {
+            params = params.set('page', currentPage.toString());
+        }
+        return this.http.delete<PageResult>(urlJoin(environment.masterListApi, `/page/${listId}/${listType}`), { params });
+    }
+
     public moveNoteElements(
         movedState: MoveParagraphs,
         listId: string,

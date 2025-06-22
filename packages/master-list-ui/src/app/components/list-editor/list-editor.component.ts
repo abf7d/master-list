@@ -123,7 +123,7 @@ export class ListEditorComponent {
                 const noteElements = x.data.notes;
                 const tags = x.data.tags;
                 this.maxPage = x.data.max_page;
-                this.pages =  Array.from({ length: this.maxPage }, (_, i) => i + 1); 
+                this.pages = Array.from({ length: this.maxPage }, (_, i) => i + 1);
 
                 this.paragraphs = noteElements;
 
@@ -145,6 +145,12 @@ export class ListEditorComponent {
                 }
                 this.manager.resetHistory();
                 this.manager.saveHistory(this.paragraphs);
+            },
+            error: err => {
+                this.error = true;
+                this.isSaving = false;
+                console.error('Error fetching note elements', err);
+                this.toastr.error('Error fetching note elements', 'Error');
             },
         });
     }
@@ -197,13 +203,28 @@ export class ListEditorComponent {
             }
         });
     }
+    public deletePage() {
+        this.notesApi.deletePage(this.listId, this.listType, this.currentPage).subscribe({
+            next: result => {
+                this.toastr.success('Page deleted successfully', 'Success');
+                if (this.currentPage === this.maxPage) [(this.currentPage = null)];
+                this.getPageNoteItems();
+            },
+            error: result => {
+                this.error = true;
+                this.isSaving = false;
+                console.error('error', result);
+                this.toastr.error('Error deleting page', 'Error');
+            },
+        });
+    }
     public async moveItems(event: MoveItems) {
         const movedState = this.manager.moveParagraph(this.paragraphs);
         if (!movedState.moved || movedState.moved.length === 0) {
             this.toastr.warning('No list items selected', 'No items to move');
         } else if (event.action === 'list' && !event.tagName) {
             this.toastr.warning('No list selected', 'Please select a list to move items to');
-        }else {
+        } else {
             let message = '';
             if (event.action === 'list') {
                 message = 'Are you sure you want to move the selected items to the list ' + event.tagName + '? This action cannot be undone.';
@@ -221,7 +242,7 @@ export class ListEditorComponent {
                 this.notesApi.moveNoteElements(movedState, this.listId, this.listType, event.tagName, event.action, this.currentPage).subscribe({
                     next: result => {
                         this.maxPage = result.data.max_page;
-                        this.pages =  Array.from({ length: this.maxPage }, (_, i) => i + 1); 
+                        this.pages = Array.from({ length: this.maxPage }, (_, i) => i + 1);
                         this.toastr.success('Items moved successfully', 'Success');
                         this.paragraphs = movedState.filtered;
                         this.manager.ngAfterViewInit(this.editorRef, this.paragraphs);
@@ -390,7 +411,7 @@ export class ListEditorComponent {
             return;
         }
         this.currentPage = page;
-        this.router.navigate(['/', 'lists', this.listType, this.listId,  page]);
+        this.router.navigate(['/', 'lists', this.listType, this.listId, page]);
         this.getPageNoteItems();
     }
 }

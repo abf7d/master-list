@@ -27,6 +27,9 @@
         <div (clickOutside)="showExtraMenu = false" [hidden]="listType !== 'note' && listType !== 'tag'">
             <button (click)="showExtraMenu = !showExtraMenu">...</button>
             <div class="extra-menu" [hidden]="!showExtraMenu">
+                @if(currentPage !== null && currentPage > 0){
+                    <div (click)="deletePage()">Delete Page</div>
+                }
                 <div (click)="deleteList()">@if(listType === 'note'){ Delete Note } @else if(listType === 'tag') { Delete Tag }</div>
             </div>
         </div>

@@ -178,6 +178,25 @@ async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
                             description="Page number (1-based); omit for first page"
     ), note_service: NoteService = Depends(get_note_service),): 
     return note_service.get_note_items(parent_tag_id, request.state.user_id, list_type, page)
+
+
+@router.delete("/page/{parent_tag_id}/{list_type}", response_model=NoteItemsResponse)
+@authenticate
+async def delete_page(request: Request, parent_tag_id: str, list_type: str,  
+                         page: Optional[int] = Query(
+                            None,  # default value if caller omits it
+                            ge=1,
+                            description="Page number (1-based); omit for first page"
+    ), note_service: NoteService = Depends(get_note_service),): 
+    note_service.delete_page(parent_tag_id, request.state.user_id, list_type, page)
+    response = ResponseData(
+        message="Note created successfully",
+        error="",
+        data={"success": True}  
+    )
+    return response
+  
+
     
 @router.post("/note-items/move", response_model=ResponseData)
 @authenticate
