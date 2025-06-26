@@ -463,3 +463,36 @@ h3 {
 .rt-strike {
     text-decoration: line-through;
 }
+.note-list-area {
+    position: relative;
+}
+.pager {
+    position: sticky;   /* keeps it in the viewport no matter what */
+    bottom: 0;
+    left: 0;
+    width: 100%;       /* make it span the screen */
+    z-index: 1000;
+    background-color: white;
+    padding: 10px;
+}
+.pages {
+    display: flex;
+    // justify-content: center;
+    align-items: baseline;
+    gap: 8px;
+    & > div {
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        // background-color: #f0f0f0;
+    }
+}
+.current-page {
+    font-weight: bold;
+    color: #333;
+    background-color:rgb(244, 242, 185)
+}
+.extra-menu > div {
+    padding: 5px;
+}

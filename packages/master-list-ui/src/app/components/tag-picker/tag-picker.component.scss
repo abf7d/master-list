@@ -1,4 +1,4 @@
-@use "../../styles/buttons.scss" as *;
+@use '../../styles/buttons.scss' as *;
 cp-tag-selection {
     padding-top: 3px;
     display: block;
@@ -7,14 +7,14 @@ cp-tag-selection {
 .group {
     padding: 10px;
     padding-top: 18px;
-  }
+}
 
-  .chart-options {
+.chart-options {
     position: sticky;
     top: 42px;
-  }
+}
 
-  .tags{
+.tags {
     overflow: auto;
     cursor: text;
     background-color: #fff;
@@ -25,21 +25,21 @@ cp-tag-selection {
     flex-wrap: wrap;
     padding-left: 8px;
 }
-.add-tag{
+.add-tag {
     padding: 3px;
     margin: 2px;
-    width: 125px!important;
+    width: 125px !important;
     background-color: #fff;
     height: 40px;
     padding-left: 12px;
-    border: none!important;
+    border: none !important;
 }
 .actions {
     width: auto;
     padding: 10px;
     padding-bottom: 7px;
 }
-.assign-button > *  {
+.assign-button > * {
     padding: 10px;
     padding-left: 0px;
     line-height: 2.2rem;
@@ -78,7 +78,7 @@ svg {
 }
 .search {
     padding-left: 4px;
-    font-size: .8rem;
+    font-size: 0.8rem;
 }
 .search-text {
     padding-left: 4px;
@@ -93,14 +93,25 @@ svg {
         padding: 6px;
     }
 }
-.unique-name { display: flex; justify-content: space-between; }
-.tab { color: #999}
-.tag-link { padding-left: 7px; padding-right: 3px;}
-.title-container{
+.unique-name {
+    display: flex;
+    justify-content: space-between;
+}
+.tab {
+    color: #999;
+}
+.tag-link {
+    padding-left: 7px;
+    padding-right: 3px;
+}
+.title-container {
     width: 100%;
     display: flex;
     justify-content: space-between;
 }
 .assign-button {
     display: flex;
+}
+.active {
+    background: #eee;
 }

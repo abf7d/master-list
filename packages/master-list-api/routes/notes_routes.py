@@ -8,7 +8,7 @@ from fastapi import Request
 from fastapi import APIRouter, Depends, HTTPException
 from services.note_service import NoteService
 from core.database import get_db
-from models.models import CreateNoteGroup, NoteItemsResponse, ResponseData, TagButton, TagCreation, TagResponse, NoteGroupResponse
+from models.models import CreateNoteGroup, MoveNoteGroup, NoteItemsResponse, ResponseData, TagButton, TagCreation, TagResponse, NoteGroupResponse
 from core.auth import authenticate
 
 from sqlalchemy.orm import Session
@@ -99,6 +99,7 @@ async def create_tag_button(request: Request, tag_button: TagButton,
     print('tag response', response)
     return response
 
+
 #TODO: move this to tag_routes
 @router.delete("/tag/{tag_name}", response_model=ResponseData,)
 @authenticate
@@ -159,17 +160,7 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
     print('NOTE GROUP', note_group)
     
     note_service.update_note_items(note_group, request.state.user_id)
-    
-    
-    # db_note = Note(
-    #     title=note.title,
-    #     content=note.content,
-    #     tags=",".join(note.tags) if note.tags else ""
-    # )
-    # db.add(db_note)
-    # db.commit()
-    # db.refresh(db_note)
-    
+   
     # Convert db_note to NoteResponse format
     return NoteItemsResponse(
         message="Success",
@@ -180,26 +171,43 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
 # For loading elemetns on a note page, perhaps call this get_note_profile or get_list_page 
 @router.get("/note-items/{parent_tag_id}/{list_type}", response_model=NoteItemsResponse)
 @authenticate
-async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
-        note_service: NoteService = Depends(get_note_service),):  
-    return note_service.get_note_items(parent_tag_id, request.state.user_id, list_type)
-    
-    
-    # db_note = Note(
-    #     title=note.title,
-    #     content=note.content,
-    #     tags=",".join(note.tags) if note.tags else ""
-    # )
-    # db.add(db_note)
-    # db.commit()
-    # db.refresh(db_note)
-    
-    # Convert db_note to NoteResponse format
-    return NoteItemsResponse(
-        message="Success",
-        error=None,
-        data='test1234'
+async def get_note_items(request: Request, parent_tag_id: str, list_type: str,  
+                         page: Optional[int] = Query(
+                            None,  # default value if caller omits it
+                            ge=1,
+                            description="Page number (1-based); omit for first page"
+    ), note_service: NoteService = Depends(get_note_service),): 
+    return note_service.get_note_items(parent_tag_id, request.state.user_id, list_type, page)
+
+
+@router.delete("/page/{parent_tag_id}/{list_type}", response_model=NoteItemsResponse)
+@authenticate
+async def delete_page(request: Request, parent_tag_id: str, list_type: str,  
+                         page: Optional[int] = Query(
+                            None,  # default value if caller omits it
+                            ge=1,
+                            description="Page number (1-based); omit for first page"
+    ), note_service: NoteService = Depends(get_note_service),): 
+    note_service.delete_page(parent_tag_id, request.state.user_id, list_type, page)
+    response = ResponseData(
+        message="Note created successfully",
+        error="",
+        data={"success": True}  
     )
+    return response
+  
+
+    
+@router.post("/note-items/move", response_model=ResponseData)
+@authenticate
+async def move_note_items(request: Request, note_group: MoveNoteGroup, 
+        note_service: NoteService = Depends(get_note_service),):
+    print('MOVE GROUP', note_group)
+    
+    response = note_service.move_note_items(note_group, request.state.user_id)
+   
+    # Convert db_note to NoteResponse format
+    return response
 
 
 # For create a note from the left hand list

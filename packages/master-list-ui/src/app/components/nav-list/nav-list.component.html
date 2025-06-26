@@ -20,6 +20,7 @@
               <!-- {{ 'rename to created_at instead of create_at' + item.description }} -->
             </div>
             <div class="timestamp">{{ item.updated_at }}</div>
+            <div class="num-pages">Page number: {{ item.max_page === 0 ? 'None' : item.max_page }}</div>
           </div>
         </div>
         
@@ -42,6 +43,7 @@
                 <div>{{ 'TODO: Get List Item Descripton, Use updated_at instead of created_at' }}</div>
               </div>
               <div class="timestamp">{{ item.created_at }}</div>
+              <div class="num-pages">Page number: {{ item.max_page === 0 ? 'None' : item.max_page }}</div>
             </div>
           </div>
           

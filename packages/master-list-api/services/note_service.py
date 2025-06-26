@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 
 from db_init.schemas import Note, Tag, NoteItem, NoteItemList
-from models.models import CreateNoteGroup, NoteCreation, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
+from models.models import NoteItem as NoteItemModel, ResponseData
+from models.models import CreateNoteGroup, MoveNoteGroup, NoteCreation, NoteEntry, NoteGroupResponse, NoteItemsResponse, TagEntry, TagResponse, NoteResponse
 from sqlalchemy import and_, select, delete, tuple_, update
 from sqlalchemy import func, case
 
@@ -15,6 +16,155 @@ from sqlalchemy import func, case
 class NoteService:
     def __init__(self, db: Session):
         self.db = db
+        
+    def move_note_items(self, note_group: MoveNoteGroup, user_id: UUID) -> ResponseData:
+        """
+        Move note items to a new list or tag.
+        
+        Args:
+            note_group: MoveNoteGroup object containing the items to move
+            user_id: UUID of the user performing the move
+        """
+        if note_group.move_type is 'list':
+            self.move_note_items_to_list(note_group, user_id)
+            max_page = note_group.current_page
+        elif note_group.move_type is 'page':
+            max_page = self.move_note_items_to_page(note_group, user_id)
+        return ResponseData(
+            message="Note items moved successfully",
+            data = {
+                "max_page": max_page
+            },
+            error=None
+        )
+        
+    def get_max_page(self, parent_id: UUID, parent_list_type: str) -> int:
+        """
+        Get the maximum page number for a given parent ID and list type.
+        
+        Args:
+            parent_id: UUID of the parent (tag or note)
+            parent_list_type: Type of the parent list ('note' or 'tag')
+            
+        Returns:
+            int: Maximum page number
+        """
+        if not parent_id or not parent_list_type:
+            return 0
+        # Query to get the maximum page number for the given parent ID and list type
+        max_page_query = (
+            self.db.query(func.max(NoteItemList.page))
+            .filter(
+                NoteItemList.list_id == parent_id,
+                NoteItemList.list_type == parent_list_type
+            )
+        )
+        max_page = max_page_query.scalar()
+        return max_page if max_page is not None else 0
+        
+    def move_note_items_to_page(self, note_group: MoveNoteGroup, user_id: UUID) -> int:
+        """
+        Move note items to a new page (list).
+        
+        Args:
+            note_group: MoveNoteGroup object containing the items to move
+            user_id: UUID of the user performing the move
+        """
+        # Validate the note group
+        if not note_group or not note_group.moved_state:
+            raise HTTPException(status_code=400, detail="Invalid note group data")
+        
+        # Get the parent ID and type from the note group
+        parent_id = note_group.list_id
+        parent_list_type = note_group.list_type
+        state = note_group.moved_state
+        
+        print('move_note_items_to_page')
+        createGroupCurrent = CreateNoteGroup(
+            parent_tag_id=parent_id,
+            parent_list_type=parent_list_type,
+            items=state.filtered,
+            page=note_group.current_page 
+        )
+        
+        self.update_note_items(createGroupCurrent, user_id=user_id, origin_type=parent_list_type)
+        get_max_page = self.get_max_page(parent_id, parent_list_type)
+        new_page = get_max_page + 1
+        
+        createGroup = CreateNoteGroup(
+            parent_tag_id=parent_id,
+            parent_list_type=parent_list_type,
+            items=state.moved,
+            page=new_page,  # Set the new page number
+        )
+        self.update_note_items(createGroup, user_id=user_id, origin_type=parent_list_type)
+        
+        return new_page
+        
+    def move_note_items_to_list(self, note_group: MoveNoteGroup, user_id: UUID) -> None:
+        """
+        Move note items to a new list or tag.
+        
+        Args:
+            note_group: MoveNoteGroup object containing the items to move
+            user_id: UUID of the user performing the move
+        """
+        # Validate the note group
+        if not note_group or not note_group.moved_state:
+            raise HTTPException(status_code=400, detail="Invalid note group data")
+        
+        # Get the parent ID and type from the note group
+        parent_id = note_group.list_id
+        parent_list_type = note_group.list_type
+        state = note_group.moved_state
+        
+        # Save the title for the new list or tag
+        # self._save_title(parent_list_type, parent_id, note_group.tag_name)
+        
+        # need to look up the tag name to get the tag id
+        tag_id = None
+        tag_query = select(Tag).where(Tag.name == note_group.tag_name) #, Tag.created_by == user_id)
+        tag = self.db.execute(tag_query).scalars().first()
+        if not tag:
+            raise HTTPException(status_code=404, detail=f"Tag '{note_group.tag_name}' not found for user {user_id}")
+        tag_id = tag.id
+        
+        
+        createGroupCurrent = CreateNoteGroup(
+            parent_tag_id=parent_id,
+            parent_list_type=parent_list_type,
+            items=state.filtered
+        )
+        response_filtered = self.update_note_items(createGroupCurrent, user_id=user_id, origin_type=parent_list_type)
+        
+        
+        new_tag_item_response = self.get_note_items(list_id=tag_id, user_id=user_id, list_type="tag")
+        for item in state.moved:
+            item.creation_list_id = None
+            item.creation_type = None
+            item.id = None
+        # new_tag_items.data['notes'] = state.moved   
+        createGroup = CreateNoteGroup(
+            parent_tag_id=tag_id,
+            parent_list_type='tag',
+            items=[]
+        )
+        items = new_tag_item_response.data['notes']
+        for item in items:
+            createGroup.items.append(
+                NoteItemModel(
+                    content=item.content,
+                    id=item.id,
+                    tags=item.tags,
+                    creation_list_id=item.creation_list_id,
+                    
+                    creation_type=item.creation_type,
+                    position=None ,
+                    origin_sort_order=item.origin_sort_order,          
+            ))
+        createGroup.items.extend(state.moved)
+        response_moved = self.update_note_items(createGroup, user_id=user_id, origin_type="tag")
+        
     
     def update_note_items(self, note_group: CreateNoteGroup, user_id: UUID, origin_type: str = "note") -> NoteGroupResponse:
         parent_id = note_group.parent_tag_id
@@ -24,17 +174,17 @@ class NoteService:
         self._save_title(origin_type, parent_id, title)
         
         # First, handle deletion of items no longer in the list (this has changed to delete all items and then add the new ones)
-        self._delete_existing_items(note_group, parent_id, parent_list_type)
+        self._delete_existing_items(note_group, parent_id, parent_list_type, note_group.page)
         
         # Categorize items as new or existing (no longer categorizes, just maps all items to sort order)
-        new_items = self._initialize_note_iems(note_group, parent_id, parent_list_type)
+        new_items = self._initialize_note_items(note_group, parent_id, parent_list_type)
         
         # Get tag mappings
         tag_ids_by_name = self._get_tag_name_id_map(note_group)
         
         # Process new items
         new_created_items, new_associations = self._save_note_items(
-            new_items, tag_ids_by_name, parent_id, parent_list_type, user_id
+            new_items, tag_ids_by_name, parent_id, parent_list_type, user_id, note_group.page
         )
         
         # # Combine results (no longer gets existing items)
@@ -68,7 +218,7 @@ class NoteService:
                 "updated_at": datetime.utcnow()
             })
         
-    def _delete_existing_items(self, note_group: CreateNoteGroup, parent_id: UUID, list_type: str):
+    def _delete_existing_items(self, note_group: CreateNoteGroup, parent_id: UUID, list_type: str, page: int | None = None):
         """
         Delete items that exist in the database but are not in the provided note_group.items list.
         This will delete both the NoteItem entries and their associated NoteItemList records.
@@ -90,7 +240,8 @@ class NoteService:
             .join(NoteItemList, NoteItem.id == NoteItemList.note_item_id)
             .filter(
                 NoteItemList.list_id == parent_id,
-                NoteItemList.list_type == list_type
+                NoteItemList.list_type == list_type,
+                NoteItemList.page == page 
             )
         )
         
@@ -110,7 +261,7 @@ class NoteService:
                 NoteItem.id.in_(item_ids_to_delete)
             ).delete(synchronize_session=False)
     
-    def _initialize_note_iems(self, note_group: CreateNoteGroup, parent_id: UUID, parent_list_type: str):
+    def _initialize_note_items(self, note_group: CreateNoteGroup, parent_id: UUID, parent_list_type: str):
         """
         Categorize items as new or existing.
         
@@ -168,7 +319,81 @@ class NoteService:
         
         return tag_ids_by_name
     
-    def _save_note_items(self, new_items, tag_ids_by_name, parent_id, parent_list_type, user_id):
+# try saving the filtered first to delete the items then try to save?
+#     {
+#     "moved_state": {
+#         "moved": [
+#             {
+#                 "id": "cea7d443-1e3a-48d8-9e6a-25d887ac6720",
+#                 "content": "six 6",
+#                 "created_at": "2025-06-06T15:55:16.818903",
+#                 "updated_at": "2025-06-06T15:55:16.818904",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_numb 1,
+#                 "tags": [],
+#                 "origin_sort_order": 1
+#             },
+#             {
+#                 "id": "8aa381e0-0f86-4ee4-a7a0-160b0921613f",
+#                 "content": "111111",
+#                 "created_at": "2025-06-06T15:55:16.818912",
+#                 "updated_at": "2025-06-06T15:55:16.818913",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 2,
+#                 "tags": [],
+#                 "origin_sort_order": 2
+#             }
+#         ],
+#         "filtered": [
+#             {
+#                 "id": "2593feb8-b3c2-43db-b46c-65788f7201cf",
+#                 "content": "one 1",
+#                 "created_at": "2025-06-06T15:55:16.818887",
+#                 "updated_at": "2025-06-06T15:55:16.818893",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 0,
+#                 "tags": [
+#                     {
+#                         "id": "11111111-1111-1111-1111-111111111111",
+#                         "name": "2",
+#                         "sort_order": 25
+#                     }
+#                 ],
+#                 "origin_sort_order": 0
+#             },
+#             {
+#                 "id": "acf9251c-f7f0-46a5-8848-97a6198a85e0",
+#                 "content": "4444",
+#                 "created_at": "2025-06-06T15:55:16.818921",
+#                 "updated_at": "2025-06-06T15:55:16.818922",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 3,
+#                 "tags": [],
+#                 "origin_sort_order": 3
+#             },
+#             {
+#                 "id": "7c0a7efe-3863-4d8e-943f-b091e78fb3d0",
+#                 "content": "<br>",
+#                 "created_at": "2025-06-06T15:55:16.818929",
+#                 "updated_at": "2025-06-06T15:55:16.818930",
+#                 "creation_list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#                 "creation_type": "note",
+#                 "sequence_number": 4,
+#                 "tags": [],
+#                 "origin_sort_order": 4
+#             }
+#         ]
+#     },
+#     "list_id": "39b86243-9a87-4559-8534-e6e4e40ab1b7",
+#     "list_type": "note",
+#     "tag_name": "2"
+# }
+    
+    def _save_note_items(self, new_items, tag_ids_by_name, parent_id, parent_list_type, user_id, page: str | None = None):
         """
         Create new note items and their associations.
         
@@ -220,7 +445,8 @@ class NoteService:
                     list_id=parent_id,
                     list_type=parent_list_type,
                     is_origin=is_origin,
-                    sort_order=parent_sort_order
+                    sort_order=parent_sort_order,
+                    page=page  
                 )
                 self.db.add(parent_association)
                 new_associations.append(parent_association)
@@ -238,6 +464,7 @@ class NoteService:
                 
                 # Determine the sort_order value
                 sort_order = tag.sort_order
+                a_page = tag.page
                 if sort_order is None:
                     # Check if we've already cached the highest sort order for this tag
                     if tag_id not in highest_sort_orders:
@@ -262,7 +489,8 @@ class NoteService:
                     list_id=tag_id,
                     list_type='tag',
                     is_origin=item.creation_list_id == tag_id and item.creation_type == 'tag',
-                    sort_order=sort_order # If sort order is None then we will have to get the tag count for that id in the NoteItemList table
+                    sort_order=sort_order, # If sort order is None then we will have to get the tag count for that id in the NoteItemList table
+                    page=a_page
                 )
                 self.db.add(tag_association)
                 new_associations.append(tag_association)
@@ -277,7 +505,8 @@ class NoteService:
                     list_id=item.creation_list_id,
                     list_type=item.creation_type,
                     is_origin=True,
-                    sort_order=item.origin_sort_order
+                    sort_order=item.origin_sort_order,
+                    page=item.origin_page
                 )
                 self.db.add(origin_association)
                 new_associations.append(origin_association)
@@ -286,7 +515,7 @@ class NoteService:
     
     
     
-    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str) -> NoteItemsResponse:
+    def get_note_items(self, list_id: UUID, user_id: UUID, list_type: str, page: int | None = None) -> NoteItemsResponse:
         """
         Given a list_id and list_type, retrieve all NoteItems in that list and all Tags associated with those NoteItems.
         Orders NoteItems based on sort_order field in NoteItemList.
@@ -341,7 +570,8 @@ class NoteService:
             and_(
                 NoteItem.id == NoteItemList.note_item_id,
                 NoteItemList.list_id == list_id,
-                NoteItemList.list_type == list_type
+                NoteItemList.list_type == list_type,
+                NoteItemList.page == page
             )
         ).where(
             NoteItem.created_by == user_id
@@ -363,6 +593,7 @@ class NoteService:
             NoteItemList.list_type,
             NoteItemList.is_origin,
             NoteItemList.sort_order,
+            NoteItemList.page
         ).where(
             NoteItemList.note_item_id.in_(note_item_ids)
         ).order_by(
@@ -397,7 +628,7 @@ class NoteService:
         this_list_order = {}
         
         # Group associations by note_item_id for easier processing
-        for a_list_id, note_item_id, a_list_type, is_origin, sort_order in tag_associations:
+        for a_list_id, note_item_id, a_list_type, is_origin, sort_order, a_page in tag_associations:
             if note_item_id not in note_item_to_associations:
                 note_item_to_associations[note_item_id] = []
             
@@ -410,7 +641,8 @@ class NoteService:
                 'list_id': a_list_id,
                 'list_type': a_list_type,
                 'is_origin': is_origin,
-                'sort_order': sort_order
+                'sort_order': sort_order,
+                'page': a_page
             })
         
         # Process note items in the order they were fetched (by sort_order)
@@ -433,12 +665,14 @@ class NoteService:
                 assoc_list_type = assoc['list_type']
                 is_origin = assoc['is_origin']
                 assoc_sort_order = assoc['sort_order']
+                a_page = assoc['page']
                 
                 # Check if this is the origin
                 if is_origin:
                     origin_id = a_list_id
                     origin_type = assoc_list_type
                     origin_sort_order = assoc_sort_order
+                    origin_page = a_page
                     
                 # TODO: Maybe not: Potentially move checking if you are on this list here to get this list sort order
                 
@@ -447,7 +681,8 @@ class NoteService:
                     tag_data.append({
                         'id': '11111111-1111-1111-1111-111111111111',
                         'name': tag_map[a_list_id]['name'],
-                        'sort_order': assoc_sort_order
+                        'sort_order': assoc_sort_order,
+                        'page': a_page
                     })
             
             note_responses.append(
@@ -461,7 +696,8 @@ class NoteService:
                     sequence_number=note_item.sequence_number,
                     tags=tag_data, #assigned_tags,
                     sort_order=sort_order,  # Include sort_order in response if needed
-                    origin_sort_order= origin_sort_order
+                    origin_sort_order= origin_sort_order,
+                    origin_page=origin_page
                 )
             )
         
@@ -471,8 +707,9 @@ class NoteService:
         tag_responses = []
         
         # Build a map of tags by note_item_id and their sort_orders
+        # tag_sort_orders isn't used even though it is set here, can I remove it
         tag_sort_orders = {}
-        for a_list_id, note_item_id, b_list_type, is_origin, sort_order in tag_associations:
+        for a_list_id, note_item_id, b_list_type, is_origin, sort_order, a_page in tag_associations:
             if b_list_type == 'tag' and a_list_id in tag_map:
                 if a_list_id not in tag_sort_orders or (sort_order is not None and (tag_sort_orders[a_list_id] is None or sort_order < tag_sort_orders[a_list_id])):
                     tag_sort_orders[a_list_id] = sort_order
@@ -498,20 +735,87 @@ class NoteService:
         # Sort the note items based on this list's sort_order
         note_responses.sort(key=lambda x:  (this_list_order.get(x.id) is None, this_list_order.get(x.id)))
         [print('sortOrder', this_list_order.get(x.id), 'content', x.content) for x in note_responses]
-        
+        max_page = self.get_max_page(list_id, list_type)
         return NoteItemsResponse(
             data={
                 "notes": note_responses,  # Already ordered by sort_order from the query
                 "tags": tag_responses,    # Ordered by sort_order
                 "list_name": list_name,
                 "list_type": list_type,
-                "color_order": color_order
+                "color_order": color_order,
+                "max_page": max_page
             },
             message="Success",
             error=None
         )
+        
+    
+    def delete_page(
+        self,
+        list_id: UUID,
+        user_id: UUID,  # Not used in this method but could be useful for logging or future checks,
+        list_type: str,       # 'note' or 'tag'
+        page_to_delete: int
+    ) -> None:
+        """
+        Remove a page from a note/list, delete the NoteItems on that page,
+        and clean up every association that refers to those NoteItems.
+        """
 
-   
+        if list_type not in ("note", "tag"):
+            raise ValueError("list_type must be 'note' or 'tag'")
+
+        with self.db.begin():                       # one atomic tx
+        # ── 1. delete page-specific associations, grab their ids ──────────────
+            item_ids_subq = (
+                select(NoteItem.id)
+                .join(NoteItemList, NoteItem.id == NoteItemList.note_item_id)
+                .where(
+                    NoteItemList.list_id   == list_id,
+                    NoteItemList.list_type == list_type,
+                    NoteItemList.page      == page_to_delete,
+                    NoteItem.created_by    == user_id,
+                )
+            )
+
+            page_assoc_cte = (
+                delete(NoteItemList)
+                .where(NoteItemList.note_item_id.in_(item_ids_subq))
+                .returning(NoteItemList.note_item_id)
+                .cte("page_assoc")
+            )
+
+            # materialise the delete
+            self.db.execute(select(func.count()).select_from(page_assoc_cte))
+
+            # ── 2. delete every remaining association for those items ─────────────
+            delete_other_assoc_stmt = (
+                delete(NoteItemList)
+                .where(NoteItemList.note_item_id.in_(select(page_assoc_cte.c.note_item_id)))
+            )
+            self.db.execute(delete_other_assoc_stmt, execution_options={"synchronize_session": False})
+
+            # ── 3. drop the NoteItem rows themselves ───────────────────────────────
+            delete_items_stmt = (
+                delete(NoteItem)
+                .where(NoteItem.id.in_(select(page_assoc_cte.c.note_item_id)))
+            )
+            self.db.execute(delete_items_stmt, execution_options={"synchronize_session": False})
+
+            # ── 4. re-number later pages ───────────────────────────────────────────
+            renumber_stmt = (
+                update(NoteItemList)
+                .where(
+                    and_(
+                        NoteItemList.list_id == list_id,
+                        NoteItemList.list_type == list_type,
+                        NoteItemList.page > page_to_delete,
+                    )
+                )
+                .values(page=NoteItemList.page - 1)
+            )
+            self.db.execute(renumber_stmt, execution_options={"synchronize_session": False})
+
 
     # TODO: Move to tag repo, then call from here
     def create_tag(self, name: str, user_id:  Optional[UUID], parent_tag_id: Optional[UUID] = None) -> TagEntry:
@@ -559,9 +863,6 @@ class NoteService:
             order=tag.creation_order,
             sort_order=None
         )
-        
-        
-        
     
     def create_note(self, user_id:  Optional[UUID]) -> TagEntry:
         """
@@ -711,7 +1012,7 @@ class NoteService:
 
         tag_responses = []
         for tag in tags:
-            
+            max_page = self.get_max_page(tag.id, 'tag')
             tag_responses.append(
                 TagEntry(
                     id=tag.id,
@@ -719,7 +1020,8 @@ class NoteService:
                     parent_id=tag.parent_id,
                     created_at=tag.created_at,
                     order=tag.creation_order,
-                    sort_order=None
+                    sort_order=None,
+                    max_page=max_page,
                 )
             )
         
@@ -849,7 +1151,7 @@ class NoteService:
                     else:
                         # No items found, set description to None/null
                         description = None
-                print('description', description)
+                max_page = self.get_max_page(note.id, 'note')
                 note_responses.append(
                     NoteEntry(
                         id=note.id,
@@ -857,7 +1159,8 @@ class NoteService:
                         description=description,
                         created_at=note.created_at,
                         updated_at=note.updated_at,
-                        order=i
+                        order=i,
+                        max_page=max_page,
                     )
                 )
             

@@ -12,6 +12,8 @@ export interface TagProps {
     parent_id: string;
     created_at: string;
     order: number;
+    max_page?: number | null;
+    page?: number | null;
 }
 export interface NoteProps {
     id: string;
@@ -20,6 +22,7 @@ export interface NoteProps {
     create_at: string;
     updated_at: string;
     order: number;
+    max_page: number | null;
 }
 export interface TagSearch extends Response<TagProps[]> {}
 export interface TagCreate extends Response<TagProps> {}
@@ -41,4 +44,5 @@ export interface NoteElementResponse {
     list_name: string;
     list_type: string;
     color_order: number | null;
+    max_page: number;
 }

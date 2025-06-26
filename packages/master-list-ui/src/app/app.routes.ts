@@ -36,14 +36,6 @@ export const routes: Routes = [
                 path: '',
                 loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
             },
-            // {
-            //     path: 'note',
-            //     loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
-            // },
-            // {
-            //     path: 'tag',
-            //     loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
-            // },
         ],
     },
     {
@@ -55,14 +47,17 @@ export const routes: Routes = [
                 path: '',
                 loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
             },
-            // {
-            //     path: 'note',
-            //     loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
-            // },
-            // {
-            //     path: 'tag',
-            //     loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
-            // },
+        ]
+    },
+    {
+        path: 'lists/:listType/:id/:page',
+        loadComponent: () => import('./components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
+        canActivate: [AuthorizedUserGuard], // [MsalGuard], //
+        children: [
+            {
+                path: '',
+                loadComponent: () => import('./components/list-editor/list-editor.component').then(m => m.ListEditorComponent),
+            },
         ]
     },
 ];

@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject } from 'rxjs';
-import { NoteItemTag, Paragraph } from '../../types/note';
+import { MoveParagraphs, NoteItemTag, Paragraph } from '../../types/note';
 import { ElementRef, Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { TagCssGenerator } from '../../services/tag-css-generator';
@@ -206,6 +206,12 @@ export class MasterLayoutService {
         this.saveHistory(paragraphs);
         return;
     }
+    moveParagraph(paragraphs: Paragraph[]): MoveParagraphs {
+        this.setAffectedRange(paragraphs);
+        const moved = this.affectedRows.length > 0 ? this.affectedRows : paragraphs.filter(x => this.selectedParagraphIds.includes(x.id));
+        const filtered = paragraphs.filter(x => !moved.find(y => x.id === y.id));
+        return { moved, filtered}
+    }
 
     // Creating a duplicatge paragraph and putting it at the top
     private mergeParagraphs(affectedRows: any[], paragraphs: Paragraph[]) {
@@ -286,7 +292,7 @@ export class MasterLayoutService {
 
     private duplicateTags(tags: NoteItemTag[], copyTagSort: boolean): NoteItemTag[] {
         if (!copyTagSort) {
-            return tags.map(tag => ({ ...tag, sort_order: null }));
+            return tags.map(tag => ({ ...tag, sort_order: null, page: null }));
         }
         return tags.map(tag => ({ ...tag }));
     }
@@ -308,6 +314,7 @@ export class MasterLayoutService {
                 creation_list_id: existingParagraph?.creation_list_id || null,
                 creation_type: existingParagraph?.creation_type || null,
                 origin_sort_order: existingParagraph?.origin_sort_order, // Need to implement this as null not undefined
+                origin_page: existingParagraph?.origin_page || null,
             };
         });
         paragraphs.length = 0;
