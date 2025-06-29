@@ -6,7 +6,7 @@ from sqlalchemy.exc import NoResultFound
 from fastapi import Request
 
 from fastapi import APIRouter, Depends, HTTPException
-from services.note_service import NoteService
+from services.tag_service import TagService
 from core.database import get_db
 from models.models import CreateNoteGroup, MoveNoteGroup, NoteItemsResponse, ResponseData, TagButton, TagCreation, TagResponse, NoteGroupResponse
 from core.auth import authenticate
@@ -26,8 +26,8 @@ logger = logging.getLogger("routers.bins")
 
 
 # Dependency to get NoteService
-def get_note_service(db: Session = Depends(get_db)):
-    return NoteService(db)
+def get_tag_service(db: Session = Depends(get_db)):
+    return TagService(db)
 
 def get_graph_service():
     return GraphService()
@@ -41,7 +41,7 @@ def get_token_service():
 @authenticate
 async def delete_tag_button(request: Request, tag_name: str,
     graph_service: GraphService = Depends(get_graph_service),
-    note_service: NoteService = Depends(get_note_service),
+    note_service: TagService = Depends(get_tag_service),
     token_service: TokenService = Depends(get_token_service)):
     # tag_buttons_db.append(tag_button)
     # Convert it to a TagCreation by unpacking and adding the id
@@ -72,7 +72,7 @@ async def delete_tag_button(request: Request, tag_name: str,
 @authenticate
 async def create_tag_button(request: Request, tag_button: TagButton,
     graph_service: GraphService = Depends(get_graph_service),
-    note_service: NoteService = Depends(get_note_service),
+    note_service: TagService = Depends(get_tag_service),
     token_service: TokenService = Depends(get_token_service)):
     # tag_buttons_db.append(tag_button)
     # Convert it to a TagCreation by unpacking and adding the id
@@ -109,7 +109,7 @@ async def get_tags(
     pageSize: int = Query(10, alias="pageSize", ge=1, le=100, description="Number of tags per page"),
     id: Optional[str] = None,
     graph_service: GraphService = Depends(get_graph_service),
-    note_service: NoteService = Depends(get_note_service),
+    note_service: TagService = Depends(get_tag_service),
 ):
     """Create a new tag"""
     # print('USERID!!!!!!!!! ', request.state.user_id)

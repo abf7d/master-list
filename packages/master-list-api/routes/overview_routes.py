@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi import Request
 
 from fastapi import APIRouter, Depends
-from services.note_service import NoteService
+from services.overview_service import OverviewService
 from core.database import get_db
 from models.models import CreateNoteGroup, MoveNoteGroup, NoteItemsResponse, ResponseData
 from core.auth import authenticate
@@ -36,8 +36,8 @@ logger = logging.getLogger("routers.bins")
 
 
 # Dependency to get NoteService
-def get_note_service(db: Session = Depends(get_db)):
-    return NoteService(db)
+def get_overview_service(db: Session = Depends(get_db)):
+    return OverviewService(db)
 
 def get_graph_service():
     return GraphService()
@@ -56,8 +56,8 @@ async def get_note_items(request: Request, parent_tag_id: str, list_type: str,
                             None,  # default value if caller omits it
                             ge=1,
                             description="Page number (1-based); omit for first page"
-    ), note_service: NoteService = Depends(get_note_service),): 
-    return note_service.get_note_items(parent_tag_id, request.state.user_id, list_type, page)
+    ), overview_service: OverviewService = Depends(get_overview_service),): 
+    return overview_service.get_note_items(parent_tag_id, request.state.user_id, list_type, page)
 
 
 # overview Deletes a Paginatated Page from the resource
@@ -68,8 +68,8 @@ async def delete_page(request: Request, parent_tag_id: str, list_type: str,
                             None,  # default value if caller omits it
                             ge=1,
                             description="Page number (1-based); omit for first page"
-    ), note_service: NoteService = Depends(get_note_service),): 
-    note_service.delete_page(parent_tag_id, request.state.user_id, list_type, page)
+    ), overview_service: OverviewService = Depends(get_overview_service),): 
+    overview_service.delete_page(parent_tag_id, request.state.user_id, list_type, page)
     response = ResponseData(
         message="Note created successfully",
         error="",

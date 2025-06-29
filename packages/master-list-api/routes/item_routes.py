@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi import Request
 
 from fastapi import APIRouter, Depends
-from services.note_service import NoteService
+from services.item_service import ItemService
 from core.database import get_db
 from models.models import CreateNoteGroup, MoveNoteGroup, NoteItemsResponse, ResponseData
 from core.auth import authenticate
@@ -23,8 +23,8 @@ logger = logging.getLogger("routers.bins")
 
 
 # Dependency to get NoteService
-def get_note_service(db: Session = Depends(get_db)):
-    return NoteService(db)
+def get_item_service(db: Session = Depends(get_db)):
+    return ItemService(db)
 
 def get_graph_service():
     return GraphService()
@@ -38,10 +38,10 @@ def get_token_service():
 @router.post("/note-items/", response_model=NoteItemsResponse)
 @authenticate
 async def post_note_items(request: Request, note_group: CreateNoteGroup, 
-        note_service: NoteService = Depends(get_note_service),):
+        item_service: ItemService = Depends(get_item_service),):
     print('NOTE GROUP', note_group)
     
-    note_service.update_note_items(note_group, request.state.user_id)
+    item_service.update_note_items(note_group, request.state.user_id)
    
     # Convert db_note to NoteResponse format
     return NoteItemsResponse(
@@ -56,10 +56,10 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
 @router.post("/note-items/move", response_model=ResponseData)
 @authenticate
 async def move_note_items(request: Request, note_group: MoveNoteGroup, 
-        note_service: NoteService = Depends(get_note_service),):
+        item_service: ItemService = Depends(get_item_service),):
     print('MOVE GROUP', note_group)
     
-    response = note_service.move_note_items(note_group, request.state.user_id)
+    response = item_service.move_note_items(note_group, request.state.user_id)
    
     # Convert db_note to NoteResponse format
     return response
