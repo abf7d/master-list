@@ -6,7 +6,7 @@ export type TextDecoration = 'bold' | 'underline' | 'strike' | 'italic' | 'large
 @Injectable({
     providedIn: 'root',
 })
-export class StyleMangerService {
+export class ItemStyleMangerService {
     /* -----------------------------------------------------------
    Rich-text helper  |  src/app/shared/rich-text.util.ts
    ----------------------------------------------------------- */

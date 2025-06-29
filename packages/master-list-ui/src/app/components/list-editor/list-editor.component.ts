@@ -3,11 +3,11 @@ import { Component, ElementRef, HostListener, ViewChild, ViewEncapsulation } fro
 import { NoteItemTag, Paragraph } from '../../types/note';
 // import {} from '../meta-tags/meta-tag.service';
 // import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
-import { NotesApiService } from '../../services/notes-api.service';
-import { TagCssGenerator } from '../../services/tag-css-generator';
+import { NoteApiService } from '../../services/api/note-api.service';
+import { TagColorManager } from '../../services/tag-color-manager';
 import { BehaviorSubject, debounceTime, skip, Subject, takeUntil, tap } from 'rxjs';
 import { TagDelete, TagSelection, TagSelectionGroup } from '../../types/tag';
-import { TagApiService } from '../../services/tag-api';
+import { TagApiService } from '../../services/api/tag-api';
 import { ToastrService } from 'ngx-toastr';
 import { MasterLayoutService } from './master-layout.service';
 import { AuthCoreService } from '@master-list/auth';
@@ -19,9 +19,11 @@ import { TagPickerComponent } from '../tag-picker/tag-picker.component';
 import { FormsModule } from '@angular/forms';
 import { AutosizeDirective } from '../../directives/auto-size.directive';
 import { ClickOutsideDirective } from '../../directives/click-outside.directive';
-import { TextDecoration } from '../../services/style-manager.service';
+import { TextDecoration } from '../../services/item-style-manager.service';
 import { AddTag, MoveItems } from '../../types/tag/tag-picker-events';
 import { ModalService } from '../confirm-dialog/modal.service';
+import { OverviewApiService } from '../../services/api/overview-api.service';
+import { ItemApiService } from '../../services/api/item-api.service';
 
 @Component({
     selector: 'app-list-editor',
@@ -56,9 +58,11 @@ export class ListEditorComponent {
 
     affectedRows: Paragraph[] = [];
     constructor(
-        private notesApi: NotesApiService,
+        private notesApi: NoteApiService,
+        private overviewApi: OverviewApiService,
+        private itemsApi: ItemApiService,
         private tagApi: TagApiService,
-        private tagColorService: TagCssGenerator,
+        private tagColorService: TagColorManager,
         private toastr: ToastrService,
         private manager: MasterLayoutService,
         private authService: AuthCoreService,
@@ -91,7 +95,7 @@ export class ListEditorComponent {
             this.currentPage = +params.get('page')! || null;
             this.listType = listType as 'tag' | 'note';
             if (listType === 'note') {
-                this.tagApi.getNotes(null, 1, 10, listId).subscribe(x => {
+                this.notesApi.getNotes(null, 1, 10, listId).subscribe(x => {
                     const found = x.data.find((y: any) => y.id === listId);
                     if (found) {
                         this.listId = found.id;
@@ -117,7 +121,7 @@ export class ListEditorComponent {
 
     getPageNoteItems() {
         this.tagHighlightNames = [];
-        this.notesApi.getNoteElements(this.listId, this.listType, this.currentPage).subscribe({
+        this.overviewApi.getOverview(this.listId, this.listType, this.currentPage).subscribe({
             next: x => {
                 console.log('getNotes', x);
                 const noteElements = x.data.notes;
@@ -204,7 +208,7 @@ export class ListEditorComponent {
         });
     }
     public deletePage() {
-        this.notesApi.deletePage(this.listId, this.listType, this.currentPage).subscribe({
+        this.overviewApi.deletePage(this.listId, this.listType, this.currentPage).subscribe({
             next: result => {
                 this.toastr.success('Page deleted successfully', 'Success');
                 if (this.currentPage === this.maxPage) [(this.currentPage = null)];
@@ -239,7 +243,7 @@ export class ListEditorComponent {
                 maxWidth: '490px',
             });
             if (ok) {
-                this.notesApi.moveNoteElements(movedState, this.listId, this.listType, event.tagName, event.action, this.currentPage).subscribe({
+                this.itemsApi.moveNoteItems(movedState, this.listId, this.listType, event.tagName, event.action, this.currentPage).subscribe({
                     next: result => {
                         this.maxPage = result.data.max_page;
                         this.pages = Array.from({ length: this.maxPage }, (_, i) => i + 1);
@@ -290,7 +294,7 @@ export class ListEditorComponent {
 
     public deleteList() {
         if (this.listType === 'note') {
-            this.tagApi.deleteNote(this.listId).subscribe({
+            this.notesApi.deleteNote(this.listId).subscribe({
                 next: result => {
                     this.toastr.success('Note deleted', 'Success');
                     this.router.navigate(['/', 'lists']);
@@ -367,7 +371,7 @@ export class ListEditorComponent {
         if (!this.isSaving && (!this.error || overrideError)) {
             this.isSaving = true;
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements([], this.listId, this.listType, this.listName, this.currentPage).subscribe({
+            this.itemsApi.saveNoteItems([], this.listId, this.listType, this.listName, this.currentPage).subscribe({
                 next: result => {
                     this.paragraphs = [];
                     this.isSaving = false;
@@ -393,7 +397,7 @@ export class ListEditorComponent {
                 }
             }
             this.updateParagraphPositions();
-            this.notesApi.saveNoteElements(this.paragraphs, this.listId, this.listType, this.listName, this.currentPage).subscribe({
+            this.itemsApi.saveNoteItems(this.paragraphs, this.listId, this.listType, this.listName, this.currentPage).subscribe({
                 next: result => {
                     this.isSaving = false;
                 },

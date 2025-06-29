@@ -17,6 +17,11 @@ from services.graph_service import GraphService
 from services.token_service import TokenService
 
 router = APIRouter()
+
+# router = APIRouter(prefix="/notes", tags=["notes"])
+
+# @router.get("/", …)  
+
 # router = APIRouter(prefix="/account")
 
 """ Initialize the logger """

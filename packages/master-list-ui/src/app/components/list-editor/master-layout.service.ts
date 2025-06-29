@@ -2,11 +2,11 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { MoveParagraphs, NoteItemTag, Paragraph } from '../../types/note';
 import { ElementRef, Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { TagCssGenerator } from '../../services/tag-css-generator';
-import { TagApiService } from '../../services/tag-api';
-import { NotesApiService } from '../../services/notes-api.service';
+import { TagColorManager } from '../../services/tag-color-manager';
+import { TagApiService } from '../../services/api/tag-api';
+import { NoteApiService } from '../../services/api/note-api.service';
 import { ListHistoryService } from '../../services/list-history.service';
-import { StyleMangerService, TextDecoration } from '../../services/style-manager.service';
+import { ItemStyleMangerService, TextDecoration } from '../../services/item-style-manager.service';
 
 @Injectable({
     providedIn: 'root',
@@ -25,12 +25,12 @@ export class MasterLayoutService {
     public ctrlDown = false;
     public shiftDown = false;
     constructor(
-        private notesApi: NotesApiService,
+        private notesApi: NoteApiService,
         private tagApi: TagApiService,
-        private tagColorService: TagCssGenerator,
+        private tagColorService: TagColorManager,
         private toastr: ToastrService,
         private historyManager: ListHistoryService, // Assuming you have a history manager service
-        private styleManager: StyleMangerService,
+        private styleManager: ItemStyleMangerService,
     ) {}
     public setEditorRef(editorRef: any) {
         this.editorRef = editorRef;

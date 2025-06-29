@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { LoadList } from '../list-nav-layout/list-nav-layout.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ColorFactoryService } from '../../services/color-factory.service';
-import { TagApiService } from '../../services/tag-api';
+import { TagApiService } from '../../services/api/tag-api';
 import { NoteProps, TagProps } from '../../types/response/response';
+import { NoteApiService } from '../../services/api/note-api.service';
 
 @Component({
     selector: 'ml-nav-list',
@@ -17,7 +18,8 @@ export class NavListComponent implements OnInit {
     public activeItem: string | null = null;
 
     constructor(
-        private listApi: TagApiService,
+        private tagApi: TagApiService,
+        private noteApi: NoteApiService,
         private router: Router,
         private route: ActivatedRoute,
         private colorFactory: ColorFactoryService
@@ -47,7 +49,7 @@ export class NavListComponent implements OnInit {
 
     public getListItems(type: 'note' | 'tag') {
         if (type === 'note') {
-            this.listApi.getNotes(null, 1, 100).subscribe({
+            this.noteApi.getNotes(null, 1, 100).subscribe({
                 next: lists => {
                     // this.items = this.noteItems;
                     // const noteProps[] = lists.data;
@@ -57,7 +59,7 @@ export class NavListComponent implements OnInit {
                 },
             });
         } else {
-            this.listApi.getTags(null, 1, 100).subscribe({
+            this.tagApi.getTags(null, 1, 100).subscribe({
                 next: lists => {
                     // this.items = this.listItems;
                     const listItems = lists.data.map(x => ({...x, color: this.colorFactory.getColor(x.order).backgroundcolor}))
@@ -73,7 +75,7 @@ export class NavListComponent implements OnInit {
     }
 
     public createList(type: 'note' | 'tag') {
-        this.listApi.createNote(type).subscribe({
+        this.noteApi.createNote(type).subscribe({
             next: createResult => {
                 this.router.navigate(['lists', this.activeListTab, createResult.data.id]);
             },

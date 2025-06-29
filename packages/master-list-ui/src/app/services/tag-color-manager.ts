@@ -13,7 +13,7 @@ import { TagProps } from '../types/response/response';
 @Injectable({
     providedIn: 'root',
 })
-export class TagCssGenerator {
+export class TagColorManager {
   // Add this to your component or create a separate service
   constructor(private colorFactory: ColorFactoryService) {}
   /**
