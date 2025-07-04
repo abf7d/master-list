@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NoteItemTag, Paragraph } from '../../types/note';
-// import {} from '../meta-tags/meta-tag.service';
-// import { MetaTagsComponent } from '../meta-tags/meta-tags.component';
 import { NoteApiService } from '../../services/api/note-api.service';
 import { TagColorManager } from '../../services/tag-color-manager';
 import { BehaviorSubject, debounceTime, skip, Subject, takeUntil, tap } from 'rxjs';
@@ -12,7 +10,6 @@ import { ToastrService } from 'ngx-toastr';
 import { ListManagerService } from './list.manager';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
-// import { AddTag } from '../tag-group/tag-group.component';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ColorFactoryService } from '../../services/color-factory.service';
 import { TagPickerComponent } from '../tag-picker/tag-picker.component';
