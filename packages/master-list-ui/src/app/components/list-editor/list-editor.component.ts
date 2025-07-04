@@ -9,7 +9,7 @@ import { BehaviorSubject, debounceTime, skip, Subject, takeUntil, tap } from 'rx
 import { TagDelete, TagSelection, TagSelectionGroup } from '../../types/tag';
 import { TagApiService } from '../../services/api/tag-api';
 import { ToastrService } from 'ngx-toastr';
-import { MasterLayoutService } from './master-layout.service';
+import { ListManagerService } from './list.manager';
 import { AuthCoreService } from '@master-list/auth';
 import { TagUpdate } from '../../types/tag/tag-update';
 // import { AddTag } from '../tag-group/tag-group.component';
@@ -24,6 +24,7 @@ import { AddTag, MoveItems } from '../../types/tag/tag-picker-events';
 import { ModalService } from '../confirm-dialog/modal.service';
 import { OverviewApiService } from '../../services/api/overview-api.service';
 import { ItemApiService } from '../../services/api/item-api.service';
+import { PageApiService } from '../../services/api/page-api.service';
 
 @Component({
     selector: 'app-list-editor',
@@ -60,11 +61,12 @@ export class ListEditorComponent {
     constructor(
         private notesApi: NoteApiService,
         private overviewApi: OverviewApiService,
+        private pageApi: PageApiService,
         private itemsApi: ItemApiService,
         private tagApi: TagApiService,
         private tagColorService: TagColorManager,
         private toastr: ToastrService,
-        private manager: MasterLayoutService,
+        private manager: ListManagerService,
         private authService: AuthCoreService,
         private route: ActivatedRoute,
         private colorFactory: ColorFactoryService,
@@ -169,7 +171,6 @@ export class ListEditorComponent {
 
     clearError() {
         this.error = false;
-        // this.changeSubject.next();
     }
 
     public setHighlight(event: Event): void {
@@ -208,7 +209,7 @@ export class ListEditorComponent {
         });
     }
     public deletePage() {
-        this.overviewApi.deletePage(this.listId, this.listType, this.currentPage).subscribe({
+        this.pageApi.deletePage(this.listId, this.listType, this.currentPage).subscribe({
             next: result => {
                 this.toastr.success('Page deleted successfully', 'Success');
                 if (this.currentPage === this.maxPage) [(this.currentPage = null)];

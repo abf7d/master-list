@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 import uuid
 from uuid import UUID
+from enum import Enum
 
 # Pydantic models for API
   
@@ -126,3 +127,6 @@ class NoteItemsResponse(BaseModel):
     error: Optional[str]
     data: Any
      
+class ListType(str, Enum):
+    notes = "note"
+    tags = "tag"

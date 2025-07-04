@@ -64,3 +64,6 @@ async def move_note_items(request: Request, note_group: MoveNoteGroup,
     # Convert db_note to NoteResponse format
     return response
 
+
+# PATCH /items/{item_id}
+# PATCH /items/move          ← move N items in one call

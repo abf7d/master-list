@@ -11,7 +11,7 @@ import { ItemStyleMangerService, TextDecoration } from '../../services/item-styl
 @Injectable({
     providedIn: 'root',
 })
-export class MasterLayoutService {
+export class ListManagerService {
     selectedParagraphId: string | null = null;
     selectedParagraphIds: string[] = [];
     affectedRows: Paragraph[] = [];
