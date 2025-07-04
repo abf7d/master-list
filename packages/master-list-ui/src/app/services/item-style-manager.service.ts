@@ -6,17 +6,13 @@ export type TextDecoration = 'bold' | 'underline' | 'strike' | 'italic' | 'large
 @Injectable({
     providedIn: 'root',
 })
-export class StyleMangerService {
-    /* -----------------------------------------------------------
-   Rich-text helper  |  src/app/shared/rich-text.util.ts
-   ----------------------------------------------------------- */
-
-    /** Styles you currently support. Add more when needed. */
+export class ItemStyleMangerService {
+    // Rich-text helper
 
     /* ------------- internal helper --------------------------------- */
     /** Insert an invisible boundary marker at the start or end of `range`
      *  and return it. */
-    insertMarker(range: Range, atStart: boolean): HTMLSpanElement {
+    private insertMarker(range: Range, atStart: boolean): HTMLSpanElement {
         const m = document.createElement('span');
         m.className = 'rt-sel-marker';
         m.style.cssText = 'display:inline-block;width:0;height:0;overflow:hidden';
@@ -28,7 +24,7 @@ export class StyleMangerService {
 
     /** If a text node is only PARTLY in the range, split it so that
      *  the chunk we return lies COMPLETELY inside the range. */
-    isolateForRange(node: Text, range: Range): Text {
+    private isolateForRange(node: Text, range: Range): Text {
         // Split at the range start
         if (node === range.startContainer && range.startOffset > 0) {
             node = node.splitText(range.startOffset);
@@ -42,7 +38,7 @@ export class StyleMangerService {
     /** Find the nearest ancestor `<span>` whose *own* classList
      *  contains the decoration we care about. Returns `null`
      *  when the text has no such wrapper.                        */
-    closestDecorated(node: Node, className: string): HTMLSpanElement | null {
+    private closestDecorated(node: Node, className: string): HTMLSpanElement | null {
         let el: Node | null = node.parentNode;
         while (el && el.nodeType === Node.ELEMENT_NODE) {
             const e = el as HTMLElement;
@@ -57,70 +53,69 @@ export class StyleMangerService {
      *  decoration that lies outside the current selection.      */
     /* ---------- NEW: surgical un-wrapper ---------------------------- */
 
- removeDecorationFromNode(node: Text, cls: string): void {
-    const wrapper = this.closestDecorated(node, cls);
-    if (!wrapper) return;
-  
-    /* STEP 1 ─ tighten every ancestor between `node` and `wrapper`
+    private removeDecorationFromNode(node: Text, cls: string): void {
+        const wrapper = this.closestDecorated(node, cls);
+        if (!wrapper) return;
+
+        /* STEP 1 ─ tighten every ancestor between `node` and `wrapper`
        so that `branch` ends as a *direct* child of `wrapper`
        and contains *only* the selected characters. */
-    let branch: Node = node;
-  
-    while (branch.parentNode !== wrapper) {
-      const parent = branch.parentNode as HTMLElement;
-  
-      /* Split the parent element into [before][branch][after]        */
-      const before = document.createDocumentFragment();
-      while (parent.firstChild && parent.firstChild !== branch) {
-        before.appendChild(parent.firstChild);
-      }
-      const after = document.createDocumentFragment();
-      while (branch.nextSibling) {
-        after.appendChild(branch.nextSibling);
-      }
-  
-      if (before.childNodes.length) {
-        const leftClone = parent.cloneNode(false) as HTMLElement;
-        leftClone.appendChild(before);
-        parent.parentNode!.insertBefore(leftClone, parent);
-      }
-      if (after.childNodes.length) {
-        const rightClone = parent.cloneNode(false) as HTMLElement;
-        rightClone.appendChild(after);
-        parent.parentNode!.insertBefore(rightClone, parent.nextSibling);
-      }
-  
-      /* Now `parent` contains only `branch`; climb one level up. */
-      branch = parent;
-    }
-  
-    /* STEP 2 ─ split the *wrapper* itself into [before][branch][after],
+        let branch: Node = node;
+
+        while (branch.parentNode !== wrapper) {
+            const parent = branch.parentNode as HTMLElement;
+
+            /* Split the parent element into [before][branch][after]        */
+            const before = document.createDocumentFragment();
+            while (parent.firstChild && parent.firstChild !== branch) {
+                before.appendChild(parent.firstChild);
+            }
+            const after = document.createDocumentFragment();
+            while (branch.nextSibling) {
+                after.appendChild(branch.nextSibling);
+            }
+
+            if (before.childNodes.length) {
+                const leftClone = parent.cloneNode(false) as HTMLElement;
+                leftClone.appendChild(before);
+                parent.parentNode!.insertBefore(leftClone, parent);
+            }
+            if (after.childNodes.length) {
+                const rightClone = parent.cloneNode(false) as HTMLElement;
+                rightClone.appendChild(after);
+                parent.parentNode!.insertBefore(rightClone, parent.nextSibling);
+            }
+
+            /* Now `parent` contains only `branch`; climb one level up. */
+            branch = parent;
+        }
+
+        /* STEP 2 ─ split the *wrapper* itself into [before][branch][after],
        then replace it with `branch` (thus removing `cls` *only for
        the selected slice*).                                         */
-    const host = wrapper.parentNode!;
-    const beforeW = document.createDocumentFragment();
-    while (wrapper.firstChild && wrapper.firstChild !== branch) {
-      beforeW.appendChild(wrapper.firstChild);
+        const host = wrapper.parentNode!;
+        const beforeW = document.createDocumentFragment();
+        while (wrapper.firstChild && wrapper.firstChild !== branch) {
+            beforeW.appendChild(wrapper.firstChild);
+        }
+        const afterW = document.createDocumentFragment();
+        while (branch.nextSibling) {
+            afterW.appendChild(branch.nextSibling);
+        }
+
+        if (beforeW.childNodes.length) {
+            const leftWrapper = wrapper.cloneNode(false) as HTMLElement;
+            leftWrapper.appendChild(beforeW);
+            host.insertBefore(leftWrapper, wrapper);
+        }
+        if (afterW.childNodes.length) {
+            const rightWrapper = wrapper.cloneNode(false) as HTMLElement;
+            rightWrapper.appendChild(afterW);
+            host.insertBefore(rightWrapper, wrapper.nextSibling);
+        }
+
+        wrapper.replaceWith(branch); // bold/underline/strike gone for *exact* slice
     }
-    const afterW = document.createDocumentFragment();
-    while (branch.nextSibling) {
-      afterW.appendChild(branch.nextSibling);
-    }
-  
-    if (beforeW.childNodes.length) {
-      const leftWrapper = wrapper.cloneNode(false) as HTMLElement;
-      leftWrapper.appendChild(beforeW);
-      host.insertBefore(leftWrapper, wrapper);
-    }
-    if (afterW.childNodes.length) {
-      const rightWrapper = wrapper.cloneNode(false) as HTMLElement;
-      rightWrapper.appendChild(afterW);
-      host.insertBefore(rightWrapper, wrapper.nextSibling);
-    }
-  
-    wrapper.replaceWith(branch); // bold/underline/strike gone for *exact* slice
-  }
-  
 
     /* ------------- public API -------------------------------------- */
 
@@ -131,7 +126,7 @@ export class StyleMangerService {
      *  - Splits boundary text nodes so styling never bleeds  */
 
     // This only works if muliple lines are selected and if there is already a style, it doesn't split it up with a new style, it just adds the style to the parent
-    toggleDecoration(decoration: TextDecoration): Range | null{
+    public toggleDecoration(decoration: TextDecoration): Range | null {
         // const decoration = decoration1 === 'bold' ? 'bold' : decoration1 === 'underline' ? 'underline' : 'strike';
 
         const sel = window.getSelection();
@@ -197,6 +192,5 @@ export class StyleMangerService {
         endMarker.remove();
 
         return newRange;
-       
     }
 }

@@ -11,12 +11,7 @@ export class ListHistoryService {
   private isUndoRedoing: boolean = false;
   private maxHistorySize: number = 4 // Default limit
   
-  constructor() {
-    // Allow custom history size limit
-    // if (maxHistorySize !== undefined && maxHistorySize > 0) {
-    //   this.maxHistorySize = maxHistorySize;
-    // }
-  }
+  constructor() {}
   
   get isPerformingOperation(): boolean {
     return this.isUndoRedoing;

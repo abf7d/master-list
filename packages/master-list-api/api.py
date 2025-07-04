@@ -48,7 +48,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
-from routes import (notes_routes, account_routes) #, tags_routes
+from routes import (tag_routes, note_routes, item_routes, overview_routes, account_routes, page_routes) #(notes_routes, account_routes) #, tags_routes
 
 app = FastAPI()
 
@@ -80,8 +80,13 @@ async def logging_middleware(request: Request, call_next):
         raise
 
 
-app.include_router(notes_routes.router)
+# app.include_router(notes_routes.router)
+app.include_router(tag_routes.router)
+app.include_router(note_routes.router)
+app.include_router(item_routes.router)
+app.include_router(overview_routes.router)
 app.include_router(account_routes.router)
+app.include_router(page_routes.router)
 
 @app.on_event("startup")
 async def startup_event():
