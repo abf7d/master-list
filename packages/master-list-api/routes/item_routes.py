@@ -15,7 +15,6 @@ from services.graph_service import GraphService
 from services.token_service import TokenService
 
 router = APIRouter()
-# router = APIRouter(prefix="/account")
 
 """ Initialize the logger """
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -29,7 +28,6 @@ def get_item_service(db: Session = Depends(get_db)):
 def get_graph_service():
     return GraphService()
 
-
 def get_token_service():
     return TokenService()
 
@@ -39,7 +37,6 @@ def get_token_service():
 @authenticate
 async def post_note_items(request: Request, note_group: CreateNoteGroup, 
         item_service: ItemService = Depends(get_item_service),):
-    print('NOTE GROUP', note_group)
     
     item_service.update_note_items(note_group, request.state.user_id)
    
@@ -49,8 +46,6 @@ async def post_note_items(request: Request, note_group: CreateNoteGroup,
         error=None,
         data='test1234'
     )
-
-  
 
 # Items
 @router.post("/note-items/move", response_model=ResponseData)
@@ -63,7 +58,3 @@ async def move_note_items(request: Request, note_group: MoveNoteGroup,
    
     # Convert db_note to NoteResponse format
     return response
-
-
-# PATCH /items/{item_id}
-# PATCH /items/move          ← move N items in one call

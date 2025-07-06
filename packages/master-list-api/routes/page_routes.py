@@ -15,8 +15,6 @@ from services.graph_service import GraphService
 from services.token_service import TokenService
 
 
-
-
 router = APIRouter(
     prefix="/{list_type}/{list_id}/page",
     tags=["pages"],
@@ -26,9 +24,6 @@ router = APIRouter(
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("routers.bins")
 
-# class ListType(str, Enum):
-#     notes = "note"
-#     tags = "tag"
 
 # Dependency to get NoteService
 def get_overview_service(db: Session = Depends(get_db)):
@@ -58,33 +53,3 @@ async def delete_page(request: Request, list_type: ListType, list_id: str,
     )
     return response
 
-
-# update api ts service and fix route path
-
-# from enum import Enum
-# from uuid import UUID
-
-# from fastapi import APIRouter, Depends, Path, HTTPException
-
-# class Parent(str, Enum):
-#     notes = "notes"
-#     tags = "tags"
-
-
-# router = APIRouter(
-#     prefix="/{parent}/{parent_id}/pages",
-#     tags=["pages"],
-# )
-
-# @router.post("/", response_model=PageOut, status_code=201)
-# async def create_page(
-#     parent: Parent,             # notes | tags  (Enum as in previous example)
-#     parent_id: UUID,
-#     body: PageCreate,           # e.g. {"title": "New Page"}
-#     svc: PageService = Depends(),
-#     user = Depends(current_user),
-# ):
-#     return await svc.create(parent, parent_id, body, user)
-
-# @router.get("/{page_no}", ...)      # fetch a page
-# @router.delete("/{page_no}", ...)   # delete a page

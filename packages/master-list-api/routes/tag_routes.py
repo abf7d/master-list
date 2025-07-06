@@ -18,7 +18,6 @@ from services.graph_service import GraphService
 from services.token_service import JwtResponse, TokenService
 
 router = APIRouter()
-# router = APIRouter(prefix="/account")
 
 """ Initialize the logger """
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -32,9 +31,9 @@ def get_tag_service(db: Session = Depends(get_db)):
 def get_graph_service():
     return GraphService()
 
-
 def get_token_service():
     return TokenService()
+
 
 #TODO: move this to tag_routes
 @router.delete("/tag/{tag_name}", response_model=ResponseData,)
@@ -100,6 +99,7 @@ async def create_tag_button(request: Request, tag_button: TagButton,
     print('tag response', response)
     return response
 
+
 @router.get("/tags/", response_model=ResponseData)
 @authenticate
 async def get_tags(
@@ -123,13 +123,3 @@ async def get_tags(
 
 
 
-
-
-
-
-
-
-
-
-
-#  GET /tags/{tag_id}/pages/{idx}
