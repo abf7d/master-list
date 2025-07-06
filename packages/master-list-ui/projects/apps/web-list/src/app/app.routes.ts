@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { MsalGuard } from '@azure/msal-angular';
 import { AuthorizedUserGuard } from '@auth/gaurd/authorized-user.guard'; 
 import { ErrorComponent } from '@lists/components/error/error.component';
 
@@ -17,20 +16,10 @@ export const routes: Routes = [
         path: 'error',
         component: ErrorComponent
     },
-    // {
-    //     path: 'main',
-    //     loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-    //     canActivate: [AuthorizedUserGuard],
-    // },
-    // {
-    //     path: 'main/:id',
-    //     loadComponent: () => import('./components/master-layout/master-layout.component').then(m => m.MasterLayoutComponent),
-    //     canActivate: [AuthorizedUserGuard],
-    // },
     {
         path: 'lists',
         loadComponent: () => import('@lists/components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
-        canActivate: [AuthorizedUserGuard], //[MsalGuard], //[
+        canActivate: [AuthorizedUserGuard], 
         children: [
             {
                 path: '',
@@ -41,7 +30,7 @@ export const routes: Routes = [
     {
         path: 'lists/:listType/:id',
         loadComponent: () => import('@lists/components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
-        canActivate: [AuthorizedUserGuard], // [MsalGuard], //
+        canActivate: [AuthorizedUserGuard], 
         children: [
             {
                 path: '',
@@ -52,7 +41,7 @@ export const routes: Routes = [
     {
         path: 'lists/:listType/:id/:page',
         loadComponent: () => import('@lists/components/list-nav-layout/list-nav-layout.component').then(m => m.ListNavLayoutComponent),
-        canActivate: [AuthorizedUserGuard], // [MsalGuard], //
+        canActivate: [AuthorizedUserGuard], 
         children: [
             {
                 path: '',

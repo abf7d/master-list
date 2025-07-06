@@ -140,11 +140,10 @@ export class TagPickerComponent implements OnInit {
         }
     }
 
-    // this triggered removeGroup with a delete = true value
     public remove(tag: TagSelection) {
         this.removeTag.emit(tag.name);
     }
-    // this triggered removeGroup with a delete = false value
+    
     public excludeFromList = (tag: TagSelection) => {
         this.handleDeleteTagComplete(tag!.name);
     };

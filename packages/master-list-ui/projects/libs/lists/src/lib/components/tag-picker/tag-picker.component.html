@@ -17,7 +17,6 @@
                 <a href="javascript:void(0)" class="" (click)="filterTags()">Clear</a>
 
                 <div (clickOutside)="showMoveMenu = false">
-                    <!--  the js:void allows us to click an element while maintaining the text selection for tag/untag/move-->
                     <a href="javascript:void(0)" (click)="showMoveMenu = !showMoveMenu">...</a>
                     <div class="extra-menu" [hidden]="!showMoveMenu">
                         <div>

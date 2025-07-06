@@ -9,22 +9,17 @@
 @if (activeListTab === 'note') {
 <div class="nav-items">
   @for(item of noteItems; track item.id) {
-    <!-- TODO: Detete nav-tile -->
     <div (click)="loadListItem(item.id)" [ngClass]="{'selected': activeListTab === 'note' && activeItem === item.id}">
-        <!-- <ml-nav-tile [itemInfo]="item"></ml-nav-tile> -->
         <div>
           <div class="note-item">
             <div>
               <div class="title">{{ item.title || '-- No Title --' }}</div>
               <div [innerHTML]="item.description"></div>
-              <!-- {{ 'rename to created_at instead of create_at' + item.description }} -->
             </div>
             <div class="timestamp">{{ item.updated_at }}</div>
             <div class="num-pages">Page number: {{ item.max_page === 0 ? 'None' : item.max_page }}</div>
           </div>
         </div>
-        
-
       </div>
   }
 </div>
@@ -32,10 +27,7 @@
 @if (activeListTab === 'tag') {
   <div class="nav-items">
     @for(item of listItems; track item.id) {
-      <!-- TODO: Detete nav-tile -->
       <div (click)="loadListItem(item.id)" [ngClass]="{'selected': activeListTab === 'tag' && activeItem === item.id}">
-          <!-- <ml-nav-tile [itemInfo]="item"></ml-nav-tile> -->
-
           <div>
             <div class="note-item">
               <div>
@@ -46,7 +38,6 @@
               <div class="num-pages">Page number: {{ item.max_page === 0 ? 'None' : item.max_page }}</div>
             </div>
           </div>
-          
       </div>
     }
   </div>

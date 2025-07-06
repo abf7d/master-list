@@ -1,8 +1,6 @@
 import {
   ApplicationConfig,
-  ErrorHandler,
   importProvidersFrom,
-  Injectable,
   provideZoneChangeDetection,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
@@ -11,26 +9,16 @@ import { routes } from './app.routes';
 import {
   HTTP_INTERCEPTORS,
   HttpContextToken,
-  HttpEvent,
-  HttpHandler,
-  HttpInterceptor,
-  HttpRequest,
   provideHttpClient,
   withFetch,
   withInterceptorsFromDi,
 } from '@angular/common/http';
 
-import { environment } from '@env/environment'; // '@environment/environments';
+import { environment } from '@env/environment';
 import { provideToastr } from 'ngx-toastr';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { LoggerModule } from 'ngx-logger';
-import { LoggerService } from '@auth/logger/logger.service'; 
 import { provideClientHydration } from '@angular/platform-browser';
-import { HashLocationStrategy, LocationStrategy } from '@angular/common';
-
-
-
-
 
 import {
   IPublicClientApplication,
@@ -49,11 +37,7 @@ import {
   MsalService,
   MsalGuard,
   MsalBroadcastService,
-  MsalInterceptorAuthRequest,
 } from '@azure/msal-angular';
-import { Observable } from 'rxjs';
-
-
 
 
 export function loggerCallback(logLevel: LogLevel, message: string) {
@@ -66,7 +50,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       clientId: environment.msalConfig.auth.clientId,
       authority: environment.b2cPolicies.authorities.signUpSignIn.authority,
       redirectUri: environment.redirectUri, 
-      postLogoutRedirectUri: environment.postLogoutUrl, //'/home',
+      postLogoutRedirectUri: environment.postLogoutUrl, 
       knownAuthorities: [environment.b2cPolicies.authorityDomain],
       navigateToLoginRequestUrl: false,
       // navigateToLoginRequestUrl: true, //commenting this out allowed me to refresh the page and it navigated
@@ -75,7 +59,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       cacheLocation: BrowserCacheLocation.SessionStorage, 
     },
     system: {
-      allowPlatformBroker: false, // Disables WAM Broker
+      allowPlatformBroker: false, 
       loggerOptions: {
         loggerCallback,
         logLevel: LogLevel.Info,
@@ -89,7 +73,8 @@ export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string>>();
   protectedResourceMap.set(
     environment.apiConfig.uri,
-    // This scope was breaking the msalInterceptor. it was environment.apiConfig.scopes but I changed it to below and it works
+    // This scope was breaking the msalInterceptor. 
+    // It was environment.apiConfig.scopes but I changed it to below and it works
     [environment.exposedApiScope]
   );
 
@@ -118,10 +103,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-   
-    // provideAnimations(),
     importProvidersFrom(LoggerModule.forRoot({ level: environment.logLevel })),
-    // { provide: ErrorHandler, useClass: LoggerService },
     provideToastr(),
     provideHttpClient(withInterceptorsFromDi(), withFetch()),
     {

@@ -16,6 +16,8 @@ import { NoteApiService } from '../../services/api/note-api.service';
 export class NavListComponent implements OnInit {
     public activeListTab: 'note' | 'tag' = 'note';
     public activeItem: string | null = null;
+    public noteItems: NoteProps[] = [];
+    public listItems: NavTag[] = [];
 
     constructor(
         private tagApi: TagApiService,
@@ -26,7 +28,6 @@ export class NavListComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        
         this.route.paramMap.subscribe(params => {
           let listId = params.get('id');
           let listType = params.get('listType');
@@ -51,17 +52,13 @@ export class NavListComponent implements OnInit {
         if (type === 'note') {
             this.noteApi.getNotes(null, 1, 100).subscribe({
                 next: lists => {
-                    // this.items = this.noteItems;
-                    // const noteProps[] = lists.data;
                     this.noteItems = lists.data;
                     this.activeListTab = type;
-                    // this.items = lists;
                 },
             });
         } else {
             this.tagApi.getTags(null, 1, 100).subscribe({
                 next: lists => {
-                    // this.items = this.listItems;
                     const listItems = lists.data.map(x => ({...x, color: this.colorFactory.getColor(x.order).backgroundcolor}))
                     this.listItems = listItems;
                     this.activeListTab = type;
@@ -81,11 +78,8 @@ export class NavListComponent implements OnInit {
             },
         });
     }
-    public navToList(props: LoadList) {
-    }
+    public navToList(props: LoadList) {}
 
-    public noteItems: NoteProps[] = [];
-    public listItems: NavTag[] = [];
  }
 
 export interface NavTag extends TagProps {
