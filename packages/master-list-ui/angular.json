@@ -3,38 +3,35 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "master-list": {
+    "web-list": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
         }
       },
-      "root": "",
-      "sourceRoot": "src",
+      "root": "projects/apps/web-list",
+      "sourceRoot": "projects/apps/web-list/src",
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/master-list",
-            "index": "src/index.html",
-            "browser": "src/main.ts",
+            "browser": "projects/apps/web-list/src/main.ts",
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "tsconfig.app.json",
+            "tsConfig": "projects/apps/web-list/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "projects/apps/web-list/public"
               }
             ],
             "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": []
+              "projects/apps/web-list/src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {
@@ -61,109 +58,83 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "master-list:build:production"
+              "buildTarget": "web-list:build:production"
             },
             "development": {
-              "buildTarget": "master-list:build:development",
-              "hmr": false
+              "buildTarget": "web-list:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n"
+          "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:karma",
           "options": {
             "polyfills": [
               "zone.js",
               "zone.js/testing"
             ],
-            "tsConfig": "tsconfig.spec.json",
+            "tsConfig": "projects/apps/web-list/tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "projects/apps/web-list/public"
               }
             ],
             "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": []
+              "projects/apps/web-list/src/styles.scss"
+            ]
           }
         }
       }
     },
     "auth": {
       "projectType": "library",
-      "root": "projects/auth",
-      "sourceRoot": "projects/auth/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/auth/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/auth/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/auth/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/auth/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
+      "root": "projects/libs/auth",
+      "sourceRoot": "projects/libs/auth/src",
+      "prefix": "auth",
+      "schematics": {
+        "@schematics/angular:component": {
+          "standalone": true,
+          "skipImport": true,
+          "style": "scss" 
         }
-      }
+      },
+      "targets": {}  
     },
     "environments": {
       "projectType": "library",
-      "root": "projects/environments",
-      "sourceRoot": "projects/environments/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:ng-packagr",
-          "options": {
-            "project": "projects/environments/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/environments/tsconfig.lib.prod.json"
-            },
-            "development": {
-              "tsConfig": "projects/environments/tsconfig.lib.json"
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "tsConfig": "projects/environments/tsconfig.spec.json",
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ]
-          }
+      "root": "projects/libs/environments",
+      "sourceRoot": "projects/libs/environments/src",
+      "prefix": "env",
+      "schematics": {
+        "@schematics/angular:component": {
+          "standalone": true,
+          "skipImport": true,
+          "style": "scss" 
         }
-      }
+      },
+      "targets": {}  
+    },
+    "lists": {
+      "projectType": "library",
+      "root": "projects/libs/lists",
+      "sourceRoot": "projects/libs/lists/src",
+      "prefix": "ml",
+      "schematics": {
+        "@schematics/angular:component": {
+          "standalone": true,
+          "skipImport": true,
+          "style": "scss" 
+        }
+      },
+      "targets": {}  
     }
   }
 }
