@@ -18,9 +18,7 @@ export class ConfirmDialogComponent {
     @Output() confirmed = new EventEmitter<void>();
     @Output() cancelled = new EventEmitter<void>();
 
-    ngOnInit() {
-        console.log('title', this.title);
-    }
+    ngOnInit() {}
 
     titleId = `dlg-title-${crypto.randomUUID()}`;
     msgId = `dlg-msg-${crypto.randomUUID()}`;

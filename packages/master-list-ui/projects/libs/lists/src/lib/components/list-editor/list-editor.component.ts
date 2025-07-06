@@ -108,7 +108,6 @@ export class ListEditorComponent {
                     const found = x.data.find((y: any) => y.id === listId);
                     if (found) {
                         this.listId = found.id;
-                        console.log('noteId found', this.listId);
                         this.getPageNoteItems();
                     } else {
                         console.error(`List with id ${listId} note found`);
@@ -122,7 +121,6 @@ export class ListEditorComponent {
         this.tagHighlightNames = [];
         this.overviewApi.getOverview(this.listId, this.listType, this.currentPage).subscribe({
             next: x => {
-                console.log('getNotes', x);
                 const noteElements = x.data.notes;
                 const tags = x.data.tags;
                 this.maxPage = x.data.max_page;
@@ -186,7 +184,6 @@ export class ListEditorComponent {
         if (tag.create) {
             this.tagApi.createTag(tag.name!).subscribe(response => {
                 this.tagColorService.addTag(response.data);
-                console.log('add tag response', response);
                 this.tagHighlightNames = Array.from(new Set([...this.tagHighlightNames, response.data.name]));
                 const tagUpdate = { id: response.data.order, name: response.data.name, navId: response.data.id };
                 this.updateAddName = tagUpdate;
@@ -198,7 +195,6 @@ export class ListEditorComponent {
     }
     public deleteTag(name: string) {
         this.tagApi.deleteTag(name).subscribe(response => {
-            console.log('add tag response', response);
             this.tagHighlightNames = this.tagHighlightNames.filter(x => x !== name);
             if (response.data) {
                 this.updateDeleteName = { name };

@@ -81,7 +81,6 @@ export class TagPickerComponent implements OnInit {
             .filter(x => x.isSelected)
             .map(x => x.name)
             .filter(x => x);
-        console.log('validNames', validNames);
         if (validNames.length > 0) {
             this.unassignTag.emit(validNames);
         } else {
@@ -143,7 +142,7 @@ export class TagPickerComponent implements OnInit {
     public remove(tag: TagSelection) {
         this.removeTag.emit(tag.name);
     }
-    
+
     public excludeFromList = (tag: TagSelection) => {
         this.handleDeleteTagComplete(tag!.name);
     };
@@ -173,12 +172,10 @@ export class TagPickerComponent implements OnInit {
 
     public autoComplete(currentValue: string) {
         this.autoCloseMenuToggle = false;
-        console.log('currentValue', currentValue);
         this.matchedEntries = [];
         if (currentValue.length > 0) {
             this.showDefaultMenu = false;
             this.tagApi.getTags(currentValue, 1, 10).subscribe(tags => {
-                console.log('matched tags', tags);
                 const map = new Map<string, boolean>(this.tags().map(t => [t.name, true]));
                 this.matchedEntries = tags.data.filter(t => !map.get(t.name));
                 this.uniqeName = !this.matchedEntries.map(t => t.name).includes(this.autoCompleteInput);

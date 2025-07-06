@@ -31,7 +31,6 @@ export class MsalManualInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<any>> {
     return this.getTokenSilently().pipe(
       switchMap((token) => {
-        console.log(token);
         // Clone the request and add the authorization header
         const authReq = req.clone({
           setHeaders: {

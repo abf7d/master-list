@@ -601,16 +601,13 @@ export class ListManagerService {
             event.preventDefault();
             if (event.shiftKey) {
                 this.redo(paragraphs);
-                console.log('redo');
             } else {
                 this.undo(paragraphs);
-                console.log('undo');
             }
             return;
         } else if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
             event.preventDefault();
             this.redo(paragraphs);
-            console.log('redo');
             return;
         }
 
