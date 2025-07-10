@@ -3,15 +3,11 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "baseUrl": "./",
     "paths": {
-      "@master-list/auth": [
-        "./dist/auth",
-        "./projects/auth/src"
-      ],
-      "@master-list/environments": [
-        "./dist/environments",
-         "./projects/environments/src"
-      ]
+      "@auth/*": ["projects/libs/auth/src/lib/*" ],
+      "@env/*": ["projects/libs/environments/src/lib/*"],
+      "@lists/*": ["projects/libs/lists/src/lib/*"]
     },
     "outDir": "./dist/out-tsc",
     "strict": true,
@@ -26,12 +22,22 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
-    "module": "ES2022"
+    "module": "preserve"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
     "strictTemplates": true
-  }
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/apps/web-list/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/apps/web-list/tsconfig.spec.json"
+    }
+  ]
 }

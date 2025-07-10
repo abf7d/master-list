@@ -84,11 +84,9 @@ async def get_token(
     # Check if user exists in database
     # user = db.query(User).filter(User.oauth_id == oauth_id).first()
     
-    
     result: TokenResponse = TokenResponse(Result=token)
     
     print('RESULT!!!!!!!!! ', result)
-
 
     # note_service.get_tags(parent_tag_id=None)
     return result

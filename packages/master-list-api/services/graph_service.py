@@ -34,7 +34,6 @@ class GraphService:
         """
         client_id = settings.AZURE_AD_CLIENT_ID
         client_secret = settings.AZURE_AD_CLIENT_SECRET
-        # user_id = self.get_account_id(user_identity)
 
         try:
             # Create MSAL Confidential Client

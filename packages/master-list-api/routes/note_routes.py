@@ -18,12 +18,6 @@ from services.token_service import TokenService
 
 router = APIRouter()
 
-# router = APIRouter(prefix="/notes", tags=["notes"])
-
-# @router.get("/", …)  
-
-# router = APIRouter(prefix="/account")
-
 """ Initialize the logger """
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("routers.bins")
@@ -36,9 +30,9 @@ def get_note_service(db: Session = Depends(get_db)):
 def get_graph_service():
     return GraphService()
 
-
 def get_token_service():
     return TokenService()
+
 
 @router.delete("/note/{note_id}", response_model=ResponseData,)
 @authenticate
@@ -46,8 +40,6 @@ async def delete_tag_button(request: Request, note_id: UUID,
     graph_service: GraphService = Depends(get_graph_service),
     note_service: NoteService = Depends(get_note_service),
     token_service: TokenService = Depends(get_token_service)):
-    # tag_buttons_db.append(tag_button)
-    # Convert it to a TagCreation by unpacking and adding the id
     
     # Integrate Redis!!!
     # claims = await graph_service.get_claims(request.state.user_id)
@@ -64,11 +56,7 @@ async def delete_tag_button(request: Request, note_id: UUID,
         error="",
         data=success
     )
-    # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
-    # response = TagResponse('success', None, data)
-    print('tag response', response)
     return response
-
 
 
 @router.get("/notes/", response_model=ResponseData)
@@ -104,8 +92,5 @@ async def create_note(request: Request,
         error="",
         data=note_info
     )
-    # data = TagCreation(tag_button.name, tag_button.color, tag_button.backgroundcolor, '1234')
     return response
 
-
-# GET /notes/{note_id}/pages/{idx} 
