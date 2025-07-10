@@ -2,7 +2,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { MoveParagraphs, NoteItemTag, Paragraph } from '../../types/note';
 import { ElementRef, Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { TagColorManager } from '../..//services/tag-color-manager';
+import { TagColorManager } from '../../services/tag-color-manager';
 import { TagApiService } from '../../services/api/tag-api';
 import { NoteApiService } from '../../services/api/note-api.service';
 import { ListHistoryService } from '../../services/list-history.service';
