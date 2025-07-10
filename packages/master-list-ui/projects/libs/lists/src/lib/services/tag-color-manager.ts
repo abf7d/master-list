@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ColorFactoryService } from './color-factory.service';
-import { TagSelectionGroup } from '../../../../../libs/lists/src/lib/types/tag';
-import { TagProps } from '../../../../../libs/lists/src/lib/types/response/response';
+import { TagSelectionGroup } from '../types/tag';
+import { TagProps } from '../types/response/response';
 
 @Injectable({
     providedIn: 'root',

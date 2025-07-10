@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Paragraph } from '../../../../../libs/lists/src/lib/types/note';
+import { Paragraph } from '../types/note';
 
 @Injectable({
   providedIn: 'root'

@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Paragraph } from '../../../../../libs/lists/src/lib/types/note';
 
 export type TextDecoration = 'bold' | 'underline' | 'strike' | 'italic' | 'large'; // 'line-through';
 

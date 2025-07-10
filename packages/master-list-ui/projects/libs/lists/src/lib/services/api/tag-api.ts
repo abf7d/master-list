@@ -2,10 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from '@env/environment';
 import urlJoin from 'url-join';
-import { TagButton, TagSelection, TagSelectionGroup } from '../../../../../../libs/lists/src/lib/types/tag';
-import { Observable, of } from 'rxjs';
-import { TagUpdate } from '../../../../../../libs/lists/src/lib/types/tag/tag-update';
-import { NoteSerach, TagCreate, TagSearch, Response } from '../../../../../../libs/lists/src/lib/types/response/response';
+import { Observable } from 'rxjs';
+import { TagCreate, TagSearch, Response } from '../../types/response/response';
 
 @Injectable({
     providedIn: 'root',
