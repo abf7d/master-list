@@ -6,10 +6,7 @@ import { TagColorManager } from '../../services/tag-color-manager';
 import { TagApiService } from '../../services/api/tag-api';
 import { NoteApiService } from '../../services/api/note-api.service';
 import { ListHistoryService } from '../../services/list-history.service';
-import {
-  ItemStyleMangerService,
-  TextDecoration,
-} from '../../services/item-style-manager.service';
+import { ItemStyleMangerService, TextDecoration } from '../../services/item-style-manager.service';
 
 @Injectable({
   providedIn: 'root',
@@ -145,10 +142,7 @@ export class ListManagerService {
     // Find the containing content divs and editor rows
     let startContentDiv = this.findParentWithClass(startNode, 'content-div');
     if (!startContentDiv) return paragraphs;
-    let startEditorRow = this.findParentWithClass(
-      startContentDiv,
-      'editor-row',
-    );
+    let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
     // let editorRow = startContentDiv.closest('.editor-row');
     if (!startEditorRow /*|| !editorRow */) return paragraphs;
 
@@ -176,10 +170,7 @@ export class ListManagerService {
     let endContentDiv = this.findParentWithClass(endNode, 'content-div');
     if (!startContentDiv || !endContentDiv) return;
 
-    let startEditorRow = this.findParentWithClass(
-      startContentDiv,
-      'editor-row',
-    );
+    let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
     let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
     if (!startEditorRow || !endEditorRow) return;
     // Handle single editor row case
@@ -189,10 +180,7 @@ export class ListManagerService {
     // Handle multiple editor rows
     else {
       // Get all affected editor rows
-      const affectedRows = this.getElementsBetween(
-        startEditorRow,
-        endEditorRow,
-      );
+      const affectedRows = this.getElementsBetween(startEditorRow, endEditorRow);
 
       this.setAffectedElements(affectedRows, paragraphs);
     }
@@ -208,10 +196,7 @@ export class ListManagerService {
     let endContentDiv = this.findParentWithClass(endNode, 'content-div');
     if (!startContentDiv || !endContentDiv) return;
 
-    let startEditorRow = this.findParentWithClass(
-      startContentDiv,
-      'editor-row',
-    );
+    let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
     let endEditorRow = this.findParentWithClass(endContentDiv, 'editor-row');
     if (!startEditorRow || !endEditorRow) return;
     const affectedRows = this.getElementsBetween(startEditorRow, endEditorRow);
@@ -231,13 +216,8 @@ export class ListManagerService {
   }
   moveParagraph(paragraphs: Paragraph[]): MoveParagraphs {
     this.setAffectedRange(paragraphs);
-    const moved =
-      this.affectedRows.length > 0
-        ? this.affectedRows
-        : paragraphs.filter((x) => this.selectedParagraphIds.includes(x.id));
-    const filtered = paragraphs.filter(
-      (x) => !moved.find((y) => x.id === y.id),
-    );
+    const moved = this.affectedRows.length > 0 ? this.affectedRows : paragraphs.filter((x) => this.selectedParagraphIds.includes(x.id));
+    const filtered = paragraphs.filter((x) => !moved.find((y) => x.id === y.id));
     return { moved, filtered };
   }
 
@@ -281,10 +261,7 @@ export class ListManagerService {
   }
 
   // Helper method to find parent element with a specific class
-  private findParentWithClass(
-    node: Node,
-    className: string,
-  ): HTMLElement | null {
+  private findParentWithClass(node: Node, className: string): HTMLElement | null {
     let current = node;
 
     // If it's a text node, start with its parent
@@ -304,10 +281,7 @@ export class ListManagerService {
   }
 
   // Helper method to get all editor rows between two elements
-  private getElementsBetween(
-    startElement: HTMLElement,
-    endElement: HTMLElement,
-  ): HTMLElement[] {
+  private getElementsBetween(startElement: HTMLElement, endElement: HTMLElement): HTMLElement[] {
     const elements: HTMLElement[] = [];
     let currentElement: HTMLElement | null = startElement;
 
@@ -318,17 +292,13 @@ export class ListManagerService {
 
       // Get next editor row
       currentElement = currentElement.nextElementSibling as HTMLElement;
-      if (!currentElement || !currentElement.classList.contains('editor-row'))
-        break;
+      if (!currentElement || !currentElement.classList.contains('editor-row')) break;
     }
 
     return elements;
   }
 
-  private duplicateTags(
-    tags: NoteItemTag[],
-    copyTagSort: boolean,
-  ): NoteItemTag[] {
+  private duplicateTags(tags: NoteItemTag[], copyTagSort: boolean): NoteItemTag[] {
     if (!copyTagSort) {
       return tags.map((tag) => ({ ...tag, sort_order: null, page: null }));
     }
@@ -337,8 +307,7 @@ export class ListManagerService {
   // Update the updateParagraphContent method to work with the new structure
   // Aaron: Commenting out this for now, do I need it?
   private updateParagraphContent(paragraphs: Paragraph[]): void {
-    const rowElements =
-      this.editorRef.nativeElement.querySelectorAll('.editor-row');
+    const rowElements = this.editorRef.nativeElement.querySelectorAll('.editor-row');
 
     const newParagraphs = Array.from(rowElements).map((row: any) => {
       const contentDiv = row.querySelector('.content-div');
@@ -388,11 +357,7 @@ export class ListManagerService {
     // this.isDirty = true;
     this.changeSubject.next();
   }
-  private createNewParagraph(
-    paragraphs: Paragraph[],
-    content: string = '',
-    level: number = 0,
-  ): void {
+  private createNewParagraph(paragraphs: Paragraph[], content: string = '', level: number = 0): void {
     const timestamp = Date.now();
     const randomUuid = crypto.randomUUID();
     const id = randomUuid; //`${timestamp}-${randomUuid}`;
@@ -462,18 +427,9 @@ export class ListManagerService {
       level1.appendChild(contentDiv);
 
       // Apply tag-based classes to bullets
-      this.applyTagClassesToBullets(paragraph.tags || [], [
-        contentDiv,
-        level1,
-        level2,
-        level3,
-      ]); ////[level3, level2, level1, contentDiv]);
+      this.applyTagClassesToBullets(paragraph.tags || [], [contentDiv, level1, level2, level3]); ////[level3, level2, level1, contentDiv]);
 
-      this.applyTagClassToContent(
-        paragraph.tags || [],
-        this.selectedHighlightTag,
-        contentDiv,
-      );
+      this.applyTagClassToContent(paragraph.tags || [], this.selectedHighlightTag, contentDiv);
 
       // Add the nested structure to the editor
       outerDiv.appendChild(level3);
@@ -491,10 +447,7 @@ export class ListManagerService {
    * @param tags Array of tag strings from the paragraph
    * @param bulletElements Array of the 4 nested bullet div elements
    */
-  private applyTagClassesToBullets(
-    tags: NoteItemTag[],
-    bulletElements: HTMLElement[],
-  ): void {
+  private applyTagClassesToBullets(tags: NoteItemTag[], bulletElements: HTMLElement[]): void {
     // We'll handle up to 4 tags, one for each bullet level
     const maxBullets = 4;
 
@@ -523,11 +476,7 @@ export class ListManagerService {
     });
   }
 
-  applyTagClassToContent(
-    tags: NoteItemTag[],
-    selectedHighlightTag: string | null,
-    contentDiv: HTMLElement,
-  ) {
+  applyTagClassToContent(tags: NoteItemTag[], selectedHighlightTag: string | null, contentDiv: HTMLElement) {
     contentDiv.classList.forEach((className) => {
       if (className.startsWith('highlight-')) {
         contentDiv.classList.remove(className);
@@ -683,10 +632,7 @@ export class ListManagerService {
       let editorRow = null;
       let node = currentNode;
       while (node && !editorRow) {
-        if (
-          node.nodeType === Node.ELEMENT_NODE &&
-          (node as HTMLElement).classList.contains('editor-row')
-        ) {
+        if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains('editor-row')) {
           editorRow = node;
           break;
         }
@@ -696,9 +642,7 @@ export class ListManagerService {
       if (!editorRow) return;
       const currentParagraph = editorRow as HTMLElement;
 
-      const currentIndex = paragraphs.findIndex(
-        (p) => p.id === currentParagraph.id,
-      );
+      const currentIndex = paragraphs.findIndex((p) => p.id === currentParagraph.id);
       if (currentIndex === -1) return;
 
       // Get content from the content div
@@ -706,8 +650,7 @@ export class ListManagerService {
       const currentContent = contentDiv ? contentDiv.innerHTML : '';
 
       // Check if we're at the end of an empty paragraph
-      const isEmptyParagraph =
-        currentContent.trim() === '' || currentContent === '<br>';
+      const isEmptyParagraph = currentContent.trim() === '' || currentContent === '<br>';
 
       // If Ctrl/Meta key is pressed, insert a line break instead of creating a new paragraph
       if (this.ctrlDown || this.shiftDown) {
@@ -789,10 +732,7 @@ export class ListManagerService {
     // Handle the tab insertion
     this.insertTabAtCursor(paragraphs, event.shiftKey);
   }
-  private insertTabAtCursor(
-    paragraphs: Paragraph[],
-    isShiftTab: boolean = false,
-  ): void {
+  private insertTabAtCursor(paragraphs: Paragraph[], isShiftTab: boolean = false): void {
     const selection = window.getSelection();
     if (!selection) return;
 
@@ -803,10 +743,7 @@ export class ListManagerService {
     let editorRow = null;
     let node = currentNode;
     while (node && !editorRow) {
-      if (
-        node.nodeType === Node.ELEMENT_NODE &&
-        (node as HTMLElement).classList.contains('editor-row')
-      ) {
+      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains('editor-row')) {
         editorRow = node;
         break;
       }
@@ -817,9 +754,7 @@ export class ListManagerService {
     const currentParagraph = editorRow as HTMLElement;
 
     // Find the corresponding paragraph in our data model
-    const currentIndex = paragraphs.findIndex(
-      (p) => p.id === currentParagraph.id,
-    );
+    const currentIndex = paragraphs.findIndex((p) => p.id === currentParagraph.id);
     if (currentIndex === -1) return;
 
     // Get content div
@@ -872,9 +807,7 @@ export class ListManagerService {
     this.setLoadOriginLink(paragraphs, id);
     if (this.ctrlDown) {
       if (this.selectedParagraphIds?.includes(id)) {
-        this.selectedParagraphIds = this.selectedParagraphIds?.filter(
-          (pId) => pId !== id,
-        );
+        this.selectedParagraphIds = this.selectedParagraphIds?.filter((pId) => pId !== id);
       } else {
         this.selectedParagraphIds?.push(id);
       }
@@ -882,11 +815,9 @@ export class ListManagerService {
       this.selectedParagraphIds = [id];
     }
 
-    this.editorRef.nativeElement
-      .querySelectorAll('.editor-row')
-      .forEach((row: HTMLElement) => {
-        row.classList.remove('selected');
-      });
+    this.editorRef.nativeElement.querySelectorAll('.editor-row').forEach((row: HTMLElement) => {
+      row.classList.remove('selected');
+    });
 
     const selectedElement = document.getElementById(id);
     if (selectedElement) {
@@ -921,9 +852,7 @@ export class ListManagerService {
 
     let currentIndex = paragraphs.length - 1;
     if (this.selectedParagraphId) {
-      currentIndex = paragraphs.findIndex(
-        (p) => p.id === this.selectedParagraphId,
-      );
+      currentIndex = paragraphs.findIndex((p) => p.id === this.selectedParagraphId);
     }
 
     if (isLikelyCode) {
@@ -942,9 +871,7 @@ export class ListManagerService {
       paragraphs.splice(currentIndex + 1, 0, newParagraph);
     } else {
       // Handle as regular text - split by newlines as before
-      const lines = pastedText
-        .split(/\r?\n/)
-        .filter((line) => line.trim().length > 0); // Remove empty lines
+      const lines = pastedText.split(/\r?\n/).filter((line) => line.trim().length > 0); // Remove empty lines
 
       // Create new paragraphs for each line
       lines.forEach((line, i) => {
@@ -989,19 +916,13 @@ export class ListManagerService {
 
     // 2. Check for consistent indentation (code usually has structured indentation)
     const lines = text.split(/\r?\n/);
-    const indentationPattern = lines
-      .filter((line) => line.trim().length > 0)
-      .map((line) => line.match(/^\s*/)?.[0].length || 0);
+    const indentationPattern = lines.filter((line) => line.trim().length > 0).map((line) => line.match(/^\s*/)?.[0].length || 0);
 
     const hasConsistentIndentation =
-      indentationPattern.length > 3 &&
-      new Set(indentationPattern).size > 1 &&
-      new Set(indentationPattern).size < indentationPattern.length / 2;
+      indentationPattern.length > 3 && new Set(indentationPattern).size > 1 && new Set(indentationPattern).size < indentationPattern.length / 2;
 
     // 3. Check for code-to-text ratio (code usually has more special characters)
-    const specialCharsCount = (
-      text.match(/[{}[\]();:.,<>?!&|^%*+=/\\-]/g) || []
-    ).length;
+    const specialCharsCount = (text.match(/[{}[\]();:.,<>?!&|^%*+=/\\-]/g) || []).length;
     const textLength = text.length;
     const specialCharRatio = specialCharsCount / textLength;
 
@@ -1009,10 +930,7 @@ export class ListManagerService {
     const hasMultipleLines = lines.length > 2;
 
     // Return true if any of the code patterns are found or multiple indicators are present
-    return (
-      codePatterns.some((pattern) => pattern.test(text)) ||
-      (hasMultipleLines && (hasConsistentIndentation || specialCharRatio > 0.1))
-    );
+    return codePatterns.some((pattern) => pattern.test(text)) || (hasMultipleLines && (hasConsistentIndentation || specialCharRatio > 0.1));
   }
 
   findParagraphElement(node: Node | null): HTMLElement | null {
@@ -1041,10 +959,7 @@ export class ListManagerService {
       let editorRow = null;
       let node = currentNode;
       while (node && !editorRow) {
-        if (
-          node.nodeType === Node.ELEMENT_NODE &&
-          (node as HTMLElement).classList.contains('editor-row')
-        ) {
+        if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains('editor-row')) {
           editorRow = node;
           break;
         }
@@ -1054,9 +969,7 @@ export class ListManagerService {
       if (!editorRow) return;
       const currentParagraph = editorRow as HTMLElement;
 
-      const currentIndex = paragraphs.findIndex(
-        (p) => p.id === currentParagraph.id,
-      );
+      const currentIndex = paragraphs.findIndex((p) => p.id === currentParagraph.id);
       if (currentIndex === -1) return;
       const activeParagraph = paragraphs[currentIndex];
       if (activeParagraph?.tags.length === 0) return;
