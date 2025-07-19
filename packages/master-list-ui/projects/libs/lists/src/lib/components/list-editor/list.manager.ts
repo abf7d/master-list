@@ -127,6 +127,8 @@ export class ListManagerService {
     return paragraphs;
   }
 
+
+  
   public pasteNoteItems(paragraphs: Paragraph[]): Paragraph[] {
     if (this.clipBoard.length === 0) {
       return paragraphs;
@@ -140,18 +142,32 @@ export class ListManagerService {
     let startNode = range.startContainer;
 
     // Find the containing content divs and editor rows
-    let startContentDiv = this.findParentWithClass(startNode, 'content-div');
+    let startContentDiv = this.findParentWithClass(startNode, 'content-div', true);
     if (!startContentDiv) return paragraphs;
-    let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row');
-    // let editorRow = startContentDiv.closest('.editor-row');
-    if (!startEditorRow /*|| !editorRow */) return paragraphs;
+    let startEditorRow = this.findParentWithClass(startContentDiv, 'editor-row', true);
+    if (!startEditorRow) return paragraphs;
+
+    let editorRow = startEditorRow; 
+    if (!editorRow) return paragraphs;
+    const currentParagraph = editorRow as HTMLElement;
+
+    const currentIndex = paragraphs.findIndex((p) => p.id === currentParagraph.id);
+    if (currentIndex === -1) return paragraphs;
+    const activeParagraph = paragraphs[currentIndex];
+    if (activeParagraph?.tags.length === 0) return paragraphs;
+
+    let indexOffset = 1;
+    // If the selection starts at the beginning of the paragraph, we want to insert before it
+    if (selection.anchorOffset === 0) {
+      indexOffset = 0;
+    }
 
     const id = startEditorRow.id;
     const selectedParagraph = paragraphs.find((x) => x.id === id);
 
     if (selectedParagraph) {
       const index = paragraphs.indexOf(selectedParagraph);
-      paragraphs.splice(index + 1, 0, ...this.clipBoard);
+      paragraphs.splice(index + indexOffset, 0, ...this.clipBoard);
     }
 
     this.renderParagraphs(paragraphs);
@@ -261,12 +277,22 @@ export class ListManagerService {
   }
 
   // Helper method to find parent element with a specific class
-  private findParentWithClass(node: Node, className: string): HTMLElement | null {
+  private findParentWithClass(node: Node, className: string, findChild = false): HTMLElement | null {
     let current = node;
 
     // If it's a text node, start with its parent
     if (current.nodeType === Node.TEXT_NODE) {
       current = current.parentElement!;
+    }
+
+    if(findChild && (current as HTMLElement).classList.contains('editor')) {
+      let currentChild = current;
+      while (currentChild && currentChild instanceof HTMLElement) {
+        if (currentChild.classList.contains(className)) {
+          return currentChild;
+        }
+        currentChild = currentChild.childNodes[0];
+      }
     }
 
     // Traverse up the DOM tree looking for an element with the specified class
@@ -629,7 +655,7 @@ export class ListManagerService {
       let currentNode = range.commonAncestorContainer;
 
       // Find the containing editor row
-      let editorRow = null;
+      let editorRow: Node | null = null;
       let node = currentNode;
       while (node && !editorRow) {
         if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains('editor-row')) {
@@ -740,7 +766,7 @@ export class ListManagerService {
     let currentNode = range.commonAncestorContainer;
 
     // Find the containing editor row
-    let editorRow = null;
+    let editorRow: Node | null = null;
     let node = currentNode;
     while (node && !editorRow) {
       if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains('editor-row')) {
@@ -956,7 +982,7 @@ export class ListManagerService {
       const range = selection.getRangeAt(0);
       let currentNode = range.commonAncestorContainer;
 
-      let editorRow = null;
+      let editorRow: Node | null = null;
       let node = currentNode;
       while (node && !editorRow) {
         if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).classList.contains('editor-row')) {
